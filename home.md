@@ -1,6 +1,6 @@
 # NeteaseCloudMusicApiEnhanced
 
-网易云音乐 NodeJS API Enhanced(Reborn)
+网易云音乐 NodeJS API Enhanced
 
 ## 灵感来自
 
