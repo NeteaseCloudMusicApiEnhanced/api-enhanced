@@ -13,7 +13,7 @@ module.exports = async (query, request) => {
     [query.captcha ? 'captcha' : 'password']: query.captcha
       ? query.captcha
       : query.md5_password || CryptoJS.MD5(query.password).toString(),
-    rememberLogin: 'true',
+    remember: 'true',
   }
   let result = await request(
     `/api/w/login/cellphone`,

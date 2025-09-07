@@ -1,63 +1,71 @@
-function MemoryCache() {
-  this.cache = {}
-  this.size = 0
-}
-
-MemoryCache.prototype.add = function (key, value, time, timeoutCallback) {
-  var old = this.cache[key]
-  var instance = this
-
-  var entry = {
-    value: value,
-    expire: time + Date.now(),
-    timeout: setTimeout(function () {
-      instance.delete(key)
-      return (
-        timeoutCallback &&
-        typeof timeoutCallback === 'function' &&
-        timeoutCallback(value, key)
-      )
-    }, time),
+class MemoryCache {
+  constructor() {
+    this.cache = new Map()
+    this.size = 0
   }
 
-  this.cache[key] = entry
-  this.size = Object.keys(this.cache).length
+  add(key, value, time, timeoutCallback) {
+    // 移除旧的条目（如果存在）
+    const old = this.cache.get(key)
+    if (old) {
+      clearTimeout(old.timeout)
+    }
 
-  return entry
-}
+    // 创建新的缓存条目
+    const entry = {
+      value,
+      expire: time + Date.now(),
+      timeout: setTimeout(() => {
+        this.delete(key)
+        if (typeof timeoutCallback === 'function') {
+          timeoutCallback(value, key)
+        }
+      }, time),
+    }
 
-MemoryCache.prototype.delete = function (key) {
-  var entry = this.cache[key]
+    this.cache.set(key, entry)
+    this.size = this.cache.size
 
-  if (entry) {
-    clearTimeout(entry.timeout)
+    return entry
   }
 
-  delete this.cache[key]
+  delete(key) {
+    const entry = this.cache.get(key)
+    if (entry) {
+      clearTimeout(entry.timeout)
+      this.cache.delete(key)
+      this.size = this.cache.size
+    }
+    return null
+  }
 
-  this.size = Object.keys(this.cache).length
+  get(key) {
+    return this.cache.get(key) || null
+  }
 
-  return null
-}
+  getValue(key) {
+    const entry = this.cache.get(key)
+    return entry ? entry.value : undefined
+  }
 
-MemoryCache.prototype.get = function (key) {
-  var entry = this.cache[key]
+  clear() {
+    this.cache.forEach((entry) => clearTimeout(entry.timeout))
+    this.cache.clear()
+    this.size = 0
+    return true
+  }
 
-  return entry
-}
+  has(key) {
+    const entry = this.cache.get(key)
+    if (!entry) return false
 
-MemoryCache.prototype.getValue = function (key) {
-  var entry = this.get(key)
+    if (Date.now() > entry.expire) {
+      this.delete(key)
+      return false
+    }
 
-  return entry && entry.value
-}
-
-MemoryCache.prototype.clear = function () {
-  Object.keys(this.cache).forEach(function (key) {
-    this.delete(key)
-  }, this)
-
-  return true
+    return true
+  }
 }
 
 module.exports = MemoryCache

@@ -2,17 +2,13 @@ const CryptoJS = require('crypto-js')
 const path = require('path')
 const fs = require('fs')
 const ID_XOR_KEY_1 = '3go8&$8*3*3h0k(2)2'
-const deviceidText = fs.readFileSync(
-  path.resolve(__dirname, '../data/deviceid.txt'),
-  'utf-8',
-)
 
 const createOption = require('../util/option.js')
-const deviceidList = deviceidText.split('\n')
+const { generateDeviceId } = require('../util/index')
 
-function getRandomFromList(list) {
-  return list[Math.floor(Math.random() * list.length)]
-}
+// function getRandomFromList(list) {
+//   return list[Math.floor(Math.random() * list.length)]
+// }
 function cloudmusic_dll_encode_id(some_id) {
   let xoredString = ''
   for (let i = 0; i < some_id.length; i++) {
@@ -26,7 +22,8 @@ function cloudmusic_dll_encode_id(some_id) {
 }
 
 module.exports = async (query, request) => {
-  const deviceId = getRandomFromList(deviceidList)
+  const deviceId = generateDeviceId()
+  console.log(`[register_anonimous] deviceId: ${deviceId}`)
   global.deviceId = deviceId
   const encodedId = CryptoJS.enc.Base64.stringify(
     CryptoJS.enc.Utf8.parse(

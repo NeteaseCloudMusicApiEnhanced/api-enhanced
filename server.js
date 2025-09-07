@@ -224,8 +224,8 @@ async function consturctServer(moduleDefs) {
           const obj = [...params]
           let ip = req.ip
 
-          if (ip.substr(0, 7) == '::ffff:') {
-            ip = ip.substr(7)
+          if (ip.substring(0, 7) == '::ffff:') {
+            ip = ip.substring(7)
           }
           if (ip == '::1') {
             ip = global.cnIp

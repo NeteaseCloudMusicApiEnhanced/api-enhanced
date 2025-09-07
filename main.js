@@ -3,47 +3,61 @@ const path = require('path')
 const tmpPath = require('os').tmpdir()
 const { cookieToJson } = require('./util')
 
-if (!fs.existsSync(path.resolve(tmpPath, 'anonymous_token'))) {
-  fs.writeFileSync(path.resolve(tmpPath, 'anonymous_token'), '', 'utf-8')
+const anonymousTokenPath = path.resolve(tmpPath, 'anonymous_token')
+if (!fs.existsSync(anonymousTokenPath)) {
+  fs.writeFileSync(anonymousTokenPath, '', 'utf-8')
 }
 
-let firstRun = true
 /** @type {Record<string, any>} */
 let obj = {}
-fs.readdirSync(path.join(__dirname, 'module'))
-  .reverse()
-  .forEach((file) => {
-    if (!file.endsWith('.js')) return
-    let fileModule = require(path.join(__dirname, 'module', file))
-    let fn = file.split('.').shift() || ''
-    obj[fn] = function (data = {}) {
-      if (typeof data.cookie === 'string') {
-        data.cookie = cookieToJson(data.cookie)
-      }
-      return fileModule(
-        {
-          ...data,
-          cookie: data.cookie ? data.cookie : {},
-        },
-        async (...args) => {
-          if (firstRun) {
-            firstRun = false
-            const generateConfig = require('./generateConfig')
-            await generateConfig()
-          }
-          // 待优化
-          const request = require('./util/request')
 
-          return request(...args)
-        },
-      )
-    }
-  })
+const modulePath = path.join(__dirname, 'module')
+const moduleFiles = fs.readdirSync(modulePath).reverse()
+
+let requestModule = null
+
+moduleFiles.forEach((file) => {
+  if (!file.endsWith('.js')) return
+
+  const filePath = path.join(modulePath, file)
+  let fileModule = require(filePath)
+  let fn = file.split('.').shift() || ''
+
+  obj[fn] = function (data = {}) {
+    const cookie =
+      typeof data.cookie === 'string'
+        ? cookieToJson(data.cookie)
+        : data.cookie || {}
+
+    return fileModule(
+      {
+        ...data,
+        cookie,
+      },
+      async (...args) => {
+        if (!requestModule) {
+          requestModule = require('./util/request')
+        }
+
+        return requestModule(...args)
+      },
+    )
+  }
+})
+
+let serverModule = null
 
 /**
  * @type {Record<string, any> & import("./server")}
  */
 module.exports = {
-  ...require('./server'),
+  get server() {
+    if (!serverModule) {
+      serverModule = require('./server')
+    }
+    return serverModule
+  },
   ...obj,
 }
+
+Object.assign(module.exports, require('./server'))

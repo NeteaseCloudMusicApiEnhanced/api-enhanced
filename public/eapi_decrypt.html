@@ -8,6 +8,19 @@
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
+<style>
+  .decode-result {
+    white-space: pre-wrap;
+    word-break: break-all;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    height: 300px;
+    overflow: auto;
+  }
+</style>
+
 <body>
   <div id="app" class="p-5 flex flex-col">
     <h1 class="text-2xl font-bold mb-5">eapi 参数和返回内容解析</h1>
@@ -23,7 +36,7 @@
     </div>
     <div>
       <p>解密结果:
-      <pre>{{ JSON.stringify(JSON.parse(result), null, 2) }}</pre>
+      <pre class="decode-result">{{ JSON.stringify(JSON.parse(result), null, 2) }}</pre>
       </p>
     </div>
 

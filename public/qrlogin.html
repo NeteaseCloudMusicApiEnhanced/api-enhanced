@@ -23,7 +23,7 @@
       })
       const key = res.data.data.unikey
       const res2 = await axios({
-        url: `/login/qr/create?key=${key}&qrimg=true&timestamp=${Date.now()}`,
+        url: `/login/qr/create?key=${key}&platform=web&qrimg=true&timestamp=${Date.now()}`,
       })
       document.querySelector('#qrImg').src = res2.data.data.qrimg
 

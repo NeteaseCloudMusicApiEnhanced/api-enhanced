@@ -1,6 +1,6 @@
 {
   "name": "NeteaseCloudMusicApi",
-  "version": "4.25.0",
+  "version": "4.28.0",
   "description": "网易云音乐 NodeJS 版 API",
   "scripts": {
     "start": "node app.js",
@@ -65,9 +65,7 @@
     "data"
   ],
   "dependencies": {
-    "@unblockneteasemusic/server": "latest",
     "axios": "^1.2.2",
-    "dotenv": "^16.0.3",
     "crypto-js": "^4.2.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.1.9",

@@ -9,6 +9,7 @@ module.exports = (query, request) => {
     password: CryptoJS.MD5(query.password).toString(),
     nickname: query.nickname,
     countrycode: query.countrycode || '86',
+    force: 'false',
   }
-  return request(`/api/register/cellphone`, data, createOption(query))
+  return request(`/api/w/register/cellphone`, data, createOption(query))
 }

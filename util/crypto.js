@@ -87,8 +87,13 @@ const eapi = (url, object) => {
 }
 const eapiResDecrypt = (encryptedParams) => {
   // 使用aesDecrypt解密参数
-  const decryptedData = aesDecrypt(encryptedParams, eapiKey, '', 'hex')
-  return JSON.parse(decryptedData)
+  try {
+    const decryptedData = aesDecrypt(encryptedParams, eapiKey, '', 'hex')
+    return JSON.parse(decryptedData)
+  } catch (error) {
+    console.log('eapiResDecrypt error:', error)
+    return null
+  }
 }
 const eapiReqDecrypt = (encryptedParams) => {
   // 使用aesDecrypt解密参数
