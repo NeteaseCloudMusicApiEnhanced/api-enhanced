@@ -65,7 +65,7 @@
     "data"
   ],
   "dependencies": {
-    "@unblockneteasemusic/server": "^0.27.10",
+    "@neteaseapireborn/api": "^4.29.1",
     "axios": "^1.11.0",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.6.1",
