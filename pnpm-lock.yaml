@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@unblockneteasemusic/server':
-        specifier: ^0.27.10
-        version: 0.27.10
+        specifier: ^0.28.0
+        version: 0.28.0
       axios:
-        specifier: ^1.12.0
-        version: 1.12.0
+        specifier: ^1.12.2
+        version: 1.12.2
       crypto-js:
         specifier: ^4.2.0
         version: 4.2.0
@@ -269,8 +269,8 @@ packages:
     resolution: {integrity: sha512-yRyd2++o/IrJdyHuYMxyFyBhU762MRHQ/bAGQeTnN3pGikfh+nEmM61XTqaDH1XDp53afZ+waXrk0ZvenoZ6xw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  '@unblockneteasemusic/server@0.27.10':
-    resolution: {integrity: sha512-qHcLT1A5DjU17JKJlJ1HrXBgmy6cYcDlBlIYocxwVtg6VYzZHt5j6LE/99XR6+kUTnDDyyVtDzR7HE7szSTztw==}
+  '@unblockneteasemusic/server@0.28.0':
+    resolution: {integrity: sha512-FLXNEMc9ItoAhhhemxKJzpJ+9DkWsfnxE5PYTCIzqZarYVUCxeKKEf0CwGeUeIW35z1Ekl0wFU4l10RDWVCr4A==}
     engines: {node: '>= 12'}
     hasBin: true
 
@@ -409,8 +409,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.12.0:
-    resolution: {integrity: sha512-oXTDccv8PcfjZmPGlWsPSwtOJCZ/b6W5jAMCNcfwJbCzDckwG0jrYJFaWH1yvivfCXjVzV/SPDEhMB3Q+DSurg==}
+  axios@1.12.2:
+    resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -641,8 +641,8 @@ packages:
       supports-color:
         optional: true
 
-  debug@4.4.1:
-    resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
+  debug@4.4.3:
+    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -697,8 +697,8 @@ packages:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
-  detect-libc@2.0.4:
-    resolution: {integrity: sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA==}
+  detect-libc@2.1.0:
+    resolution: {integrity: sha512-vEtk+OcP7VBRtQZ1EJ3bdgzSfBjgnEalLTp5zjJrS+2Z1w2KZly4SBdac/WDU3hhsNAZ9E8SC96ME4Ey8MZ7cg==}
     engines: {node: '>=8'}
 
   diff-match-patch@1.0.5:
@@ -2246,8 +2246,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  tar-fs@2.1.3:
-    resolution: {integrity: sha512-090nwYJDmlhwFwEW3QQl+vaNnxsO2yVsd45eTKRBzSzu+hlb1w2K9inVq5b0ngXuLVqQ4ApvsUHHnu/zQNkWAg==}
+  tar-fs@2.1.4:
+    resolution: {integrity: sha512-mDAjwmZdh7LTT6pNleZ05Yt65HC3E+NiQzl672vQG38jIrehtJk/J3mNwIg+vShQPcLF/LV7CMnDW6vjj6sfYQ==}
 
   tar-stream@2.2.0:
     resolution: {integrity: sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ==}
@@ -2515,7 +2515,7 @@ snapshots:
   '@eslint/eslintrc@1.4.1':
     dependencies:
       ajv: 6.12.6
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       espree: 9.6.1
       globals: 13.24.0
       ignore: 5.3.2
@@ -2529,7 +2529,7 @@ snapshots:
   '@humanwhocodes/config-array@0.9.5':
     dependencies:
       '@humanwhocodes/object-schema': 1.2.1
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -2628,7 +2628,7 @@ snapshots:
       '@typescript-eslint/experimental-utils': 5.0.0(eslint@8.7.0)(typescript@4.5.2)
       '@typescript-eslint/parser': 5.0.0(eslint@8.7.0)(typescript@4.5.2)
       '@typescript-eslint/scope-manager': 5.0.0
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       eslint: 8.7.0
       functional-red-black-tree: 1.0.1
       ignore: 5.3.2
@@ -2658,7 +2658,7 @@ snapshots:
       '@typescript-eslint/scope-manager': 5.0.0
       '@typescript-eslint/types': 5.0.0
       '@typescript-eslint/typescript-estree': 5.0.0(typescript@4.5.2)
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       eslint: 8.7.0
     optionalDependencies:
       typescript: 4.5.2
@@ -2676,7 +2676,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 5.0.0
       '@typescript-eslint/visitor-keys': 5.0.0
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.7.2
@@ -2691,7 +2691,7 @@ snapshots:
       '@typescript-eslint/types': 5.0.0
       eslint-visitor-keys: 3.4.3
 
-  '@unblockneteasemusic/server@0.27.10':
+  '@unblockneteasemusic/server@0.28.0':
     dependencies:
       node-windows: 1.0.0-beta.8
       pino: 6.14.0
@@ -2720,7 +2720,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -2815,7 +2815,7 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.12.0:
+  axios@1.12.2:
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
@@ -3065,7 +3065,7 @@ snapshots:
     optionalDependencies:
       supports-color: 8.1.1
 
-  debug@4.4.1(supports-color@9.4.0):
+  debug@4.4.3(supports-color@9.4.0):
     dependencies:
       ms: 2.1.3
     optionalDependencies:
@@ -3116,7 +3116,7 @@ snapshots:
 
   destroy@1.2.0: {}
 
-  detect-libc@2.0.4: {}
+  detect-libc@2.1.0: {}
 
   diff-match-patch@1.0.5: {}
 
@@ -3397,7 +3397,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -3731,7 +3731,7 @@ snapshots:
     dependencies:
       basic-ftp: 5.0.5
       data-uri-to-buffer: 6.0.2
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -3831,21 +3831,21 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4083,7 +4083,7 @@ snapshots:
       cli-truncate: 3.1.0
       colorette: 2.0.20
       commander: 8.3.0
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       execa: 5.1.1
       lilconfig: 2.0.4
       listr2: 3.14.0
@@ -4228,7 +4228,7 @@ snapshots:
     dependencies:
       '@tokenizer/token': 0.3.0
       content-type: 1.0.5
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       file-type: 16.5.4
       media-typer: 1.1.0
       strtok3: 6.3.0
@@ -4353,7 +4353,7 @@ snapshots:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.4
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       get-uri: 6.0.5
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
@@ -4430,7 +4430,7 @@ snapshots:
       node-fetch: 2.7.0
       progress: 2.0.3
       semver: 7.7.2
-      tar-fs: 2.1.3
+      tar-fs: 2.1.4
       yargs: 16.2.0
     transitivePeerDependencies:
       - encoding
@@ -4528,7 +4528,7 @@ snapshots:
 
   prebuild-install@7.1.1:
     dependencies:
-      detect-libc: 2.0.4
+      detect-libc: 2.1.0
       expand-template: 2.0.3
       github-from-package: 0.0.0
       minimist: 1.2.8
@@ -4538,7 +4538,7 @@ snapshots:
       pump: 3.0.3
       rc: 1.2.8
       simple-get: 4.0.1
-      tar-fs: 2.1.3
+      tar-fs: 2.1.4
       tunnel-agent: 0.6.0
 
   prelude-ls@1.1.2: {}
@@ -4852,7 +4852,7 @@ snapshots:
   socks-proxy-agent@8.0.5:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.1(supports-color@9.4.0)
+      debug: 4.4.3(supports-color@9.4.0)
       socks: 2.8.7
     transitivePeerDependencies:
       - supports-color
@@ -4987,7 +4987,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  tar-fs@2.1.3:
+  tar-fs@2.1.4:
     dependencies:
       chownr: 1.1.4
       mkdirp-classic: 0.5.3
