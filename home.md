@@ -1265,11 +1265,11 @@ tags: 歌单标签
 
 **必选参数 :** `id` : 音乐 id
 
-**可选参数 :** `source`: 选择要解灰的音源, 目前支持`pyncmd`, `kuwo`, `kugou`, `qq`, `migu`, 选择多个音源中间用`,`分隔
+**可选参数 :** `source`: 选择要解灰的音源, 目前支持`pyncmd`, `bodian`, `kuwo`, `kugou`, `qq`, `migu`, 选择多个音源中间用`,`分隔
 
 **接口地址 :** `/song/url/match`
 
-**调用例子 :** `/song/url/match?id=1969519579` `/song/url/match?id=1969519579&source=pyncmd,kuwo`
+**调用例子 :** `/song/url/match?id=1969519579` `/song/url/match?id=1969519579&source=pyncmd,bodian`
 
 注意: 如果解灰出现问题, 本项目只是集成[UnblockNeteaseMusic](https://github.com/UnblockNeteaseMusic/server)的接口, 请在对应的仓库开启议题
 
