@@ -1,4 +1,4 @@
-# 网易云音乐 API Enhanced Reborn
+# 网易云音乐 API Enhanced
 
 > 为停更的网易云音乐 NodeJs API 提供持续的维护！
 
