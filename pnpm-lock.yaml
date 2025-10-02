@@ -83,7 +83,7 @@ importers:
         version: 8.1.3
       eslint-plugin-prettier:
         specifier: 4.0.0
-        version: 4.0.0(eslint-config-prettier@8.5.0(eslint@8.7.0))(eslint@8.7.0)(prettier@2.7.1)
+        version: 4.0.0(eslint-config-prettier@8.5.0(eslint@8.7.0))(eslint@8.7.0)(prettier@3.6.2)
       husky:
         specifier: 7.0.4
         version: 7.0.4
@@ -103,8 +103,8 @@ importers:
         specifier: 1.6.1
         version: 1.6.1
       prettier:
-        specifier: 2.7.1
-        version: 2.7.1
+        specifier: 3.6.2
+        version: 3.6.2
       typescript:
         specifier: 4.5.2
         version: 4.5.2
@@ -1869,9 +1869,9 @@ packages:
     resolution: {integrity: sha512-GbK2cP9nraSSUF9N2XwUwqfzlAFlMNYYl+ShE/V+H8a9uNl/oUqB1w2EL54Jh0OlyRSd8RfWYJ3coVS4TROP2w==}
     engines: {node: '>=6.0.0'}
 
-  prettier@2.7.1:
-    resolution: {integrity: sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==}
-    engines: {node: '>=10.13.0'}
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
+    engines: {node: '>=14'}
     hasBin: true
 
   process-nextick-args@2.0.1:
@@ -3375,10 +3375,10 @@ snapshots:
     dependencies:
       htmlparser2: 10.0.0
 
-  eslint-plugin-prettier@4.0.0(eslint-config-prettier@8.5.0(eslint@8.7.0))(eslint@8.7.0)(prettier@2.7.1):
+  eslint-plugin-prettier@4.0.0(eslint-config-prettier@8.5.0(eslint@8.7.0))(eslint@8.7.0)(prettier@3.6.2):
     dependencies:
       eslint: 8.7.0
-      prettier: 2.7.1
+      prettier: 3.6.2
       prettier-linter-helpers: 1.0.0
     optionalDependencies:
       eslint-config-prettier: 8.5.0(eslint@8.7.0)
@@ -4575,7 +4575,7 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier@2.7.1: {}
+  prettier@3.6.2: {}
 
   process-nextick-args@2.0.1: {}
 
