@@ -162,9 +162,7 @@ banner({ type: 0 }).then((res) => {
 })
 ```
 
-## Docker 容器运行 (原版 API, 不推荐)
-
-> 注意: 该部分为**原版网易云音乐 API**的 Docker 容器部署方式, 关于增强版本请**自行构建并部署**
+## Docker 容器运行
 
 > 注意: 在 docker 中运行的时候, 由于使用了 request 来发请求, 所以会检查几个 proxy 相关的环境变量(如下所列), 这些环境变量 会影响到 request 的代理, 详情请参考[request 的文档](https://github.com/request/request#proxies), 如果这些环境变量 指向的代理不可用, 那么就会造成错误, 所以在使用 docker 的时候一定要注意这些环境变量. 不过, 要是你在 query 中加上了 proxy 参数, 那么环境变量会被覆盖, 就会用你通过 proxy 参数提供的代理了.
 
@@ -178,20 +176,20 @@ request 相关的环境变量
 6. NO_PROXY
 
 ```shell
-docker pull binaryify/netease_cloud_music_api
+docker pull moefurina/ncm-api
 
-docker run -d -p 3000:3000 --name netease_cloud_music_api    binaryify/netease_cloud_music_api
+docker run -d -p 3000:3000 --name ncm-api-enhanced moefurina/ncm-api
 
 
 // 或者
-docker run -d -p 3000:3000 binaryify/netease_cloud_music_api
+docker run -d -p 3000:3000 moefurina/ncm-api
 
 // 去掉或者设置相关的环境变量
 
-docker run -d -p 3000:3000 --name netease_cloud_music_api -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= binaryify/netease_cloud_music_api
+docker run -d -p 3000:3000 --name ncm-api-enhanced -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api
 
 // 或者
-docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= binaryify/netease_cloud_music_api
+docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api
 ```
 
 ### 自行构建 docker 镜像 (推荐)
