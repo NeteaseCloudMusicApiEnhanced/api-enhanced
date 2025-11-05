@@ -1,9 +1,10 @@
 {
   "name": "netease-api",
-  "main": "app.js",
-  "compatibility_date": "2025-08-05",
-  "compatibility_flags": ["nodejs_compat"],
-  "service": {
-    "environment": "production"
+  "main": "src/index.js",
+  "compatibility_date": "2024-05-01",
+  "vars": {
+    "NODE_ENV": "production",
+    "ENABLE_FLAC": "true",
+    "ENABLE_GENERAL_UNBLOCK": "true"
   }
 }
