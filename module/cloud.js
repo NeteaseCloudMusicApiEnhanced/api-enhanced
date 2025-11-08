@@ -1,9 +1,15 @@
-const mm = require('music-metadata')
 const uploadPlugin = require('../plugins/songUpload')
 const md5 = require('md5')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
 module.exports = async (query, request) => {
+  // 延迟加载以避免 Serverless 环境启动失败
+  let mm
+  try {
+    mm = require('music-metadata')
+  } catch (e) {
+    console.error('music-metadata load failed:', e.message)
+  }
   let ext = 'mp3'
   // if (query.songFile.name.indexOf('flac') > -1) {
   //   ext = 'flac'
@@ -49,20 +55,22 @@ module.exports = async (query, request) => {
   let album = ''
   let songName = ''
   try {
-    const metadata = await mm.parseBuffer(
-      query.songFile.data,
-      query.songFile.mimetype,
-    )
-    const info = metadata.common
+    if (mm) {
+      const metadata = await mm.parseBuffer(
+        query.songFile.data,
+        query.songFile.mimetype,
+      )
+      const info = metadata.common
 
-    if (info.title) {
-      songName = info.title
-    }
-    if (info.album) {
-      album = info.album
-    }
-    if (info.artist) {
-      artist = info.artist
+      if (info.title) {
+        songName = info.title
+      }
+      if (info.album) {
+        album = info.album
+      }
+      if (info.artist) {
+        artist = info.artist
+      }
     }
     // if (metadata.native.ID3v1) {
     //   metadata.native.ID3v1.forEach((item) => {
