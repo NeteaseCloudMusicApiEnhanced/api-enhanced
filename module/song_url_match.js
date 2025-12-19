@@ -6,23 +6,22 @@ const logger = require('../util/logger.js')
 
 module.exports = async (query, request) => {
   try {
-    const match = require('@unblockneteasemusic/server')
-    const source = query.source
-      ? query.source.split(',')
-      : ['pyncmd', 'bodian', 'kuwo', 'qq', 'migu', 'kugou']
-    const server = query.server ? query.server.split(',') : query.server
-    const result = await match(query.id, !server ? source : server)
+    const {
+      matchID,
+    } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
+    const result = await matchID(query.id)
     const proxy = process.env.PROXY_URL
     logger.info('开始解灰', query.id, result)
     const useProxy = process.env.ENABLE_PROXY || 'false'
-    if (result.url.includes('kuwo')) {
-      result.proxyUrl = useProxy === 'true' ? proxy + result.url : result.url
+    if (result.data.url.includes('kuwo')) {
+      result.proxyUrl =
+        useProxy === 'true' ? proxy + result.data.url : result.data.url
     }
     return {
       status: 200,
       body: {
         code: 200,
-        data: result,
+        data: result.data.url,
       },
     }
   } catch (e) {
