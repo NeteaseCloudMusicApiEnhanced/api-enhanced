@@ -4861,6 +4861,22 @@ let data = encodeURIComponent(
 
 **调用例子:** `/broadcast/channel/list`
 
+### 黑胶乐签打卡
+
+说明: 登录后调用此接口, 进行黑胶乐签打卡
+
+**接口地址:** `/vip/sign`
+
+**调用例子:** `/vip/sign`
+
+### 黑胶乐签打卡信息
+
+说明: 登录后调用此接口, 获取黑胶乐签打卡信息
+
+**接口地址:** `/vip/sign/info`
+
+**调用例子:** `/vip/sign/info`
+
 ## 离线访问此文档
 
 此文档同时也是 Progressive Web Apps(PWA), 加入了 serviceWorker, 可离线访问
