@@ -11,9 +11,6 @@ importers:
       '@neteasecloudmusicapienhanced/unblockmusic-utils':
         specifier: ^0.1.2
         version: 0.1.2
-      '@unblockneteasemusic/server':
-        specifier: ^0.28.0
-        version: 0.28.0
       axios:
         specifier: ^1.13.2
         version: 1.13.2
