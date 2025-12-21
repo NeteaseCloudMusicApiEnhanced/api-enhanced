@@ -1,6 +1,6 @@
 {
   "name": "@neteasecloudmusicapienhanced/api",
-  "version": "4.29.19",
+  "version": "4.29.20",
   "description": "A revival project for NeteaseCloudMusicApi Node.js Services (Half Refactor & Enhanced)|| 网易云音乐 API 备份 + 增强 || 本项目自原版v4.28.0版本后开始自行维护",
   "scripts": {
     "dev": "nodemon app.js",
