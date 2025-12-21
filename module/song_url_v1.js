@@ -31,7 +31,7 @@ module.exports = async (query, request) => {
         status: 200,
         body: {
           code: 200,
-          msg: 'Warning: you can only adjust unblock source song_url_unblock interface, use /song/url/match instead.',
+          msg: 'Warning: Customizing unblock sources is not supported on this endpoint. Please use `/song/url/match` instead.',
           data: [
             {
               id: Number(query.id),
