@@ -6,8 +6,9 @@
 const logger = require('../util/logger.js')
 const createOption = require('../util/option.js')
 module.exports = async (query, request) => {
-  const match = require('@unblockneteasemusic/server')
-  const source = ['pyncmd', 'bodian', 'kuwo', 'qq', 'migu', 'kugou']
+  const {
+    matchID,
+  } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
   require('dotenv').config()
   const data = {
     ids: '[' + query.id + ']',
@@ -16,45 +17,34 @@ module.exports = async (query, request) => {
   }
   if (query.unblock === 'true') {
     try {
-      const result = await match(query.id, source)
+      const result = await matchID(query.id, query.source)
       logger.info('Starting unblock(uses modules unblock):', query.id, result)
-      // avoid optional chaining for compatibility
-      let url
-      if (Array.isArray(result)) {
-        url = result[0] && result[0].url ? result[0].url : result[0]
-      } else {
-        url = result && result.url ? result.url : result
-      }
-      // decide proxyUrl after we resolved the actual url value
+      const useProxy = process.env.ENABLE_PROXY || 'false'
       let proxyUrl = ''
-      if (url) {
-        if (url.includes('kuwo')) {
-          const useProxy = process.env.ENABLE_PROXY || 'false'
-          if (useProxy === 'true' && process.env.PROXY_URL) {
-            proxyUrl = process.env.PROXY_URL + url
-          } else {
-            proxyUrl = url
-          }
-        }
-        return {
-          status: 200,
-          body: {
-            code: 200,
-            msg: 'Warning: you can only adjust unblock source in dotenv config, use /song/url/match instead.',
-            data: [
-              {
-                id: Number(query.id),
-                url,
-                type: 'flac',
-                level: query.level,
-                freeTrialInfo: 'null',
-                fee: 0,
-                proxyUrl: proxyUrl || '',
-              },
-            ],
-          },
-          cookie: [],
-        }
+      if (result.data.url && result.data.url.includes('kuwo')) {
+        proxyUrl =
+          useProxy === 'true' && process.env.PROXY_URL
+            ? process.env.PROXY_URL + result.data.url
+            : result.data.url
+      }
+      return {
+        status: 200,
+        body: {
+          code: 200,
+          msg: 'Warning: you can only adjust unblock source song_url_unblock interface, use /song/url/match instead.',
+          data: [
+            {
+              id: Number(query.id),
+              url: result.data.url,
+              type: 'flac',
+              level: query.level,
+              freeTrialInfo: 'null',
+              fee: 0,
+              proxyUrl: proxyUrl || '',
+            },
+          ],
+        },
+        cookie: [],
       }
     } catch (e) {
       console.error('Error in unblockneteasemusic:', e)

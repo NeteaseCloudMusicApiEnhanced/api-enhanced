@@ -9,7 +9,7 @@ module.exports = async (query, request) => {
     const {
       matchID,
     } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
-    const result = await matchID(query.id)
+    const result = await matchID(query.id, query.source)
     const proxy = process.env.PROXY_URL
     logger.info('开始解灰', query.id, result)
     const useProxy = process.env.ENABLE_PROXY || 'false'
@@ -22,6 +22,7 @@ module.exports = async (query, request) => {
       body: {
         code: 200,
         data: result.data.url,
+        proxyUrl: result.proxyUrl || '',
       },
     }
   } catch (e) {

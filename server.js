@@ -254,13 +254,12 @@ async function consturctServer(moduleDefs) {
             !song.url ||
             [1, 4].includes(song.fee)
           ) {
-            const match = require('@unblockneteasemusic/server')
-            const source = process.env.UNBLOCK_SOURCE
-              ? process.env.UNBLOCK_SOURCE.split(',')
-              : ['pyncmd', 'bodian', 'kuwo', 'qq', 'migu', 'kugou']
-            logger.info('Starting unblock(uses general unblock):', source)
-            const { url } = await match(req.query.id, source)
-            song.url = url
+            const {
+              matchID,
+            } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
+            logger.info('Starting unblock(uses general unblock):', req.query.id)
+            const result = await matchID(req.query.id)
+            song.url = result.data.url
             song.freeTrialInfo = 'null'
             logger.info('Unblock success! url:', song.url)
           }
