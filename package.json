@@ -66,7 +66,7 @@
     "data"
   ],
   "dependencies": {
-    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.1.1",
+    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.1.2",
     "@unblockneteasemusic/server": "^0.28.0",
     "axios": "^1.13.2",
     "crypto-js": "^4.2.0",

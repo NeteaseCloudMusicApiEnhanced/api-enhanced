@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@neteasecloudmusicapienhanced/unblockmusic-utils':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.1.2
+        version: 0.1.2
       '@unblockneteasemusic/server':
         specifier: ^0.28.0
         version: 0.28.0
@@ -228,8 +228,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.1.1':
-    resolution: {integrity: sha512-CihuY2gOVTnBY1wkHZBAEW2SCUHPo16KrNuxl1O8ESFdn+1TJRzlEjaPKFrG2yrwrEbzj0SV/na8tvNVyPqz1g==}
+  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.1.2':
+    resolution: {integrity: sha512-yhzMU+AaNI3QBm4KnKSJ2k0qy9oDKE0SjEfEHiGYNC0eTnAvCYvk+dZ1AuLzpm6b8yVLzK+oo+RvQwOd/zo5JQ==}
     hasBin: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -2757,7 +2757,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.1.1':
+  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.1.2':
     dependencies:
       '@unblockneteasemusic/server': 0.28.0
       axios: 1.13.2
