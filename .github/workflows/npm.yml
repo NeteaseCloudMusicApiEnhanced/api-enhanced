@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'package.json'
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -17,26 +19,52 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v5
+      - name: Check if version has changed
+        id: version_check
+        run: |
+          # 获取当前提交中的版本号
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # 获取上一个提交中的版本号
+          git fetch origin main --depth=1
+          PREVIOUS_COMMIT=$(git rev-parse HEAD~1)
+          PREVIOUS_VERSION=$(git show $PREVIOUS_COMMIT:package.json | node -p "require('/dev/stdin').version" 2>/dev/null || echo "")
+          echo "Previous version: $PREVIOUS_VERSION"
+          
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "Version has changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version has not changed"
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
 
       # 发布到 NPM Registry
       - name: Setup Node.js for NPM
+        if: steps.version_check.outputs.version_changed == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org/'
-      - run: npm install
+      - name: Install dependencies
+        if: steps.version_check.outputs.version_changed == 'true'
+        run: npm install
       - name: Publish to NPM
+        if: steps.version_check.outputs.version_changed == 'true'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # 发布到 GitHub Packages
       - name: Setup Node.js for GitHub Packages
+        if: steps.version_check.outputs.version_changed == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 20
           registry-url: 'https://npm.pkg.github.com'
       - name: Publish to GitHub Packages
+        if: steps.version_check.outputs.version_changed == 'true'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}

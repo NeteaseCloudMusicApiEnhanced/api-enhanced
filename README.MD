@@ -4,7 +4,7 @@
 
 ## 项目简介
 
-本项目为网易云音乐第三方 Node.js API，基于社区停更的原版 API 持续维护和升级，支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
+本项目为网易云音乐第三方 Node.js API，基于停更的原版 API 持续维护，支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
 
 ## 快速开始
 
@@ -77,7 +77,7 @@ docker run -d \
 
 运行后访问 http://localhost:3000 即可使用 API。
 
-### 3. 环境变量
+## 3. 环境变量
 
 | 变量名                     | 默认值                               | 说明                                                                           |
 | -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
@@ -87,7 +87,6 @@ docker run -d \
 | **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                   |
 | **ENABLE_FLAC**            | `true`                               | 是否启用无损音质（FLAC）。                                                     |
 | **SELECT_MAX_BR**          | `false`                              | 启用无损音质时，是否选择最高码率音质。                                         |
-| **UNBLOCK_SOURCE**         | `pyncmd,qq,bodian,migu,kugou,kuwo`   | 音源优先级列表（多个音源以逗号分隔）。                                         |
 | **FOLLOW_SOURCE_ORDER**    | `true`                               | 是否严格按照音源列表顺序进行匹配。                                             |
 
 ---
@@ -157,21 +156,40 @@ pnpm test
 - 用户信息、歌单、动态、播放记录
 - 歌曲、专辑、歌手、MV、歌词、评论、排行榜
 - 搜索、推荐、私人 FM、签到、云盘
-- 歌曲解锁（解灰）、多音源支持（qq/bodian/kuwo/kugou/migu/pyncmd）
-  > 注意: 如果解灰出现问题, 本项目只是集成[UnblockNeteaseMusic](https://github.com/UnblockNeteaseMusic/server)的接口, 请在对应的仓库开启议题
-- 详细接口请见[在线文档](https://neteasecloudmusicapienhanced.js.org/)
+- 歌曲解锁（解灰）
 
 ## 贡献与社区
 
 - 欢迎提交 PR、Issue 参与维护
 
-## SDK 生态
+### 致谢
+
+原作者 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 项目为本项目基础 (该项目在`npmjs`网站上仍持续维护, 但 github 仓库已不再更新)
+
+感谢大佬们为逆向eapi, weapi等加密算法所做的贡献
+
+项目参考:
+
+[trazyn/ieaseMusic](https://github.com/trazyn/ieaseMusic)
+
+[listen1/listen1_chrome_extension](https://github.com/listen1/listen1_chrome_extension)
+
+[chaunsin/netease-cloud-music](https://github.com/chaunsin/netease-cloud-music)
+
+### SDK 生态
 
 | 语言   | 作者                                        | 地址                                                                                     | 类型   |
 | ------ | ------------------------------------------- | ---------------------------------------------------------------------------------------- | ------ |
 | Java   | [JackuXL](https://github.com/JackuXL)       | [NeteaseCloudMusicApi-SDK](https://github.com/JackuXL/NeteaseCloudMusicApi-SDK)          | 第三方 |
 | Java   | [1015770492](https://github.com/1015770492) | https://github.com/1015770492/yumbo-music-utils                                          | 第三方 |
 | Python | [盧瞳](https://github.com/2061360308)       | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
+
+
+### 依赖此项目的优秀开源项目
+
+- [imsyy/splayer](https://github.com/imsyy/splayer)
+
+- [qier2222/YesPlayMusic](https://github.com/qier222/YesPlayMusic)
 
 ## License
 

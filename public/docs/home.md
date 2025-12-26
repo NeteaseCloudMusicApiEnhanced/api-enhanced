@@ -1252,8 +1252,6 @@ tags: 歌单标签
 
 说明：`杜比全景声`音质需要设备支持，不同的设备可能会返回不同码率的 url。cookie 需要传入`os=pc`保证返回正常码率的 url。
 
-注意: 如果解灰出现问题, 本项目只是集成[UnblockNeteaseMusic](https://github.com/UnblockNeteaseMusic/server)的接口, 请在对应的仓库开启议题
-
 ### 音乐是否可用
 
 说明: 调用此接口,传入歌曲 id, 可获取音乐是否可用,返回 `{ success: true, message: 'ok' }` 或者 `{ success: false, message: '亲爱的,暂无版权' }`
@@ -1268,17 +1266,15 @@ tags: 歌单标签
 
 ### 直接获取灰色歌曲链接
 
-说明 : 技术来自于 [UnblockNeteaseMusic](https://github.com/unblockneteasemusic/server) 的支持, 聚合多个音源匹配(有几率匹配不成功)
+说明 : 技术部分来自于 [UnblockNeteaseMusic](https://github.com/unblockneteasemusic/server) 的支持
 
 **必选参数 :** `id` : 音乐 id
 
-**可选参数 :** `source`: 选择要解灰的音源, 目前支持`pyncmd`, `bodian`, `kuwo`, `kugou`, `qq`, `migu`, 选择多个音源中间用`,`分隔
+**可选参数 :** `source`: 选择要解灰的音源, 不支持多音源
 
 **接口地址 :** `/song/url/match`
 
-**调用例子 :** `/song/url/match?id=1969519579` `/song/url/match?id=1969519579&source=pyncmd,bodian`
-
-注意: 如果解灰出现问题, 本项目只是集成[UnblockNeteaseMusic](https://github.com/UnblockNeteaseMusic/server)的接口, 请在对应的仓库开启议题
+**调用例子 :** `/song/url/match?id=1969519579` `/song/url/match?id=1969519579`
 
 ### 搜索
 

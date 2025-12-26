@@ -58,33 +58,8 @@
             <input type="number" id="songId" placeholder="请输入音乐ID" required>
         </div>
         <div class="form-group">
-            <p>选择音源：</p>
-            <div class="source-options">
-                <div class="source-option">
-                    <input type="checkbox" id="pyncmd" value="pyncmd">
-                    <label for="pyncmd">pyncmd</label>
-                </div>
-                <div class="source-option">
-                    <input type="checkbox" id="kuwo" value="kuwo">
-                    <label for="kuwo">kuwo</label>
-                </div>
-                <div class="source-option">
-                    <input type="checkbox" id="bodian" value="bodian">
-                    <label for="bodian">bodian</label>
-                </div>
-                <div class="source-option">
-                    <input type="checkbox" id="qq" value="qq">
-                    <label for="qq">qq</label>
-                </div>
-                <div class="source-option">
-                    <input type="checkbox" id="kugou" value="kugou">
-                    <label for="kugou">kugou</label>
-                </div>
-                <div class="source-option">
-                    <input type="checkbox" id="migu" value="migu">
-                    <label for="migu">migu</label>
-                </div>
-            </div>
+            <label for="sources">音源列表：</label>
+            <input type="text" id="sources" placeholder="请输入音源">
         </div>
         <button onclick="testSong()">开始测试</button>
         <div id="result"></div>
@@ -98,12 +73,10 @@
                 return;
             }
 
-            const sources = ['pyncmd', 'kuwo', 'bodian', 'qq', 'kugou', 'migu']
-                .filter(source => document.getElementById(source).checked)
-                .join(',');
+            const sources = document.getElementById('sources').value;
 
-            if (!sources) {
-                alert('请至少选择一个音源');
+            if (!sources || !sources.trim()) {
+                alert('请输入至少一个音源');
                 return;
             }
 
