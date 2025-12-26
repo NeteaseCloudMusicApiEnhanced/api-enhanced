@@ -98,7 +98,7 @@
     "globals": "^16.5.0",
     "husky": "9.1.7",
     "intelli-espower-loader": "1.1.0",
-    "lint-staged": "16.2.6",
+    "lint-staged": "16.2.7",
     "mocha": "11.7.5",
     "nodemon": "^3.1.11",
     "pkg": "^5.8.1",
