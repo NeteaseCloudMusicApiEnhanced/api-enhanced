@@ -59,7 +59,7 @@
         </div>
         <div class="form-group">
             <label for="sources">音源列表：</label>
-            <input type="text" id="sources" placeholder="请输入音源">
+            <input type="text" id="sources" placeholder="请输入音源(非必填)">
         </div>
         <button onclick="testSong()">开始测试</button>
         <div id="result"></div>
@@ -75,10 +75,7 @@
 
             const sources = document.getElementById('sources').value;
 
-            if (!sources || !sources.trim()) {
-                alert('请输入至少一个音源');
-                return;
-            }
+
 
             const resultDiv = document.getElementById('result');
             resultDiv.textContent = '正在请求...';
