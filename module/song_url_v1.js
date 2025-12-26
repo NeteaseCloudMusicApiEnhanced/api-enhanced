@@ -1,7 +1,7 @@
 // 歌曲链接 - v1
 // 此版本不再采用 br 作为音质区分的标准
 // 而是采用 standard, exhigh, lossless, hires, jyeffect(高清环绕声), sky(沉浸环绕声), jymaster(超清母带) 进行音质判断
-// 当unblock为true时, 会尝试使用unblockneteasemusic进行解锁, 同时音质设置不会生效, 但仍然为必须传入参数
+// 当unblock为true时, 会尝试使用unblockmusic-utils进行解锁, 同时音质设置不会生效, 但仍然为必须传入参数
 
 const logger = require('../util/logger.js')
 const createOption = require('../util/option.js')
@@ -47,7 +47,7 @@ module.exports = async (query, request) => {
         cookie: [],
       }
     } catch (e) {
-      console.error('Error in unblockneteasemusic:', e)
+      console.error('Error in unblocking music:', e)
     }
   }
   if (data.level == 'sky') {
