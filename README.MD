@@ -90,7 +90,7 @@ docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_P
 
 > 以下是自行 build docker 镜像方式
 
-```
+```shell
 $ git clone https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced && cd api-enhanced
 
 $ sudo docker build . -t ncm-api
