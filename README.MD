@@ -19,7 +19,7 @@
 
 ### 环境要求
 
-- Node.js 14 及以上
+- Node.js 18 及以上
 - 推荐使用 pnpm 进行依赖管理
 
 ### 安装
@@ -60,31 +60,43 @@ set PORT=4000 && node app.js  # Windows
 
 本项目支持通过 Docker 一键部署，无需手动安装 Node.js 或依赖。
 
-### 1. 拉取镜像
+> 注意: 在 docker 中运行的时候, 由于使用了 request 来发请求, 所以会检查几个 proxy 相关的环境变量(如下所列), 这些环境变量 会影响到 request 的代理, 详情请参考[request 的文档](https://github.com/request/request#proxies), 如果这些环境变量 指向的代理不可用, 那么就会造成错误, 所以在使用 docker 的时候一定要注意这些环境变量. 不过, 要是你在 query 中加上了 proxy 参数, 那么环境变量会被覆盖, 就会用你通过 proxy 参数提供的代理了.
 
-从 Docker Hub 拉取最新版本镜像：
+request 相关的环境变量
 
-```bash
+1. http_proxy
+2. https_proxy
+3. HTTP_PROXY
+4. HTTPS_PROXY
+5. no_proxy
+6. NO_PROXY
+
+```shell
 docker pull moefurina/ncm-api:latest
+
+docker run -d -p 3000:3000 --name ncm-api moefurina/ncm-api:latest
+
+
+// 或者
+docker run -d -p 3000:3000 moefurina/ncm-api:latest
+
+// 去掉或者设置相关的环境变量
+
+docker run -d -p 3000:3000 --name ncm-api -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
+
+// 或者
+docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
 ```
 
-或指定版本（与 package.json 中版本号一致）：
-
-```bash
-docker pull moefurina/ncm-api:4.29.0
+> 以下是自行 build docker 镜像方式
 
 ```
+$ git clone https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced && cd api-enhanced
 
-### 2. 运行容器
+$ sudo docker build . -t ncm-api
 
-```bash
-docker run -d \
-  --name ncm-api \
-  -p 3000:3000 \
-  moefurina/ncm-api:latest
+$ sudo docker run -d -p 3000:3000 ncm-api
 ```
-
-运行后访问 http://localhost:3000 即可使用 API。
 
 ## 3. 环境变量
 
