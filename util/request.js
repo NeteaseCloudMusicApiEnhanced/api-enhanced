@@ -100,7 +100,7 @@ const SPECIAL_STATUS_CODES = new Set([201, 302, 400, 502, 800, 801, 802, 803])
 
 // chooseUserAgent函数
 const chooseUserAgent = (crypto, uaType = 'pc') => {
-  return userAgentMap[crypto]?.[uaType] || ''
+  return (userAgentMap[crypto] && userAgentMap[crypto][uaType]) || ''
 }
 
 // cookie处理
@@ -152,8 +152,7 @@ const createHeaderCookie = (header) => {
 const generateRequestId = () => {
   return `${now()}_${floor(random() * 1000)
     .toString()
-    .padStart(4, "0")}`;
-
+    .padStart(4, '0')}`
 }
 
 const createRequest = (uri, data, options) => {
