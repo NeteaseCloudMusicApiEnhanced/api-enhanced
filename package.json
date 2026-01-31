@@ -11,7 +11,11 @@
     "prepare": "husky install",
     "pkgwin": "pkg . -t node18-win-x64 -C GZip -o bin/app --no-bytecode",
     "pkglinux": "pkg . -t node18-linux-x64 -C GZip -o bin/app --no-bytecode",
-    "pkgmacos": "pkg . -t node18-macos-x64 -C GZip -o bin/app --no-bytecode"
+    "pkgmacos": "pkg . -t node18-macos-x64 -C GZip -o bin/app --no-bytecode",
+    "build": "webpack --config webpack.config.js",
+    "build:prod": "webpack --mode production --config webpack.config.js",
+    "build:dev": "webpack --mode development --config webpack.config.js",
+    "start:bundle": "node precompiled/bundle.js"
   },
   "bin": "./app.js",
   "pkg": {
@@ -83,6 +87,8 @@
     "yargs": "^18.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
     "@types/express": "^5.0.6",
@@ -91,6 +97,7 @@
     "@types/node": "25.0.9",
     "@typescript-eslint/eslint-plugin": "8.46.3",
     "@typescript-eslint/parser": "8.53.0",
+    "babel-loader": "^10.0.0",
     "eslint": "9.39.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-html": "8.1.3",
@@ -104,6 +111,8 @@
     "pkg": "^5.8.1",
     "power-assert": "1.6.1",
     "prettier": "3.7.4",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1"
   }
 }
