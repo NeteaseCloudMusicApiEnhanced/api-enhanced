@@ -3,7 +3,7 @@ name: Build and Create PR
 on:
   workflow_dispatch: # 手动触发
   push:
-    branches: [ main, pr/* ]
+    branches: [main, pr/*]
 
 jobs:
   build:
@@ -26,83 +26,84 @@ jobs:
             output: precompiled/app
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-    - name: Install dependencies
-      run: |
-        npm install -g pnpm
-        pnpm install
+      - name: Install dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install
 
-    - name: Build for ${{ matrix.platform }}
-      run: |
-        npm run pkg${{ matrix.platform }}
-      env:
-        PKG_TARGET: ${{ matrix.target }}
+      - name: Build for ${{ matrix.platform }}
+        run: |
+          npm run pkg${{ matrix.platform }}
+        env:
+          PKG_TARGET: ${{ matrix.target }}
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-${{ matrix.platform }}
-        path: ${{ matrix.output }}
-        if-no-files-found: error
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.platform }}
+          path: ${{ matrix.output }}
+          if-no-files-found: error
 
   create-pr:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'  # 只在手动触发时创建PR
+    if: github.event_name == 'workflow_dispatch' # 只在手动触发时创建PR
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: precompiled
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: precompiled
 
-    - name: Display structure of downloaded files
-      run: ls -R
+      - name: Display structure of downloaded files
+        run: ls -R
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
 
-    - name: Create new branch and commit
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        
-        BRANCH_NAME="auto-build-$(date +%Y%m%d-%H%M%S)"
-        git checkout -b $BRANCH_NAME
-        
-        # 复制并整理下载的文件
-        mkdir -p precompiled
-        cp app-win/* precompiled/ || true
-        cp app-linux/* precompiled/ || true
-        cp app-macos/* precompiled/ || true
-        
-        # 提交更改
-        git add precompiled/
-        git commit -m "Auto-build: Add compiled binaries for win, linux, macos" || exit 0
-        
-        # 推送到远程仓库
-        git push origin $BRANCH_NAME
+      - name: Create new branch and commit
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-    - name: Create Pull Request
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const { data: pullRequest } = await github.rest.pulls.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: 'Auto-build: Add compiled binaries for win, linux, macos',
-            head: `auto-build-${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')}`,
-            base: 'main',
-            body: 'This PR contains newly built binaries for Windows, Linux, and macOS platforms.'
-          });
-          console.log(`Created PR #${pullRequest.number}: ${pullRequest.html_url}`);
+          BRANCH_NAME="auto-build-$(date +%Y%m%d-%H%M%S)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+
+          # 复制并整理下载的文件
+          mkdir -p precompiled
+          cp app-win/* precompiled/ || true
+          cp app-linux/* precompiled/ || true
+          cp app-macos/* precompiled/ || true
+
+          # 提交更改
+          git add precompiled/
+          git commit -m "Auto-build: Add compiled binaries for win, linux, macos" || exit 0
+
+          # 推送到远程仓库
+          git push origin $BRANCH_NAME
+
+      - name: Create Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Auto-build: Add compiled binaries for win, linux, macos',
+              head: '${{ env.BRANCH_NAME }}',
+              base: 'main',
+              body: 'This PR contains newly built binaries for Windows, Linux, and macOS platforms.'
+            });
+            console.log(`Created PR #${pullRequest.number}: ${pullRequest.html_url}`);
