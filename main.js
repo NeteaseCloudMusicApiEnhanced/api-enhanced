@@ -11,7 +11,19 @@ if (!fs.existsSync(anonymousTokenPath)) {
 /** @type {Record<string, any>} */
 let obj = {}
 
-const modulePath = path.join(__dirname, 'module')
+// 当打包后运行时，__dirname会指向bundle.js的位置，需要回退到上级目录查找module
+// 检查当前目录下是否存在module文件夹，如果不存在则尝试在上级目录查找
+// 如果上级目录也不存在，抛出错误
+let modulePath = path.join(__dirname, 'module')
+if (!fs.existsSync(modulePath)) {
+  modulePath = path.join(__dirname, '..', 'module')
+}
+if (!fs.existsSync(modulePath)) {
+  throw new Error(
+    `Module directory not found at ${path.join(__dirname, 'module')} or ${modulePath}`,
+  )
+}
+
 const moduleFiles = fs.readdirSync(modulePath).reverse()
 
 let requestModule = null
