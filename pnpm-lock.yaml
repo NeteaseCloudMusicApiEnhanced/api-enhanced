@@ -70,8 +70,8 @@ importers:
         specifier: ^10.0.10
         version: 10.0.10
       '@types/node':
-        specifier: 25.0.9
-        version: 25.0.9
+        specifier: 25.2.0
+        version: 25.2.0
       '@typescript-eslint/eslint-plugin':
         specifier: 8.46.3
         version: 8.46.3(@typescript-eslint/parser@8.53.0(eslint@9.39.0)(typescript@5.9.3))(eslint@9.39.0)(typescript@5.9.3)
@@ -286,8 +286,8 @@ packages:
   '@types/mocha@10.0.10':
     resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
 
-  '@types/node@25.0.9':
-    resolution: {integrity: sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw==}
+  '@types/node@25.2.0':
+    resolution: {integrity: sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w==}
 
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
@@ -2814,15 +2814,15 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
 
   '@types/busboy@1.5.4':
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
 
   '@types/estree@1.0.8': {}
 
@@ -2833,7 +2833,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.1.1':
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -2850,7 +2850,7 @@ snapshots:
 
   '@types/mocha@10.0.10': {}
 
-  '@types/node@25.0.9':
+  '@types/node@25.2.0':
     dependencies:
       undici-types: 7.16.0
 
@@ -2860,12 +2860,12 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
 
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 25.0.9
+      '@types/node': 25.2.0
 
   '@typescript-eslint/eslint-plugin@8.46.3(@typescript-eslint/parser@8.53.0(eslint@9.39.0)(typescript@5.9.3))(eslint@9.39.0)(typescript@5.9.3)':
     dependencies:
