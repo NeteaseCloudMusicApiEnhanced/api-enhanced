@@ -90,7 +90,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "25.0.9",
     "@typescript-eslint/eslint-plugin": "8.46.3",
-    "@typescript-eslint/parser": "8.53.0",
+    "@typescript-eslint/parser": "8.54.0",
     "eslint": "9.39.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-html": "8.1.3",
