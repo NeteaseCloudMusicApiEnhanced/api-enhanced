@@ -3633,6 +3633,14 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 **调用例子 :** `/musician/tasks/new`
 
+### 音乐人黑胶会员任务
+
+说明 : 音乐人登录后调用此接口 , 可获取音乐人黑胶会员任务。返回的数据中`missionStatus`字段为任务状态，100 表示任务完成。
+
+**接口地址 :** `/musician/vip/tasks`
+
+**调用例子 :** `/musician/vip/tasks`
+
 ### 账号云豆数
 
 说明 : 音乐人登录后调用此接口 , 可获取账号云豆数
