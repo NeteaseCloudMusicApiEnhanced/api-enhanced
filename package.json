@@ -88,7 +88,7 @@
     "@types/express": "^5.0.6",
     "@types/express-fileupload": "^1.5.1",
     "@types/mocha": "^10.0.10",
-    "@types/node": "25.0.9",
+    "@types/node": "25.2.0",
     "@typescript-eslint/eslint-plugin": "8.46.3",
     "@typescript-eslint/parser": "8.53.0",
     "eslint": "9.39.0",
