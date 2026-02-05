@@ -46,7 +46,7 @@ jobs:
           PKG_TARGET: ${{ matrix.target }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: app-${{ matrix.platform }}
           path: ${{ matrix.output }}
