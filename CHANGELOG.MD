@@ -1,6 +1,12 @@
 # 更新日志
 
-## 二开作者注: 这些`commit`记录为原版网易云音乐API的记录, 本项目不会对其进行添加以及修改
+### 4.30.0 | 2026.02.06
+- feat: 新增音乐人黑胶会员任务接口 `/musician/vip/tasks` (#95)
+- feat: 自动构建: 添加Windows、Linux、macOS预编译二进制文件 (#88)
+- fix: 修复模块未定义问题
+- chore: 更新依赖项 (music-metadata: ^11.11.1 -> ^11.11.2, ansi-escapes: ^7.2.0 -> ^7.3.0, commander: ^14.0.2 -> ^14.0.3)
+- chore: 更新GitHub Actions (checkout: v4 -> v6, setup-node: v4 -> v6, upload-artifact: v4 -> v6, download-artifact: v4 -> v7, github-script: v7 -> v8)
+- refactor: 注释掉IP地址日志输出以提升隐私保护
 
 ### 4.25.0 | 2024.11.16
 - feat: 增加副歌时间、相关歌单推荐接口，原有相关歌单接口已废弃；fix: 将部分易盾白名单接口替换为eapi [#30](https://gitlab.com/Binaryify/neteasecloudmusicapi/-/merge_requests/30)

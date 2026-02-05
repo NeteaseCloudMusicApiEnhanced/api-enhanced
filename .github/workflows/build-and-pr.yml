@@ -3,7 +3,7 @@ name: Build and Create PR
 on:
   workflow_dispatch: # 手动触发
   push:
-    branches: [main, pr/*]
+    branches: [main]
 
 jobs:
   build:

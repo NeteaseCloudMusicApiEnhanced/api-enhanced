@@ -235,7 +235,7 @@ async function consturctServer(moduleDefs) {
           if (ip == '::1') {
             ip = global.cnIp
           }
-          logger.info('Requested from ip:', ip)
+          // logger.info('Requested from ip:', ip)
           obj[3] = {
             ...obj[3],
             ip,
