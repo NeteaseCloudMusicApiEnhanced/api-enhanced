@@ -5,79 +5,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>音乐解灰测试</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        .container {
-            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            background: #f5f5f5;
             padding: 20px;
-            border-radius: 8px;
         }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 24px;
+        }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-        .source-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
         }
-        .source-option {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #result {
-            margin-top: 20px;
-            padding: 10px;
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #333;
+        }
+
+        button {
+            background: #333;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 24px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
             white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 100px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>音乐解灰测试</h1>
+        
         <div class="form-group">
-            <label for="songId">音乐 ID：</label>
-            <input type="number" id="songId" placeholder="请输入音乐ID" required>
+            <label for="songId">音乐 ID</label>
+            <input type="number" id="songId" placeholder="请输入音乐ID" />
+            <div class="hint">例如: 1372188635</div>
         </div>
+        
         <div class="form-group">
-            <label for="sources">音源列表：</label>
-            <input type="text" id="sources" placeholder="请输入音源(非必填)">
+            <label for="sources">音源列表（可选）</label>
+            <input type="text" id="sources" placeholder="请输入音源" />
+            <div class="hint">例如: kuwo, kugou, migu</div>
         </div>
-        <button onclick="testSong()">开始测试</button>
+        
+        <button id="testBtn" onclick="testSong()">开始测试</button>
+        
         <div id="result"></div>
     </div>
 
     <script>
         async function testSong() {
             const songId = document.getElementById('songId').value;
+            const sources = document.getElementById('sources').value;
+            const testBtn = document.getElementById('testBtn');
+            const resultDiv = document.getElementById('result');
+
             if (!songId) {
                 alert('请输入音乐ID');
                 return;
             }
 
-            const sources = document.getElementById('sources').value;
-
-
-
-            const resultDiv = document.getElementById('result');
+            testBtn.disabled = true;
+            testBtn.textContent = '测试中...';
             resultDiv.textContent = '正在请求...';
 
             try {
@@ -86,6 +143,9 @@
                 resultDiv.textContent = JSON.stringify(data, null, 2);
             } catch (error) {
                 resultDiv.textContent = `请求失败: ${error.message}`;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = '开始测试';
             }
         }
     </script>

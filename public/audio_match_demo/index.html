@@ -1,27 +1,142 @@
 <!DOCTYPE html>
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>听歌识曲 Demo</title>
   <style>
     * {
-      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    pre {
-      font-family: monospace;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 20px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 12px;
     }
 
     a {
-      font-family: sans-serif;
+      color: #333;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #333;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    input[type="file"] {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      font-size: 14px;
+      color: #555;
     }
 
     audio {
       width: 100%;
+      margin-bottom: 16px;
     }
 
     canvas {
       width: 100%;
       height: 0;
       transition: all linear 0.1s;
+      background: #f9f9f9;
+      border-radius: 6px;
     }
 
     .canvas-active {
@@ -29,39 +144,80 @@
     }
 
     pre {
-      overflow: scroll;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #666;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 16px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+
+    .warning {
+      padding: 12px 16px;
+      background: #fef3c7;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #92400e;
+      margin-bottom: 16px;
     }
   </style>
 </head>
 
 <body>
-  <h1>听歌识曲 Demo (Credit: <a href="https://github.com/mos9527/ncm-afp" target="_blank">https://github.com/mos9527/ncm-afp</a>)</h1>
-  <hr>
-  <p><b>DISCLAIMER: </b></p>
-  <p>This site uses the offical NetEase audio matcher APIs (reverse engineered from <a
-      href="https://fn.music.163.com/g/chrome-extension-home-page-beta/">https://fn.music.163.com/g/chrome-extension-home-page-beta/</a>)
-  </p>
-  <p>And DOES NOT condone copyright infringment nor intellectual property theft.</p>
-  <hr>
-  <p><b>NOTE:</b></p>
-  <p>Before start using the site, you may want to access this link first:</p>
-  <a href="https://cors-anywhere.herokuapp.com/corsdemo">https://cors-anywhere.herokuapp.com/corsdemo</a>
-  <p>Since Netease APIs do not have CORS headers, this is required to alleviate this restriction.</p>
-  <hr>
-  <p>Usage:</p>
-  <li>Select your audio file through "Choose File" picker</li>
-  <li>Hit the "Clip" button and wait for the results!</li>
+  <div class="container">
+    <h1>听歌识曲 Demo</h1>
+    <p class="subtitle">Credit: <a href="https://github.com/mos9527/ncm-afp" target="_blank">https://github.com/mos9527/ncm-afp</a></p>
 
-  <audio id="audio" controls autoplay></audio>
-  <canvas id="canvas"></canvas>
-  <button id="invoke">Clip</button>
-  <input type="file" name="picker" accept="*" id="file">
-  <hr>
-  <label for="use-mic">Mix in Microphone input</label>
-  <input type="checkbox" name="use-mic" id="usemic">
-  <hr>
-  <pre id="logs"></pre>
+    <hr>
+
+    <div class="warning">
+      <strong>免责声明：</strong>本站点使用网易云音乐官方音频识别API（逆向自 <a href="https://fn.music.163.com/g/chrome-extension-home-page-beta/" target="_blank">Chrome 扩展页面</a>），不鼓励版权侵犯或知识产权盗窃。
+    </div>
+
+    <div class="section">
+      <h3>使用说明</h3>
+      <p>在使用本站点之前，您可能需要先访问以下链接：</p>
+      <p><a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">https://cors-anywhere.herokuapp.com/corsdemo</a></p>
+      <p>由于网易云音乐API没有CORS头，这是解决此限制的必要步骤。</p>
+    </div>
+
+    <div class="section">
+      <h3>使用方法</h3>
+      <ul style="padding-left: 20px; font-size: 14px; color: #555;">
+        <li>通过"选择文件"选择您的音频文件</li>
+        <li>点击"识别"按钮并等待结果</li>
+      </ul>
+    </div>
+
+    <hr>
+
+    <audio id="audio" controls autoplay></audio>
+    <canvas id="canvas"></canvas>
+
+    <div class="control-group">
+      <button id="invoke">识别</button>
+      <input type="file" name="picker" accept="*" id="file">
+    </div>
+
+    <div class="control-group">
+      <div class="checkbox-group">
+        <input type="checkbox" name="use-mic" id="usemic">
+        <label for="usemic">混合麦克风输入</label>
+      </div>
+    </div>
+
+    <hr>
+
+    <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px;">日志</h3>
+    <pre id="logs"></pre>
+  </div>
 </body>
+
 <script src="./afp.wasm.js"></script>
 <script src="./afp.js"></script>
 <script type="module">
@@ -81,8 +237,8 @@
   function RecorderCallback(channelL) {
     let sampleBuffer = new Float32Array(channelL.subarray(0, duration * 8000))
     GenerateFP(sampleBuffer).then(FP => {
-      logs.write(`[index] Generated FP ${FP}`)
-      logs.write('[index] Now querying, please wait...')
+      logs.write(`[index] 生成指纹 ${FP}`)
+      logs.write('[index] 正在查询，请稍候...')
       fetch(
         '/audio/match?' +
         new URLSearchParams({
@@ -91,9 +247,9 @@
         method: 'POST'
       }).then(resp => resp.json()).then(resp => {
         if (!resp.data.result) {
-          return logs.write('[index] Query failed with no results.')
+          return logs.write('[index] 查询失败，无结果')
         }
-        logs.write(`[index] Query complete. Results=${resp.data.result.length}`)
+        logs.write(`[index] 查询完成。结果数量=${resp.data.result.length}`)
         for (var song of resp.data.result) {
           logs.write(
             `[result] <a target="_blank" href="https://music.163.com/song?id=${song.song.id}">${song.song.name} - ${song.song.album.name} (${song.startTime / 1000}s)</a>`
@@ -104,20 +260,19 @@
   }
 
   function InitAudioCtx() {
-    // AFP.wasm can't do it with anything other than 8KHz
     audioCtx = new AudioContext({ 'sampleRate': 8000 })
     if (audioCtx.state == 'suspended')
       return false
     let audioNode = audioCtx.createMediaElementSource(audio)
     audioCtx.audioWorklet.addModule('rec.js').then(() => {
       recorderNode = new AudioWorkletNode(audioCtx, 'timed-recorder')
-      audioNode.connect(recorderNode) // recorderNode doesn't output anything
+      audioNode.connect(recorderNode)
       audioNode.connect(audioCtx.destination)
       recorderNode.port.onmessage = event => {
         switch (event.data.message) {
           case 'finished':
             RecorderCallback(event.data.recording)
-            clip.innerHTML = 'Clip'
+            clip.innerHTML = '识别'
             clip.disabled = false
             canvas.classList.remove('canvas-active')
             break
@@ -130,7 +285,6 @@
             logs.write(event.data.message)
         }
       }
-      // Attempt to get user's microphone and connect it to the AudioContext.
       navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -142,7 +296,7 @@
         micSourceNode = audioCtx.createMediaStreamSource(micStream);
         micSourceNode.connect(recorderNode)
         usemic.checked = true
-        logs.write('[rec.js] Microphone attached.')
+        logs.write('[rec.js] 麦克风已连接')
       });
     });
     return true
@@ -164,7 +318,7 @@
   file.addEventListener('change', event => {
     file.files[0].arrayBuffer().then(
       async buffer => {
-        logs.write(`[index] File ${file.files[0].name} loaded.`)
+        logs.write(`[index] 文件 ${file.files[0].name} 已加载`)
         audio.src = window.URL.createObjectURL(new Blob([buffer]))
         clip.disabled = false
       })
@@ -188,12 +342,13 @@
   UpdateCanvas()
   let requestCtx = setInterval(() => {
     try {
-      if (InitAudioCtx()) { // Put this here so we don't have to deal with the 'user did not interact' thing
+      if (InitAudioCtx()) {
         clearInterval(requestCtx)
-        logs.write('[rec.js] Audio Context started.')
+        logs.write('[rec.js] 音频上下文已启动')
       }
     } catch {
       // Fail silently
     }
   }, 100)
 </script>
+</html>
