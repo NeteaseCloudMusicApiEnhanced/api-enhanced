@@ -232,7 +232,11 @@
   let canvas = document.getElementById('canvas')
   let canvasCtx = canvas.getContext('2d')
   let logs = document.getElementById('logs')
-  logs.write = line => logs.innerHTML += line + '\n'
+  logs.write = line => {
+    // Append log lines as text to avoid interpreting content as HTML
+    logs.appendChild(document.createTextNode(line));
+    logs.appendChild(document.createElement('br'));
+  }
 
   function RecorderCallback(channelL) {
     let sampleBuffer = new Float32Array(channelL.subarray(0, duration * 8000))
