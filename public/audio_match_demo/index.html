@@ -319,10 +319,20 @@
     else
       micSourceNode.connect(recorderNode)
   })
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/\//g, '&#x2F;');
+  }
   file.addEventListener('change', event => {
     file.files[0].arrayBuffer().then(
       async buffer => {
-        logs.write(`[index] 文件 ${file.files[0].name} 已加载`)
+        const safeName = escapeHtml(file.files[0].name)
+        logs.write(`[index] 文件 ${safeName} 已加载`)
         audio.src = window.URL.createObjectURL(new Blob([buffer]))
         clip.disabled = false
       })
