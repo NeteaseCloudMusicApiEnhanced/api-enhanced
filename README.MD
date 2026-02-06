@@ -183,6 +183,15 @@ pnpm test
 
 - 欢迎提交 PR、Issue 参与维护
 
+## 最近更新日志
+### 4.30.0 | 2026.02.06
+- feat: 新增音乐人黑胶会员任务接口 `/musician/vip/tasks` (#95)
+- feat: 自动构建: 添加Windows、Linux、macOS预编译二进制文件 (#88)
+- fix: 修复模块未定义问题
+- chore: 更新依赖项 (music-metadata: ^11.11.1 -> ^11.11.2, ansi-escapes: ^7.2.0 -> ^7.3.0, commander: ^14.0.2 -> ^14.0.3)
+- chore: 更新GitHub Actions (checkout: v4 -> v6, setup-node: v4 -> v6, upload-artifact: v4 -> v6, download-artifact: v4 -> v7, github-script: v7 -> v8)
+- refactor: 注释掉IP地址日志输出以提升隐私保护
+
 ### 致谢
 
 原作者 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 项目为本项目基础 (该项目在`npmjs`网站上仍持续维护, 但 github 仓库已不再更新)

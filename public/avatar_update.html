@@ -5,67 +5,320 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>更新头像</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 32px;
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-wrapper.loading .avatar {
+      opacity: 0.5;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .avatar-wrapper.loading .loading-overlay {
+      opacity: 1;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .upload-btn {
+      display: inline-block;
+      position: relative;
+      padding: 12px 28px;
+      background: #333;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border: none;
+    }
+
+    .upload-btn:hover {
+      background: #555;
+    }
+
+    .upload-btn input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .login-link {
+      display: block;
+      margin-top: 24px;
+      color: #666;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .login-link:hover {
+      color: #333;
+      text-decoration: underline;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: #10b981;
+    }
+
+    .toast.error {
+      background: #ef4444;
+    }
+
+    .toast.info {
+      background: #3b82f6;
+    }
+
+    .hint {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
 </head>
 
 <body>
-  <div>
-    <a href="/qrlogin-nocookie.html">
-      如果没登录,请先登录
+  <div class="container">
+    <h1>更新头像</h1>
+    <p class="subtitle">选择一张图片作为您的新头像</p>
+
+    <div class="avatar-wrapper" id="avatarWrapper">
+      <img id="avatar" class="avatar" src="" alt="头像" />
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <label class="upload-btn">
+      选择图片
+      <input id="file" type="file" accept="image/*" />
+    </label>
+
+    <a href="/qrlogin-nocookie.html" class="login-link">
+      还没有登录？点击登录
     </a>
+
+    <p class="hint">支持 JPG、PNG 格式，建议尺寸 200x200</p>
   </div>
-  <input id="file" type="file" />
-  <img id="avatar" style="height: 200px; width: 200px; border-radius: 50%" />
-  <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js
-    "></script>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
   <script>
     main()
 
     async function main() {
-      document.querySelector('input[type="file"]').addEventListener(
-        'change',
-        function (e) {
-          var file = this.files[0]
-          upload(file)
-        },
-        false,
-      )
-      const res = await axios({
-        url: `/user/detail?uid=32953014&timestamp=${Date.now()}`,
-        withCredentials: true, //跨域的话必须设置
-      })
-      document.querySelector('#avatar').src = res.data.profile.avatarUrl
+      const fileInput = document.querySelector('input[type="file"]');
+      const avatarWrapper = document.getElementById('avatarWrapper');
+
+      fileInput.addEventListener('change', function(e) {
+        const file = this.files[0];
+        if (file) {
+          upload(file);
+        }
+      }, false);
+
+      try {
+        showToast('正在加载头像...', 'info');
+        avatarWrapper.classList.add('loading');
+        const res = await axios({
+          url: `/user/detail?uid=32953014&timestamp=${Date.now()}`,
+          withCredentials: true
+        });
+        document.querySelector('#avatar').src = res.data.profile.avatarUrl;
+        hideToast();
+      } catch (error) {
+        hideToast();
+        showToast('加载头像失败，请刷新页面重试', 'error');
+        console.error('加载头像失败:', error);
+      } finally {
+        avatarWrapper.classList.remove('loading');
+      }
     }
 
     async function upload(file) {
-      var formData = new FormData()
-      formData.append('imgFile', file)
-      const imgSize = await getImgSize(file)
-      const res = await axios({
-        method: 'post',
-        url: `/avatar/upload?cookie=${localStorage.getItem('cookie')}&imgSize=${imgSize.width
-          }&imgX=0&imgY=0&timestamp=${Date.now()}`,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        data: formData,
-      })
-      document.querySelector('#avatar').src = res.data.data.url
+      const avatarWrapper = document.getElementById('avatarWrapper');
+
+      if (!file.type.startsWith('image/')) {
+        showToast('请选择图片文件', 'error');
+        return;
+      }
+
+      try {
+        showToast('正在上传头像...', 'info');
+        avatarWrapper.classList.add('loading');
+
+        var formData = new FormData();
+        formData.append('imgFile', file);
+        const imgSize = await getImgSize(file);
+
+        const res = await axios({
+          method: 'post',
+          url: `/avatar/upload?cookie=${localStorage.getItem('cookie')}&imgSize=${imgSize.width}&imgX=0&imgY=0&timestamp=${Date.now()}`,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          data: formData,
+        });
+
+        document.querySelector('#avatar').src = res.data.data.url;
+        showToast('头像更新成功！', 'success');
+      } catch (error) {
+        console.error('上传失败:', error);
+        const errorMsg = error.response?.data?.message || error.message || '上传失败，请重试';
+        showToast(errorMsg, 'error');
+      } finally {
+        avatarWrapper.classList.remove('loading');
+      }
     }
+
     function getImgSize(file) {
       return new Promise((resolve, reject) => {
-        let reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = function (theFile) {
-          let image = new Image()
-          image.src = theFile.target.result
-          image.onload = function () {
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(theFile) {
+          let image = new Image();
+          image.src = theFile.target.result;
+          image.onload = function() {
             resolve({
               width: this.width,
               height: this.height,
-            })
-          }
-        }
-      })
+            });
+          };
+          image.onerror = function() {
+            reject(new Error('图片加载失败'));
+          };
+        };
+        reader.onerror = function() {
+          reject(new Error('文件读取失败'));
+        };
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      
+      requestAnimationFrame(() => {
+        toast.classList.add('show');
+      });
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.remove('show');
     }
   </script>
 </body>

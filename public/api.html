@@ -5,82 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API 调试界面</title>
 <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 20px;
     }
+
     .container {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
     form {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
     }
-    input, button {
-        padding: 10px;
-        box-sizing: border-box;
-        flex: 1;
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
+
+    label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      min-width: 80px;
+    }
+
+    input, select {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      flex: 1;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #333;
+    }
+
     button {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        cursor: pointer;
+      background: #333;
+      color: white;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease;
     }
+
+    button:hover {
+      background: #555;
+    }
+
     .data-result {
-        display: flex;
-        flex-direction: row;
-        flex-grow: 1;
+      display: flex;
+      gap: 16px;
+      min-height: 400px;
     }
+
     .data-result > div {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        padding: 10px;
-        box-sizing: border-box;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
+
     .data-result label {
-        margin-bottom: 10px;
+      margin-bottom: 8px;
+      padding: 0;
     }
-    #data, #result {
-        height: 100%;
-        box-sizing: border-box;
+
+    textarea {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 350px;
+      outline: none;
     }
-    #data {
-        border-right: 1px solid #ccc;
+
+    textarea:focus {
+      border-color: #333;
     }
 </style>
 </head>
 <body>
     <div class="container">
+        <h1>API 调试界面</h1>
         <form onsubmit="event.preventDefault(); sendRequest();">
-            <label for="uri">uri</label>
-            <input type="text" id="uri" name="uri" value="/api/song/lyric/v1">
-            <label for="crypto">crypto</label>
-            <select id="crypto" name="crypto">
-                <option value="weapi">weapi</option>
-                <option value="eapi">eapi</option>
-                <option value="api">api</option>
-                <option value="linuxapi">linuxapi</option>
-                <option value="" selected>(默认)</option>
-            </select>
-            <button type="submit">发送</button>
+            <div class="form-row">
+                <label for="uri">URI</label>
+                <input type="text" id="uri" name="uri" value="/api/song/lyric/v1">
+            </div>
+            <div class="form-row">
+                <label for="crypto">加密方式</label>
+                <select id="crypto" name="crypto">
+                    <option value="weapi">weapi</option>
+                    <option value="eapi">eapi</option>
+                    <option value="api">api</option>
+                    <option value="linuxapi">linuxapi</option>
+                    <option value="" selected>(默认)</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label></label>
+                <button type="submit">发送请求</button>
+            </div>
         </form>
         <div class="data-result">
             <div>
-                <label for="result">result</label>
-                <textarea id="result" name="result"></textarea>
+                <label for="result">响应结果</label>
+                <textarea id="result" name="result" readonly></textarea>
             </div>
             <div>
-                <label for="data">data</label>
+                <label for="data">请求数据</label>
                 <textarea id="data" name="data">
 {
     "cp": false,

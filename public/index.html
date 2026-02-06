@@ -7,33 +7,33 @@
   <title>网易云音乐 API Enhanced</title>
   <style>
     :root {
-      --fg: #111827; /* gray-900 */
-      --muted: #6b7280; /* gray-500 */
-      --border: #e5e7eb; /* gray-200 */
-      --bg: #ffffff;
-      --panel: #f9fafb; /* gray-50 */
-      --accent: #2563eb; /* blue-600 */
+      --fg: #333;
+      --muted: #666;
+      --border: #ddd;
+      --bg: #f5f5f5;
+      --panel: #ffffff;
+      --accent: #333;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, PingFang SC, Helvetica, Arial, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
     .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
     header.site-header { margin-bottom: 24px; }
-    header.site-header h1 { font-size: 28px; font-weight: 700; margin: 0; }
-    .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 14px; font-size: 12px; color: var(--muted); }
-    .sub { margin-top: 6px; color: var(--muted); }
-    .block { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    .block h2 { margin: 0 0 10px; font-size: 18px; }
+    header.site-header h1 { font-size: 28px; font-weight: 600; margin: 0; }
+    .badge { display: inline-block; margin-left: 8px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 12px; font-size: 12px; color: var(--muted); }
+    .sub { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .block h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
     .kvs { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; align-items: center; }
     .kvs div:first-child { color: var(--muted); }
     ul.links { list-style: none; padding: 0; margin: 0; }
-    ul.links li { margin: 6px 0; }
-    ul.links a { color: var(--fg); text-decoration: none; border-bottom: 1px dotted var(--border); }
+    ul.links li { margin: 8px 0; }
+    ul.links a { color: var(--fg); text-decoration: none; border-bottom: 1px dotted var(--border); transition: all 0.2s ease; }
     ul.links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-    pre { margin: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow: auto; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; }
-    footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); }
-    footer.site-footer a { color: var(--fg); text-decoration: none; }
+    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow: auto; }
+    code { font-family: 'Courier New', monospace; font-size: 13px; }
+    footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; }
+    footer.site-footer a { color: var(--fg); text-decoration: none; transition: color 0.2s ease; }
     footer.site-footer a:hover { color: var(--accent); }
   </style>
 </head>

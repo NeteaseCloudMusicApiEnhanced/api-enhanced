@@ -1,6 +1,5 @@
 'use strict'
 const WASM_BINARY_PLACEHOLDER = 'WASM_BINARY_PLACEHOLDER';
-const logger = require('../../util/logger.js')
 // See https://github.com/Distributive-Network/PythonMonkey/issues/266
 if (typeof globalThis.setInterval != 'function'){
     globalThis.setInterval = function pm$$setInterval(fn, timeout) {
@@ -1612,9 +1611,9 @@ function instantiateRuntime(){
 
 function GenerateFP(floatArray) {
     let PCMBuffer = Float32Array.from(floatArray)
-    logger.info('[afp] input samples n=', PCMBuffer.length)    
+    console.info('[afp] input samples n=', PCMBuffer.length)    
     return instantiateRuntime().then((fpRuntime) => {
-        logger.info('[afp] begin fingerprinting')
+        console.info('[afp] begin fingerprinting')
         let fp_vector = fpRuntime.ExtractQueryFP(PCMBuffer.buffer)        
         let result_buf = new Uint8Array(fp_vector.size());
         for (let t = 0; t < fp_vector.size(); t++)

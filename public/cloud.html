@@ -4,26 +4,135 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>云盘上传</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 24px;
+      }
+
+      .login-link {
+        display: block;
+        margin-bottom: 24px;
+        color: #666;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .login-link:hover {
+        color: #333;
+        text-decoration: underline;
+      }
+
+      .upload-section {
+        margin-bottom: 32px;
+      }
+
+      .upload-btn {
+        display: inline-block;
+        padding: 12px 28px;
+        background: #333;
+        color: white;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        border: none;
+      }
+
+      .upload-btn:hover {
+        background: #555;
+      }
+
+      .upload-btn input[type="file"] {
+        display: none;
+      }
+
+      .songs-list {
+        list-style: none;
+      }
+
+      .song-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .song-item:last-child {
+        border-bottom: none;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+        font-size: 14px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+    </style>
   </head>
 
   <body>
-    <div>
-      <a href="/qrlogin-nocookie.html"> 如果没登录,请先登录 </a>
-    </div>
-    <input id="file" type="file" multiple />
-    <div id="app">
-      <ul>
-        <li v-for="(item,index) in songs" :key="index">{{item.songName}}</li>
-      </ul>
+    <div class="container">
+      <h1>云盘上传</h1>
+      <a href="/qrlogin-nocookie.html" class="login-link">还没登录？点击登录</a>
+
+      <div class="upload-section">
+        <label class="upload-btn">
+          选择文件（支持多选）
+          <input id="file" type="file" multiple accept="audio/*" />
+        </label>
+      </div>
+
+      <div id="app">
+        <div v-if="loading" class="loading">加载中...</div>
+        <ul v-else-if="songs.length > 0" class="songs-list">
+          <li v-for="(item, index) in songs" :key="index" class="song-item">
+            {{ item.songName }}
+          </li>
+        </ul>
+        <div v-else class="empty-state">暂无云盘歌曲</div>
+      </div>
     </div>
 
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/vue"></script>
+    <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
     <script>
       const app = Vue.createApp({
         data() {
           return {
             songs: [],
+            loading: false,
           }
         },
         created() {
@@ -31,19 +140,23 @@
         },
         methods: {
           getData() {
-            console.info('getdata')
-            const _this = this
+            this.loading = true
             axios({
-              url: `/user/cloud?time=${Date.now()}&cookie=${localStorage.getItem(
-                'cookie',
-              )}`,
-            }).then((res) => {
-              console.info(res.data)
-              _this.songs = res.data.data
+              url: `/user/cloud?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
             })
+              .then((res) => {
+                this.songs = res.data.data || []
+              })
+              .catch((err) => {
+                console.error('获取云盘数据失败:', err)
+              })
+              .finally(() => {
+                this.loading = false
+              })
           },
         },
       }).mount('#app')
+
       const fileUpdateTime = {}
       let fileLength = 0
 
@@ -51,51 +164,46 @@
         document
           .querySelector('input[type="file"]')
           .addEventListener('change', function (e) {
-            console.info(this.files)
-            let currentIndx = 0
-            fileLength = this.files.length
-            for (const item of this.files) {
-              currentIndx += 1
-              upload(item, currentIndx)
+            const files = this.files
+            if (files.length === 0) return
+
+            fileLength = files.length
+            for (let i = 0; i < files.length; i++) {
+              upload(files[i], i + 1)
             }
           })
       }
       main()
 
-      function upload(file, currentIndx) {
+      function upload(file, currentIndex) {
         var formData = new FormData()
         formData.append('songFile', file)
+
         axios({
           method: 'post',
-          url: `/cloud?time=${Date.now()}&cookie=${localStorage.getItem(
-            'cookie',
-          )}`,
+          url: `/cloud?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
           headers: {
             'Content-Type': 'multipart/form-data',
           },
           data: formData,
         })
           .then((res) => {
-            console.info(`${file.name} 上传成功`)
-            if (currentIndx >= fileLength) {
-              console.info('上传完毕')
+            console.log(`${file.name} 上传成功`)
+            if (currentIndex >= fileLength) {
+              console.log('所有文件上传完毕')
             }
             app.getData()
           })
-          .catch(async (err) => {
-            console.info(err)
-            console.info(fileUpdateTime)
-            fileUpdateTime[file.name]
-              ? (fileUpdateTime[file.name] += 1)
-              : (fileUpdateTime[file.name] = 1)
+          .catch((err) => {
+            console.error(`${file.name} 上传失败:`, err)
+            fileUpdateTime[file.name] = (fileUpdateTime[file.name] || 0) + 1
             if (fileUpdateTime[file.name] >= 4) {
-              console.error(`丢，这首歌怎么都传不上：${file.name}`)
+              console.error(`文件 ${file.name} 上传失败次数过多，已停止重试`)
               return
             } else {
-              console.error(`${file.name} 失败 ${fileUpdateTime[file.name]} 次`)
+              console.error(`${file.name} 上传失败 ${fileUpdateTime[file.name]} 次，正在重试...`)
+              upload(file, currentIndex)
             }
-            // await login()
-            upload(file, currentIndx)
           })
       }
     </script>

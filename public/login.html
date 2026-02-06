@@ -5,21 +5,143 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>登录</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #333;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #333;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #555;
+    }
+
+    .btn:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .result {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #666;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .error {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .success {
+      color: #10b981;
+      background: #f0fdf4;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>登录</h1>
+    <p class="subtitle">使用手机号和密码登录网易云音乐</p>
+
+    <div class="form-group">
+      <label for="phone">手机号</label>
+      <input type="tel" id="phone" placeholder="请输入手机号" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">密码</label>
+      <input type="password" id="password" placeholder="请输入密码" />
+    </div>
+
+    <button id="loginBtn" class="btn" onclick="handleLogin()">登录</button>
+
+    <div id="result" class="result" style="display: none;"></div>
+  </div>
+
   <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
   <script>
-    const phone = '' // 这里填手机号
-    const password = '' // 这里填密码
     const fileUpdateTime = {}
-    if (!phone || !password) {
-      const msg = '请设置你的手机号码和密码'
-      alert(msg)
-      throw new Error(msg)
-    }
 
-    async function login() {
+    async function login(phone, password) {
       const res = await axios({
         url: `/login/cellphone`,
         method: 'post',
@@ -30,17 +152,67 @@
       })
       return res.data.cookie
     }
-    async function main() {
-      const cookieToken = await login()
-      const res = await axios({
-        url: `/login/status`,
-        method: 'post',
-        data: {
-          cookie: cookieToken,
-        },
-      })
+
+    async function handleLogin() {
+      const phoneInput = document.getElementById('phone')
+      const passwordInput = document.getElementById('password')
+      const loginBtn = document.getElementById('loginBtn')
+      const resultDiv = document.getElementById('result')
+
+      const phone = phoneInput.value.trim()
+      const password = passwordInput.value
+
+      if (!phone || !password) {
+        showResult('请输入手机号和密码', 'error')
+        return
+      }
+
+      loginBtn.disabled = true
+      loginBtn.textContent = '登录中...'
+      showResult('正在登录...', 'info')
+
+      try {
+        const cookieToken = await login(phone, password)
+        localStorage.setItem('cookie', cookieToken)
+
+        const res = await axios({
+          url: `/login/status`,
+          method: 'post',
+          data: {
+            cookie: cookieToken,
+          },
+        })
+
+        showResult(`登录成功！\n${JSON.stringify(res.data, null, 2)}`, 'success')
+      } catch (error) {
+        console.error('登录失败:', error)
+        const errorMsg = error.response?.data?.message || error.message || '登录失败，请重试'
+        showResult(`登录失败：${errorMsg}`, 'error')
+      } finally {
+        loginBtn.disabled = false
+        loginBtn.textContent = '登录'
+      }
     }
-    main()
+
+    function showResult(message, type = 'info') {
+      const resultDiv = document.getElementById('result')
+      resultDiv.style.display = 'block'
+      resultDiv.textContent = message
+      resultDiv.className = 'result ' + type
+    }
+
+    // 支持回车登录
+    document.getElementById('password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        handleLogin()
+      }
+    })
+
+    document.getElementById('phone').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('password').focus()
+      }
+    })
   </script>
 </body>
 
