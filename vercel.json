@@ -19,7 +19,6 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "ENABLE_FLAC": "true",
-    "ENABLE_GENERAL_UNBLOCK": "false"
+    "ENABLE_FLAC": "true"
   }
 }

@@ -1,92 +1,321 @@
-<!-- eslint-disable prettier/prettier -->
 <!DOCTYPE html>
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>一起听</title>
+    <title>一起听 - 主机模式</title>
     <script src="https://unpkg.com/petite-vue"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/mdui@1.0.2/dist/css/mdui.min.css"
-    />
-    <script src="https://unpkg.com/mdui@1.0.2/dist/js/mdui.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+      }
+
+      .login-link {
+        display: block;
+        margin-bottom: 24px;
+        color: #666;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .login-link:hover {
+        color: #333;
+        text-decoration: underline;
+      }
+
+      .message {
+        padding: 12px 16px;
+        background: #f9f9f9;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: #555;
+      }
+
+      .audio-player {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .btn {
+        background: #333;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        margin-right: 8px;
+        margin-bottom: 8px;
+      }
+
+      .btn:hover {
+        background: #555;
+      }
+
+      .section {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 6px;
+      }
+
+      .section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+      }
+
+      input[type="text"], input[type="number"] {
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        width: 200px;
+      }
+
+      input:focus {
+        border-color: #333;
+      }
+
+      .input-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .input-group label {
+        font-size: 14px;
+        color: #555;
+        min-width: 80px;
+      }
+
+      .share-link {
+        padding: 12px;
+        background: #f0f0f0;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #666;
+        word-break: break-all;
+        margin-bottom: 12px;
+      }
+
+      .user-list {
+        list-style: none;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .user-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .user-item:last-child {
+        border-bottom: none;
+      }
+
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .user-name {
+        font-size: 14px;
+        color: #333;
+      }
+
+      .track-list {
+        list-style: none;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .track-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .track-item:hover {
+        background: #f5f5f5;
+      }
+
+      .track-item:last-child {
+        border-bottom: none;
+      }
+
+      .track-cover {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+      }
+
+      .track-name {
+        font-size: 14px;
+        color: #333;
+      }
+
+      details {
+        cursor: pointer;
+      }
+
+      details summary {
+        font-size: 14px;
+        font-weight: 500;
+        color: #555;
+        padding: 8px 0;
+      }
+
+      details summary:hover {
+        color: #333;
+      }
+
+      details[open] summary {
+        margin-bottom: 12px;
+      }
+
+      .control-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    </style>
   </head>
 
-  <body class="mdui-container">
-    <div>
-      <a href="/qrlogin.html"> 如果没登录,请先登录 </a>
-    </div>
+  <body class="container">
+    <a href="/qrlogin.html" class="login-link">还没登录？点击登录</a>
+
     <h1>一起听 - 主机模式</h1>
-    <div>消息: {{message}}</div>
-    <audio id="player" autoplay controls></audio>
-    <br />
-    <br />
-    <button v-if="!account.login" @click="login">获取登录状态</button>
-    <div>您的当前登录账号为: {{account.nickname}}</div>
-    <br />
-    <div v-if="account.login">
-      <button v-if="!roomInfo.roomId" @click="createRoom">创建房间</button>
+
+    <div class="message">消息: {{message}}</div>
+
+    <audio id="player" class="audio-player" autoplay controls></audio>
+
+    <div v-if="!account.login">
+      <button class="btn" @click="login">获取登录状态</button>
+    </div>
+
+    <div class="section">
+      <h3>账号信息</h3>
+      <div>当前登录账号: {{account.nickname}}</div>
+    </div>
+
+    <div v-if="account.login" class="section">
+      <h3>房间管理</h3>
+      <div class="control-buttons">
+        <button v-if="!roomInfo.roomId" class="btn" @click="createRoom">创建房间</button>
+      </div>
+
       <details>
         <summary>加入房间</summary>
-        <div><span>房间ID: </span><input v-model="roomInfo.roomId" /></div>
-        <div>
-          <span>邀请者 ID: </span><input v-model="roomInfo.inviterId" />
+        <div class="input-group">
+          <label>房间ID:</label>
+          <input v-model="roomInfo.roomId" type="text" />
         </div>
-        <button @click="joinRoom">点击加入</button>
+        <div class="input-group">
+          <label>邀请者ID:</label>
+          <input v-model="roomInfo.inviterId" type="text" />
+        </div>
+        <button class="btn" @click="joinRoom">加入房间</button>
       </details>
 
-      <div v-if="roomInfo.roomId">
-        <div>
-          分享链接为:
+      <div v-if="roomInfo.roomId" style="margin-top: 16px;">
+        <h4>分享链接</h4>
+        <div class="share-link">
           https://st.music.163.com/listen-together/share/?songId=1372188635&roomId={{roomInfo.roomId}}&inviterId={{roomInfo.inviterId}}
         </div>
-        <br />
-        <button @click="refreshRoom">刷新房间状态</button>
-        <div>在线用户:</div>
-        <ul class="mdui-list">
-          <li
-            v-for="user in roomInfo.roomUsers"
-            class="mdui-list-item mdui-ripple"
-          >
-            <div class="mdui-list-item-avatar">
-              <img :src="user.avatarUrl" />
-            </div>
-            <div class="mdui-list-item-content">{{user.nickname}}</div>
+        <button class="btn" @click="refreshRoom">刷新房间状态</button>
+        <button class="btn" @click="closeRoom">关闭房间</button>
+
+        <h4 style="margin-top: 16px;">在线用户</h4>
+        <ul class="user-list">
+          <li v-for="user in roomInfo.roomUsers" :key="user.userId" class="user-item">
+            <img :src="user.avatarUrl" class="user-avatar" alt="avatar" />
+            <span class="user-name">{{user.nickname}}</span>
           </li>
         </ul>
-        <button v-if="roomInfo.roomId" @click="closeRoom">关闭房间</button>
       </div>
     </div>
-    <button @click="playTrack">播放</button>
-    <button @click="pauseTrack">暂停</button>
-    <button @click="seekTrack">同步进度</button>
+
+    <div class="section">
+      <h3>播放控制</h3>
+      <div class="control-buttons">
+        <button class="btn" @click="playTrack">播放</button>
+        <button class="btn" @click="pauseTrack">暂停</button>
+        <button class="btn" @click="seekTrack">同步进度</button>
+      </div>
+    </div>
+
     <details>
       <summary>播放列表</summary>
-      <br />
-      <div>
-        <span>歌单ID: </span><input v-model="playlistInfo.playlistId" />
+      <div class="section">
+        <div class="input-group">
+          <label>歌单ID:</label>
+          <input v-model="playlistInfo.playlistId" type="text" />
+        </div>
+        <button class="btn" @click="loadPlaylist">加载歌单</button>
+        <div style="margin-top: 12px; font-size: 14px; color: #555;">
+          歌单名称: {{playlistInfo.playlistName}}
+        </div>
+
+        <h4 style="margin-top: 16px;">歌单内容</h4>
+        <ul class="track-list">
+          <li
+            @click="gotoTrack(track.id)"
+            v-for="track in playlistInfo.playlistTracks"
+            :key="track.id"
+            class="track-item"
+          >
+            <img :src="track.al.picUrl" class="track-cover" alt="cover" />
+            <span class="track-name">{{track.name}}</span>
+          </li>
+        </ul>
       </div>
-      <button @click="loadPlaylist">加载歌单到播放列表</button>
-      <span>{{playlistInfo.playlistName}}</span>
-      <br />
-      <br />
-      <div>歌单内容:</div>
-      <ul class="mdui-list">
-        <li
-          @click="gotoTrack(track.id)"
-          v-for="track in playlistInfo.playlistTracks"
-          class="mdui-list-item mdui-ripple"
-        >
-          <div class="mdui-list-item-avatar">
-            <img :src="track.al.picUrl" />
-          </div>
-          <div class="mdui-list-item-content">{{track.name}}</div>
-        </li>
-      </ul>
     </details>
   </body>
+
   <script>
     PetiteVue.createApp({
       message: '请点击获取登录状态',
@@ -126,7 +355,7 @@
           this.account.userId = res.data.data.profile.userId
           this.account.nickname = res.data.data.profile.nickname
           this.account.login = true
-          this.message = '成功登录, 请创建房间'
+          this.message = '成功登录，请创建房间'
         }
       },
       joinRoom: async function () {
@@ -212,7 +441,7 @@
         })
         console.info(res)
         if (res.data.code != 200 || !res.data.data.inRoom) {
-          this.message = '房间状态获取失败, 可能退出了房间'
+          this.message = '房间状态获取失败，可能退出了房间'
         } else {
           this.roomInfo.roomUsers = res.data.data.roomInfo.roomUsers
         }
