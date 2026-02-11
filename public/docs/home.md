@@ -4883,6 +4883,43 @@ let data = encodeURIComponent(
 
 **调用例子:** `/vip/sign/info`
 
+
+### 用户的创建歌单列表
+
+说明 : 调用此接口, 传入用户id, 获取用户的创建歌单列表
+
+**必选参数 :**  
+
+`uid`: 用户 id
+
+**可选参数 :**
+
+`limit` : 返回数量 , 默认为 100
+
+`offset` : 偏移数量，用于分页 ,如 :( 页数 -1)\*30, 其中 30 为 limit 的值 , 默认为 0
+
+**接口地址 :** `/user/playlist/create`
+
+**调用例子 :** `/user/playlist/create?uid=32953014`
+
+### 用户的收藏歌单列表
+
+说明 : 调用此接口, 传入用户id, 获取用户的收藏歌单列表
+
+**必选参数 :**  
+
+`uid`: 用户 id
+
+**可选参数 :**
+
+`limit` : 返回数量 , 默认为 100
+
+`offset` : 偏移数量，用于分页 ,如 :( 页数 -1)\*30, 其中 30 为 limit 的值 , 默认为 0
+
+**接口地址 :** `/user/playlist/collect`
+
+**调用例子 :** `/user/playlist/collect?uid=32953014`
+
 ## 离线访问此文档
 
 此文档同时也是 Progressive Web Apps(PWA), 加入了 serviceWorker, 可离线访问
