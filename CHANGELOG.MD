@@ -1,7 +1,7 @@
 # 更新日志
 
 ### 4.30.1 | 2026.02.11
-- feat: Add user playlist endpoints & domain overrides (#96)
+- feat: Add user playlist endpoints & domain overrides (#105)
 
 ### 4.30.0 | 2026.02.06
 - feat: 新增音乐人黑胶会员任务接口 `/musician/vip/tasks` (#95)
