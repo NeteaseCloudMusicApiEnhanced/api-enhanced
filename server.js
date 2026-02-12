@@ -238,7 +238,7 @@ async function consturctServer(moduleDefs) {
           }
           // logger.info('Requested from ip:', ip)
           obj[2] = {
-            ...obj[2],
+            ...(obj[2] || {}),
             ip,
           }
           return request(...obj)
