@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8">
-  <meta name="KEYWords" contect="网易云音乐,网易云音乐 api,网易云音乐 nodejs,网易云音乐 node.js">
+  <meta name="keywords" content="网易云音乐,网易云音乐 api,网易云音乐 nodejs,网易云音乐 node.js">
   <meta name="description" content="网易云音乐 NodeJS API Enhanced">
   <title>网易云音乐 NodeJS API Enhanced</title>
   <link rel="icon" href="favicon.ico">
-  <meta name="description" content="Description">
   <meta name="viewport"
     content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta name="referrer" content="never">
-  <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
+  <link rel="stylesheet" href="https://unpkg.com/docsify@4.13.1/lib/themes/vue.css">
+  <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
   <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
   <script>
     (adsbygoogle = window.adsbygoogle || []).push({
@@ -19,10 +19,381 @@
       enable_page_level_ads: true
     });
   </script>
+  <style>
+    :root {
+      --theme-color: #22C55E !important;
+      --accent: #22C55E;
+      --accent-light: #DCFCE7;
+      --accent-dark: #16A34A;
+      --bg: #FFFFFF;
+      --bg-sidebar: #FAFAFA;
+      --text: #1A1A1A;
+      --text-secondary: #6B7280;
+      --border: #E5E7EB;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg) !important;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 封面 */
+    .cover {
+      background: var(--bg) !important;
+    }
+
+    .cover .cover-main {
+      color: var(--text) !important;
+    }
+
+    .cover .cover-main>h1 {
+      color: var(--text) !important;
+      font-weight: 800;
+      font-size: 2.8rem;
+      letter-spacing: -0.02em;
+    }
+
+    .cover .cover-main>h1>a {
+      color: var(--text) !important;
+    }
+
+    .cover blockquote p {
+      color: var(--text-secondary) !important;
+      font-size: 1.15rem;
+    }
+
+    .cover ul li {
+      color: var(--text-secondary) !important;
+    }
+
+    .cover .cover-main>p:last-child a {
+      background: var(--accent) !important;
+      color: #fff !important;
+      border: 2px solid var(--accent) !important;
+      border-radius: 8px;
+      padding: 10px 28px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .cover .cover-main>p:last-child a:hover {
+      background: var(--accent-dark) !important;
+      border-color: var(--accent-dark) !important;
+      color: #fff !important;
+    }
+
+    section.cover.show {
+      height: auto;
+      min-height: 100vh;
+      padding: 120px 0 80px;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      background: var(--bg-sidebar) !important;
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar .sidebar-nav {
+      padding: 20px 0;
+    }
+
+    .sidebar .sidebar-nav>ul>li>a {
+      font-weight: 700;
+      color: var(--text) !important;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sidebar ul li a {
+      color: var(--text-secondary) !important;
+      transition: color 0.15s ease;
+      border: none !important;
+    }
+
+    .sidebar ul li a:hover,
+    .sidebar ul li.active>a {
+      color: var(--accent) !important;
+    }
+
+    .sidebar ul li.active>a {
+      font-weight: 600;
+      border-right: 3px solid var(--accent) !important;
+    }
+
+    .sidebar .app-name {
+      padding: 16px 24px;
+    }
+
+    .sidebar .app-name a {
+      color: var(--text) !important;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    /* 主内容 */
+    .markdown-section {
+      max-width: 860px;
+      padding: 40px 48px;
+    }
+
+    .markdown-section h1 {
+      font-weight: 800;
+      font-size: 2rem;
+      color: var(--text) !important;
+      border: none;
+      margin-top: 2rem;
+    }
+
+    .markdown-section h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--text) !important;
+      border-bottom: 2px solid var(--accent) !important;
+      padding-bottom: 8px;
+      margin-top: 2.5rem;
+    }
+
+    .markdown-section h3 {
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--text) !important;
+      margin-top: 1.8rem;
+    }
+
+    .markdown-section p {
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    .markdown-section a {
+      color: var(--accent) !important;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+
+    .markdown-section a:hover {
+      border-bottom-color: var(--accent);
+    }
+
+    .markdown-section strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* 代码 */
+    .markdown-section code {
+      background: #F3F4F6;
+      color: var(--accent-dark);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 0.88em;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .markdown-section pre {
+      background: #F9FAFB !important;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+    }
+
+    .markdown-section pre code {
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+    }
+
+    /* 表格 */
+    .markdown-section table {
+      display: table;
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    .markdown-section table th {
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      border: none;
+      text-align: left;
+    }
+
+    .markdown-section table td {
+      padding: 10px 14px;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    .markdown-section table tr:hover td {
+      background: #F9FAFB;
+    }
+
+    /* 引用 */
+    .markdown-section blockquote {
+      border-left: 4px solid var(--accent) !important;
+      background: var(--accent-light) !important;
+      padding: 12px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+
+    .markdown-section blockquote p {
+      color: var(--accent-dark) !important;
+    }
+
+    .markdown-section .tip,
+    body .markdown-section p.tip {
+      background: var(--accent-light) !important;
+      border-left: 4px solid var(--accent) !important;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .markdown-section .warn,
+    body .markdown-section p.warn {
+      background: #FEF3C7 !important;
+      border-left: 4px solid #F59E0B !important;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* 搜索 */
+    .search input {
+      border: 2px solid var(--border) !important;
+      border-radius: 8px !important;
+      padding: 8px 14px !important;
+      font-size: 0.9rem;
+      transition: border-color 0.2s ease;
+      background: var(--bg) !important;
+    }
+
+    .search input:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
+    }
+
+    .search .matching-post {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .search .matching-post .search-keyword {
+      color: var(--accent) !important;
+      font-weight: 600;
+    }
+
+    /* GitHub Corner */
+    .github-corner svg {
+      fill: var(--accent) !important;
+    }
+
+    /* 滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #D1D5DB;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9CA3AF;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .markdown-section {
+        padding: 24px 20px;
+      }
+
+      .markdown-section h1 {
+        font-size: 1.6rem;
+      }
+
+      section.cover.show {
+        padding: 80px 20px 60px;
+      }
+    }
+
+    body .markdown-section> :first-child {
+      margin-top: 0 !important;
+    }
+
+    /* 代码复制按钮 */
+    .docsify-copy-code-button {
+      background: var(--accent) !important;
+      color: #fff !important;
+      border-radius: 6px !important;
+      font-size: 0.8rem !important;
+      padding: 4px 10px !important;
+    }
+
+    .docsify-copy-code-button:hover {
+      background: var(--accent-dark) !important;
+    }
+
+    /* 分页导航 */
+    .docsify-pagination-container {
+      border-top: 1px solid var(--border) !important;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+    }
+
+    .pagination-item-label {
+      color: var(--text-secondary) !important;
+      font-size: 0.85rem;
+    }
+
+    .pagination-item-title {
+      color: var(--accent) !important;
+      font-weight: 600;
+    }
+
+    /* 回到顶部按钮 */
+    .back-to-top {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 999;
+      transition: all 0.2s ease;
+    }
+
+    .back-to-top:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+  </style>
 </head>
 
 <body>
-  <div id="app"></div>
+  <div id="app">加载中...</div>
+  <button class="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
 </body>
 <script>
   window.$docsify = {
@@ -30,13 +401,55 @@
     repo: 'https://github.com/neteasecloudmusicapienhanced/api-enhanced',
     coverpage: true,
     homepage: 'https://fastly.jsdelivr.net/gh/NeteaseCloudMusicApiEnhanced/api-enhanced@main/public/docs/home.md',
+    themeColor: '#22C55E',
+    auto2top: true,
+    copyCode: {
+      buttonText: '复制',
+      errorText: '失败',
+      successText: '已复制',
+    },
+    search: {
+      placeholder: '搜索接口...',
+      noData: '没有找到结果',
+      depth: 3,
+    },
   }
 </script>
-<script src="https://unpkg.com/docsify@4.11.3/lib/docsify.min.js"></script>
+<script src="https://unpkg.com/docsify@4.13.1/lib/docsify.min.js"></script>
+<script src="https://unpkg.com/docsify@4.13.1/lib/plugins/search.min.js"></script>
+<script src="https://unpkg.com/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
+<script src="https://unpkg.com/docsify-pagination@2.10.0/dist/docsify-pagination.min.js"></script>
+<script src="https://unpkg.com/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<script src="https://unpkg.com/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://unpkg.com/prismjs@1.29.0/components/prism-xml-doc.min.js"></script>
 <script>
   if (typeof navigator.serviceWorker !== 'undefined') {
     navigator.serviceWorker.register('sw.js')
   }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () { if (window.lucide) lucide.createIcons(); });
+  window.$docsify.plugins = [function (hook) {
+    hook.doneEach(function () {
+      if (window.lucide) lucide.createIcons();
+    });
+  }];
+  // 回到顶部按钮显示/隐藏
+  var mainContent = document.querySelector('.content') || document.querySelector('main') || window;
+  window.addEventListener('scroll', function () {
+    var btn = document.querySelector('.back-to-top');
+    if (btn) btn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+  }, true);
+  // 监听 docsify 内容区域滚动
+  new MutationObserver(function () {
+    var section = document.querySelector('section.content');
+    if (section) {
+      section.addEventListener('scroll', function () {
+        var btn = document.querySelector('.back-to-top');
+        if (btn) btn.style.display = section.scrollTop > 400 ? 'flex' : 'none';
+      });
+    }
+  }).observe(document.body, { childList: true, subtree: true });
 </script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BPRGR23JEG"></script>
