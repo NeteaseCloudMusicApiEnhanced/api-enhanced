@@ -227,6 +227,7 @@ async function consturctServer(moduleDefs) {
         const moduleResponse = await moduleDef.module(query, (...params) => {
           // 参数注入客户端IP
           const obj = [...params]
+          // 获取请求中的 IP 参数
           let ip = req.ip
 
           if (ip.substring(0, 7) == '::ffff:') {
@@ -236,8 +237,8 @@ async function consturctServer(moduleDefs) {
             ip = global.cnIp
           }
           // logger.info('Requested from ip:', ip)
-          obj[3] = {
-            ...obj[3],
+          obj[2] = {
+            ...(obj[2] || {}),
             ip,
           }
           return request(...obj)
