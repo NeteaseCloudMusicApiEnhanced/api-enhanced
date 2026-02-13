@@ -18,20 +18,33 @@
     html, body { height: 100%; }
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
     .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+    @media (max-width: 480px) {
+      .container { margin: 20px auto; padding: 0 16px; }
+      header.site-header h1 { font-size: 22px; }
+      .block { padding: 16px; }
+    }
     header.site-header { margin-bottom: 24px; }
     header.site-header h1 { font-size: 28px; font-weight: 600; margin: 0; }
     .badge { display: inline-block; margin-left: 8px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 12px; font-size: 12px; color: var(--muted); }
     .sub { margin-top: 8px; color: var(--muted); font-size: 14px; }
     .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
     .block h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
-    .kvs { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; align-items: center; }
-    .kvs div:first-child { color: var(--muted); }
+    .kvs { display: grid; grid-template-columns: 100px 1fr; gap: 8px 12px; align-items: start; }
+    .kvs div:first-child { color: var(--muted); flex-shrink: 0; }
+    .kvs div:last-child { word-break: break-all; overflow-wrap: anywhere; min-width: 0; overflow: hidden; }
+    @media (max-width: 480px) {
+      .kvs { grid-template-columns: 1fr; gap: 4px 12px; }
+      .kvs div:first-child { font-weight: 500; }
+    }
     ul.links { list-style: none; padding: 0; margin: 0; }
     ul.links li { margin: 8px 0; }
     ul.links a { color: var(--fg); text-decoration: none; border-bottom: 1px dotted var(--border); transition: all 0.2s ease; }
     ul.links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow: auto; }
+    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
     code { font-family: 'Courier New', monospace; font-size: 13px; }
+    @media (max-width: 480px) {
+      code { font-size: 12px; }
+    }
     footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; }
     footer.site-footer a { color: var(--fg); text-decoration: none; transition: color 0.2s ease; }
     footer.site-footer a:hover { color: var(--accent); }
@@ -71,7 +84,18 @@
       <h2>调试部分</h2>
       <pre><code>curl -s {origin}/inner/version
 curl -s {origin}/search?keywords=网易云</code></pre>
-      <p style="margin-top:10px"> · <a href="/api.html">交互式调试</a> · <a href="/qrlogin.html">二维码登录示例</a> · <a href="/unblock_test.html">解灰测试</a></p> · <a href="/audio_match_demo/index.html">听歌识曲 Demo</a></p> · <a href="/cloud.html">云盘上传</a></p> · <a href="/playlist_import.html">歌单导入</a></p> · <a href="/eapi_decrypt.html">EAPI 解密</p> · <a href="/listen_together_host.html">一起听示例</p> · <a href="/playlist_cover_update.html">更新歌单封面示例</p> · <a href="/avatar_update.html">头像更新示例</p>
+      <div style="margin-top:10px; line-height:2;">
+        <a href="/api.html">交互式调试</a> ·
+        <a href="/qrlogin.html">二维码登录示例</a> ·
+        <a href="/unblock_test.html">解灰测试</a> ·
+        <a href="/audio_match_demo/index.html">听歌识曲 Demo</a> ·
+        <a href="/cloud.html">云盘上传</a> ·
+        <a href="/playlist_import.html">歌单导入</a> ·
+        <a href="/eapi_decrypt.html">EAPI 解密</a> ·
+        <a href="/listen_together_host.html">一起听示例</a> ·
+        <a href="/playlist_cover_update.html">更新歌单封面示例</a> ·
+        <a href="/avatar_update.html">头像更新示例</a>
+      </div>
     </section>
 
     <footer class="site-footer">
