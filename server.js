@@ -227,20 +227,23 @@ async function consturctServer(moduleDefs) {
         const moduleResponse = await moduleDef.module(query, (...params) => {
           // 参数注入客户端IP
           const obj = [...params]
-          // 获取请求中的 IP 参数
-          let ip = req.ip
+          const options = obj[2] || {}
+          if (!options.randomCNIP) {
+            let ip = req.ip
 
-          if (ip.substring(0, 7) == '::ffff:') {
-            ip = ip.substring(7)
+            if (ip.substring(0, 7) == '::ffff:') {
+              ip = ip.substring(7)
+            }
+            if (ip == '::1') {
+              ip = global.cnIp
+            }
+            // logger.info('Requested from ip:', ip)
+            obj[2] = {
+              ...options,
+              ip,
+            }
           }
-          if (ip == '::1') {
-            ip = global.cnIp
-          }
-          // logger.info('Requested from ip:', ip)
-          obj[2] = {
-            ...(obj[2] || {}),
-            ip,
-          }
+
           return request(...obj)
         })
         logger.info(`Request Success: ${decode(req.originalUrl)}`)

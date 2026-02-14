@@ -16,7 +16,7 @@ updates:
     # 自动合并小版本更新的 PR (可选)
     # 可以设置针对 patch 或 minor 版本更新自动合并
     commit-message:
-      prefix: "chore(packages):" # PR 合并提交信息的前缀
+      prefix: "build(packages):" # PR 合并提交信息的前缀
 
   # 更新 GitHub Actions 依赖
   - package-ecosystem: "github-actions"
