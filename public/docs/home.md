@@ -2,6 +2,8 @@
 
 网易云音乐 NodeJS API Enhanced
 
+最后更新于: 2026.2.15
+
 ## 灵感来自
 
 [disoul/electron-cloud-music](https://github.com/disoul/electron-cloud-music)
