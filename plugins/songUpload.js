@@ -38,7 +38,7 @@ module.exports = async (query, request) => {
     }
   }
 
-  const objectKey = tokenRes.body.result.objectKey.replace('/', '%2F')
+  const objectKey = tokenRes.body.result.objectKey.replace(/\//g, '%2F')
   let lbs
   try {
     lbs = (
@@ -87,7 +87,7 @@ module.exports = async (query, request) => {
       headers: {
         'x-nos-token': tokenRes.body.result.token,
         'Content-MD5': query.songFile.md5,
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': query.songFile.mimetype || 'audio/mpeg',
         'Content-Length': String(query.songFile.size),
       },
       data: uploadData,

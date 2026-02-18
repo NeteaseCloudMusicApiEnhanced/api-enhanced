@@ -1,5 +1,5 @@
+const { default: axios } = require('axios')
 const createOption = require('../util/option.js')
-const crypto = require('crypto')
 
 module.exports = async (query, request) => {
   const { md5, fileSize, filename, bitrate = 999000 } = query
@@ -55,7 +55,6 @@ module.exports = async (query, request) => {
     })
   }
 
-  const { default: axios } = require('axios')
   let lbs
   try {
     lbs = (
@@ -97,7 +96,7 @@ module.exports = async (query, request) => {
         uploadToken: tokenRes.body.result.token,
         objectKey: tokenRes.body.result.objectKey,
         resourceId: tokenRes.body.result.resourceId,
-        uploadUrl: `${lbs.upload[0]}/${bucket}/${tokenRes.body.result.objectKey.replace('/', '%2F')}?offset=0&complete=true&version=1.0`,
+        uploadUrl: `${lbs.upload[0]}/${bucket}/${tokenRes.body.result.objectKey.replace(/\//g, '%2F')}?offset=0&complete=true&version=1.0`,
         bucket: bucket,
         md5: md5,
         fileSize: fileSize,
