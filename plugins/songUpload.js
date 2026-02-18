@@ -27,7 +27,7 @@ module.exports = async (query, request) => {
   )
 
   if (!tokenRes.body.result || !tokenRes.body.result.objectKey) {
-    logger.error('Token allocation failed:', tokenRes.body)
+    logger.error('Token分配失败:', tokenRes.body)
     throw {
       status: 500,
       body: {
@@ -49,7 +49,7 @@ module.exports = async (query, request) => {
       })
     ).data
   } catch (error) {
-    logger.error('LBS fetch failed:', error.message)
+    logger.error('LBS获取失败:', error.message)
     throw {
       status: 500,
       body: {
@@ -61,7 +61,7 @@ module.exports = async (query, request) => {
   }
 
   if (!lbs || !lbs.upload || !lbs.upload[0]) {
-    logger.error('Invalid LBS response:', lbs)
+    logger.error('无效的LBS响应:', lbs)
     throw {
       status: 500,
       body: {
@@ -95,9 +95,9 @@ module.exports = async (query, request) => {
       maxBodyLength: Infinity,
       timeout: 300000,
     })
-    logger.info('Upload success:', filename)
+    logger.info('上传成功:', filename)
   } catch (error) {
-    logger.error('Upload failed:', {
+    logger.error('上传失败:', {
       status: error.response?.status,
       data: error.response?.data,
       message: error.message,
