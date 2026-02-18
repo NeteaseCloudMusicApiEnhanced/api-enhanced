@@ -69,11 +69,7 @@ module.exports = async (query, request) => {
     }
   } else {
     if (!fileMd5) {
-      fileMd5 = await new Promise((resolve) => {
-        setImmediate(() => {
-          resolve(crypto.createHash('md5').update(query.songFile.data).digest('hex'))
-        })
-      })
+      fileMd5 = crypto.createHash('md5').update(query.songFile.data).digest('hex')
     }
     fileSize = query.songFile.data.byteLength
   }
