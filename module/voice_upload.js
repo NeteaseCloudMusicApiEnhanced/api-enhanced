@@ -3,7 +3,10 @@ const fs = require('fs')
 var xml2js = require('xml2js')
 
 const createOption = require('../util/option.js')
+const { getFileExtension, readFileChunk } = require('../util/fileHelper')
+
 var parser = new xml2js.Parser()
+
 function createDupkey() {
   var s = []
   var hexDigits = '0123456789abcdef'
@@ -15,11 +18,9 @@ function createDupkey() {
   s[8] = s[13] = s[18] = s[23] = '-'
   return s.join('')
 }
+
 module.exports = async (query, request) => {
-  let ext = 'mp3'
-  if (query.songFile.name.indexOf('flac') > -1) {
-    ext = 'flac'
-  }
+  const ext = getFileExtension(query.songFile.name)
   const filename =
     query.songName ||
     query.songFile.name
@@ -66,15 +67,10 @@ module.exports = async (query, request) => {
 
   const useTempFile = !!query.songFile.tempFilePath
   let fileSize = query.songFile.size
-  let fileData
 
   if (useTempFile) {
     const stats = await fs.promises.stat(query.songFile.tempFilePath)
     fileSize = stats.size
-    fileData = query.songFile.tempFilePath
-  } else {
-    fileSize = query.songFile.data.length
-    fileData = query.songFile.data
   }
 
   const blockSize = 10 * 1024 * 1024
@@ -86,11 +82,7 @@ module.exports = async (query, request) => {
   while (offset < fileSize) {
     let chunk
     if (useTempFile) {
-      const fd = await fs.promises.open(query.songFile.tempFilePath, 'r')
-      const buffer = Buffer.alloc(Math.min(blockSize, fileSize - offset))
-      await fd.read(buffer, 0, buffer.length, offset)
-      await fd.close()
-      chunk = buffer
+      chunk = await readFileChunk(query.songFile.tempFilePath, offset, Math.min(blockSize, fileSize - offset))
     } else {
       chunk = query.songFile.data.slice(offset, Math.min(offset + blockSize, fileSize))
     }

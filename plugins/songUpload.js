@@ -1,17 +1,13 @@
 const { default: axios } = require('axios')
-const fs = require('fs')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
+const { getUploadData, getFileExtension, sanitizeFilename } = require('../util/fileHelper')
+
 module.exports = async (query, request) => {
-  let ext = 'mp3'
-  if (query.songFile.name.includes('.')) {
-    ext = query.songFile.name.split('.').pop()
-  }
-  const filename = query.songFile.name
-    .replace('.' + ext, '')
-    .replace(/\s/g, '')
-    .replace(/\./g, '_')
+  const ext = getFileExtension(query.songFile.name)
+  const filename = sanitizeFilename(query.songFile.name)
   const bucket = 'jd-musicrep-privatecloud-audio-public'
+
   const tokenRes = await request(
     `/api/nos/token/alloc`,
     {
@@ -72,14 +68,6 @@ module.exports = async (query, request) => {
     }
   }
 
-  const useTempFile = !!query.songFile.tempFilePath
-  let uploadData
-  if (useTempFile) {
-    uploadData = fs.createReadStream(query.songFile.tempFilePath)
-  } else {
-    uploadData = query.songFile.data
-  }
-
   try {
     await axios({
       method: 'post',
@@ -90,7 +78,7 @@ module.exports = async (query, request) => {
         'Content-Type': query.songFile.mimetype || 'audio/mpeg',
         'Content-Length': String(query.songFile.size),
       },
-      data: uploadData,
+      data: getUploadData(query.songFile),
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
       timeout: 300000,

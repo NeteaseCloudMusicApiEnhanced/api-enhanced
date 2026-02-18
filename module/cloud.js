@@ -1,23 +1,24 @@
 const uploadPlugin = require('../plugins/songUpload')
-const crypto = require('crypto')
-const fs = require('fs')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
+const {
+  isTempFile,
+  getFileSize,
+  getFileMd5,
+  cleanupTempFile,
+  getFileExtension,
+  sanitizeFilename,
+} = require('../util/fileHelper')
+
 let mm
 module.exports = async (query, request) => {
   mm = require('music-metadata')
-  let ext = 'mp3'
-  if (query.songFile.name.includes('.')) {
-    ext = query.songFile.name.split('.').pop()
-  }
-  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString(
-    'utf-8',
-  )
-  const filename = query.songFile.name
-    .replace('.' + ext, '')
-    .replace(/\s/g, '')
-    .replace(/\./g, '_')
+
+  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString('utf-8')
+  const ext = getFileExtension(query.songFile.name)
+  const filename = sanitizeFilename(query.songFile.name)
   const bitrate = 999000
+
   if (!query.songFile) {
     return Promise.reject({
       status: 500,
@@ -28,55 +29,14 @@ module.exports = async (query, request) => {
     })
   }
 
-  const useTempFile = !!query.songFile.tempFilePath
-  let fileSize = query.songFile.size
-  let fileMd5 = query.songFile.md5
+  const useTemp = isTempFile(query.songFile)
+  let fileSize = await getFileSize(query.songFile)
+  let fileMd5 = await getFileMd5(query.songFile)
 
-  const cleanupTempFile = async () => {
-    if (useTempFile) {
-      try {
-        await fs.promises.unlink(query.songFile.tempFilePath)
-      } catch (e) {
-        logger.info('临时文件清理失败:', e.message)
-      }
-    }
-  }
+  query.songFile.md5 = fileMd5
+  query.songFile.size = fileSize
 
   try {
-    if (useTempFile) {
-      try {
-        const stats = await fs.promises.stat(query.songFile.tempFilePath)
-        fileSize = stats.size
-      } catch (e) {
-        logger.error('获取临时文件状态失败:', e.message)
-        return Promise.reject({
-          status: 500,
-          body: {
-            code: 500,
-            msg: '临时文件访问失败',
-            detail: e.message,
-          },
-        })
-      }
-      if (!fileMd5) {
-        fileMd5 = await new Promise((resolve, reject) => {
-          const hash = crypto.createHash('md5')
-          const stream = fs.createReadStream(query.songFile.tempFilePath)
-          stream.on('data', (chunk) => hash.update(chunk))
-          stream.on('end', () => resolve(hash.digest('hex')))
-          stream.on('error', reject)
-        })
-      }
-    } else {
-      if (!fileMd5) {
-        fileMd5 = crypto.createHash('md5').update(query.songFile.data).digest('hex')
-      }
-      fileSize = query.songFile.data.byteLength
-    }
-
-    query.songFile.md5 = fileMd5
-    query.songFile.size = fileSize
-
     const res = await request(
       `/api/cloud/upload/check`,
       {
@@ -89,33 +49,26 @@ module.exports = async (query, request) => {
       },
       createOption(query),
     )
+
     let artist = ''
     let album = ''
     let songName = ''
+
     try {
       let metadata
-      if (useTempFile) {
+      if (useTemp) {
         metadata = await mm.parseFile(query.songFile.tempFilePath)
       } else {
-        metadata = await mm.parseBuffer(
-          query.songFile.data,
-          query.songFile.mimetype,
-        )
+        metadata = await mm.parseBuffer(query.songFile.data, query.songFile.mimetype)
       }
       const info = metadata.common
-
-      if (info.title) {
-        songName = info.title
-      }
-      if (info.album) {
-        album = info.album
-      }
-      if (info.artist) {
-        artist = info.artist
-      }
+      if (info.title) songName = info.title
+      if (info.album) album = info.album
+      if (info.artist) artist = info.artist
     } catch (error) {
       logger.info('元数据解析错误:', error.message)
     }
+
     const tokenRes = await request(
       `/api/nos/token/alloc`,
       {
@@ -189,6 +142,7 @@ module.exports = async (query, request) => {
       },
       createOption(query),
     )
+
     return {
       status: 200,
       body: {
@@ -198,6 +152,8 @@ module.exports = async (query, request) => {
       cookie: res.cookie,
     }
   } finally {
-    await cleanupTempFile()
+    if (useTemp) {
+      await cleanupTempFile(query.songFile.tempFilePath)
+    }
   }
 }

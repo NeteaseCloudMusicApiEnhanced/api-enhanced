@@ -1,6 +1,6 @@
 const { default: axios } = require('axios')
-const fs = require('fs')
 const createOption = require('../util/option.js')
+const { getUploadData } = require('../util/fileHelper')
 
 module.exports = async (query, request) => {
   const data = {
@@ -12,20 +12,11 @@ module.exports = async (query, request) => {
     return_body: `{"code":200,"size":"$(ObjectSize)"}`,
     type: 'other',
   }
-  //   获取key和token
   const res = await request(
     `/api/nos/token/alloc`,
     data,
     createOption(query, 'weapi'),
   )
-  //   上传图片
-  const useTempFile = !!query.imgFile.tempFilePath
-  let uploadData
-  if (useTempFile) {
-    uploadData = fs.createReadStream(query.imgFile.tempFilePath)
-  } else {
-    uploadData = query.imgFile.data
-  }
 
   const res2 = await axios({
     method: 'post',
@@ -34,13 +25,10 @@ module.exports = async (query, request) => {
       'x-nos-token': res.body.result.token,
       'Content-Type': query.imgFile.mimetype || 'image/jpeg',
     },
-    data: uploadData,
+    data: getUploadData(query.imgFile),
   })
 
   return {
-    // ...res.body.result,
-    // ...res2.data,
-    // ...res3.body,
     url_pre: 'https://p1.music.126.net/' + res.body.result.objectKey,
     imgId: res.body.result.docId,
   }
