@@ -6,9 +6,6 @@ let mm
 module.exports = async (query, request) => {
   mm = require('music-metadata')
   let ext = 'mp3'
-  // if (query.songFile.name.indexOf('flac') > -1) {
-  //   ext = 'flac'
-  // }
   if (query.songFile.name.includes('.')) {
     ext = query.songFile.name.split('.').pop()
   }
@@ -30,7 +27,6 @@ module.exports = async (query, request) => {
     })
   }
   if (!query.songFile.md5) {
-    // 命令行上传没有md5和size信息,需要填充
     query.songFile.md5 = md5(query.songFile.data)
     query.songFile.size = query.songFile.data.byteLength
   }
@@ -65,32 +61,8 @@ module.exports = async (query, request) => {
     if (info.artist) {
       artist = info.artist
     }
-    // if (metadata.native.ID3v1) {
-    //   metadata.native.ID3v1.forEach((item) => {
-    //     // logger.info(item.id, item.value)
-    //     if (item.id === 'title') {
-    //       songName = item.value
-    //     }
-    //     if (item.id === 'artist') {
-    //       artist = item.value
-    //     }
-    //     if (item.id === 'album') {
-    //       album = item.value
-    //     }
-    //   })
-    //   // logger.info({
-    //   //   songName,
-    //   //   album,
-    //   //   songName,
-    //   // })
-    // }
-    // logger.info({
-    //   songName,
-    //   album,
-    //   songName,
-    // })
   } catch (error) {
-    logger.info(error)
+    logger.info('metadata parse error:', error.message)
   }
   const tokenRes = await request(
     `/api/nos/token/alloc`,
@@ -106,11 +78,31 @@ module.exports = async (query, request) => {
     createOption(query),
   )
 
-  if (res.body.needUpload) {
-    const uploadInfo = await uploadPlugin(query, request)
-    // logger.info('uploadInfo', uploadInfo.body.result.resourceId)
+  if (!tokenRes.body.result || !tokenRes.body.result.resourceId) {
+    logger.error('Token allocation failed:', tokenRes.body)
+    return Promise.reject({
+      status: 500,
+      body: {
+        code: 500,
+        msg: '获取上传token失败',
+        detail: tokenRes.body,
+      },
+    })
   }
-  // logger.info(tokenRes.body.result)
+
+  if (res.body.needUpload) {
+    logger.info('Need upload, starting upload process...')
+    try {
+      const uploadInfo = await uploadPlugin(query, request)
+      logger.info('Upload completed:', uploadInfo?.body?.result?.resourceId)
+    } catch (uploadError) {
+      logger.error('Upload failed:', uploadError)
+      return Promise.reject(uploadError)
+    }
+  } else {
+    logger.info('File already exists, skip upload')
+  }
+
   const res2 = await request(
     `/api/upload/cloud/info/v2`,
     {
@@ -125,8 +117,19 @@ module.exports = async (query, request) => {
     },
     createOption(query),
   )
-  // logger.info({ res2, privateCloud: res2.body.privateCloud })
-  // logger.info(res.body.songId, 'songid')
+
+  if (res2.body.code !== 200 && res2.body.code !== 200) {
+    logger.error('Cloud info upload failed:', res2.body)
+    return Promise.reject({
+      status: res2.status || 500,
+      body: {
+        code: res2.body.code || 500,
+        msg: res2.body.msg || '上传云盘信息失败',
+        detail: res2.body,
+      },
+    })
+  }
+
   const res3 = await request(
     `/api/cloud/pub/v2`,
     {
@@ -134,13 +137,11 @@ module.exports = async (query, request) => {
     },
     createOption(query),
   )
-  // logger.info({ res3 })
   return {
     status: 200,
     body: {
       ...res.body,
       ...res3.body,
-      // ...uploadInfo,
     },
     cookie: res.cookie,
   }

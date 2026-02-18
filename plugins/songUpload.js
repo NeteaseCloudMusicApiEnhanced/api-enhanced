@@ -3,9 +3,6 @@ const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
 module.exports = async (query, request) => {
   let ext = 'mp3'
-  // if (query.songFile.name.indexOf('flac') > -1) {
-  //   ext = 'flac'
-  // }
   if (query.songFile.name.includes('.')) {
     ext = query.songFile.name.split('.').pop()
   }
@@ -14,7 +11,6 @@ module.exports = async (query, request) => {
     .replace(/\s/g, '')
     .replace(/\./g, '_')
   const bucket = 'jd-musicrep-privatecloud-audio-public'
-  //   获取key和token
   const tokenRes = await request(
     `/api/nos/token/alloc`,
     {
@@ -29,15 +25,53 @@ module.exports = async (query, request) => {
     createOption(query, 'weapi'),
   )
 
-  // 上传
+  if (!tokenRes.body.result || !tokenRes.body.result.objectKey) {
+    logger.error('Token allocation failed:', tokenRes.body)
+    throw {
+      status: 500,
+      body: {
+        code: 500,
+        msg: '获取上传token失败',
+        detail: tokenRes.body,
+      },
+    }
+  }
+
   const objectKey = tokenRes.body.result.objectKey.replace('/', '%2F')
+  let lbs
   try {
-    const lbs = (
+    lbs = (
       await axios({
         method: 'get',
         url: `https://wanproxy.127.net/lbs?version=1.0&bucketname=${bucket}`,
+        timeout: 10000,
       })
     ).data
+  } catch (error) {
+    logger.error('LBS fetch failed:', error.message)
+    throw {
+      status: 500,
+      body: {
+        code: 500,
+        msg: '获取上传服务器地址失败',
+        detail: error.message,
+      },
+    }
+  }
+
+  if (!lbs || !lbs.upload || !lbs.upload[0]) {
+    logger.error('Invalid LBS response:', lbs)
+    throw {
+      status: 500,
+      body: {
+        code: 500,
+        msg: '获取上传服务器地址无效',
+        detail: lbs,
+      },
+    }
+  }
+
+  try {
     await axios({
       method: 'post',
       url: `${lbs.upload[0]}/${bucket}/${objectKey}?offset=0&complete=true&version=1.0`,
@@ -50,10 +84,23 @@ module.exports = async (query, request) => {
       data: query.songFile.data,
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
+      timeout: 300000,
     })
+    logger.info('Upload success:', filename)
   } catch (error) {
-    logger.info('error', error.response)
-    throw error.response
+    logger.error('Upload failed:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    })
+    throw {
+      status: error.response?.status || 500,
+      body: {
+        code: error.response?.status || 500,
+        msg: '文件上传失败',
+        detail: error.response?.data || error.message,
+      },
+    }
   }
   return {
     ...tokenRes,
