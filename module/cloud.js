@@ -32,9 +32,32 @@ module.exports = async (query, request) => {
   let fileSize = query.songFile.size
   let fileMd5 = query.songFile.md5
 
+  const cleanupTempFile = async () => {
+    if (useTempFile) {
+      try {
+        await fs.promises.unlink(query.songFile.tempFilePath)
+      } catch (e) {
+        logger.info('Temp file cleanup failed:', e.message)
+      }
+    }
+  }
+
   if (useTempFile) {
-    const stats = fs.statSync(query.songFile.tempFilePath)
-    fileSize = stats.size
+    try {
+      const stats = await fs.promises.stat(query.songFile.tempFilePath)
+      fileSize = stats.size
+    } catch (e) {
+      logger.error('Failed to stat temp file:', e.message)
+      await cleanupTempFile()
+      return Promise.reject({
+        status: 500,
+        body: {
+          code: 500,
+          msg: '临时文件访问失败',
+          detail: e.message,
+        },
+      })
+    }
     if (!fileMd5) {
       fileMd5 = await new Promise((resolve, reject) => {
         const hash = crypto.createHash('md5')
@@ -46,7 +69,11 @@ module.exports = async (query, request) => {
     }
   } else {
     if (!fileMd5) {
-      fileMd5 = crypto.createHash('md5').update(query.songFile.data).digest('hex')
+      fileMd5 = await new Promise((resolve) => {
+        setImmediate(() => {
+          resolve(crypto.createHash('md5').update(query.songFile.data).digest('hex'))
+        })
+      })
     }
     fileSize = query.songFile.data.byteLength
   }
@@ -109,6 +136,7 @@ module.exports = async (query, request) => {
 
   if (!tokenRes.body.result || !tokenRes.body.result.resourceId) {
     logger.error('Token allocation failed:', tokenRes.body)
+    await cleanupTempFile()
     return Promise.reject({
       status: 500,
       body: {
@@ -126,18 +154,14 @@ module.exports = async (query, request) => {
       logger.info('Upload completed:', uploadInfo?.body?.result?.resourceId)
     } catch (uploadError) {
       logger.error('Upload failed:', uploadError)
+      await cleanupTempFile()
       return Promise.reject(uploadError)
-    } finally {
-      if (useTempFile && fs.existsSync(query.songFile.tempFilePath)) {
-        fs.unlinkSync(query.songFile.tempFilePath)
-      }
     }
   } else {
     logger.info('File already exists, skip upload')
-    if (useTempFile && fs.existsSync(query.songFile.tempFilePath)) {
-      fs.unlinkSync(query.songFile.tempFilePath)
-    }
   }
+
+  await cleanupTempFile()
 
   const res2 = await request(
     `/api/upload/cloud/info/v2`,
