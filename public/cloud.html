@@ -276,6 +276,7 @@
 
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <script>
       const app = Vue.createApp({
         data() {
@@ -454,6 +455,23 @@
         })
       }
 
+      async function parseMediaTags(file) {
+        return new Promise((resolve) => {
+          jsmediatags.read(file, {
+            onSuccess: function(tag) {
+              resolve({
+                title: tag.tags.title || null,
+                artist: tag.tags.artist || null,
+                album: tag.tags.album || null,
+              })
+            },
+            onError: function() {
+              resolve({ title: null, artist: null, album: null })
+            }
+          })
+        })
+      }
+
       async function uploadFileDirect(file, index, total) {
         createProgressItem(file, index, total)
 
@@ -463,6 +481,10 @@
           const md5 = await calculateMD5(file)
           const fileSize = file.size
           const filename = file.name
+
+          updateProgress(index, '解析音频元数据...', 8)
+
+          const mediaTags = await parseMediaTags(file)
 
           updateProgress(index, '获取上传凭证...', 10)
 
@@ -484,7 +506,7 @@
 
           if (!tokenData.needUpload) {
             updateProgress(index, '文件已存在，直接导入云盘...', 80)
-            await completeUpload(tokenData, file.name)
+            await completeUpload(tokenData, file, mediaTags)
             updateProgress(index, '上传完成！', 100)
             return
           }
@@ -512,7 +534,7 @@
 
           updateProgress(index, '上传完成，正在导入云盘...', 90)
 
-          await completeUpload(tokenData, file.name)
+          await completeUpload(tokenData, file, mediaTags)
 
           updateProgress(index, '上传完成！', 100)
 
@@ -523,8 +545,10 @@
         }
       }
 
-      async function completeUpload(tokenData, filename) {
-        const songName = filename.replace(/\.[^.]+$/, '')
+      async function completeUpload(tokenData, file, mediaTags = {}) {
+        const songName = mediaTags.title || file.name.replace(/\.[^.]+$/, '')
+        const artist = mediaTags.artist || '未知艺术家'
+        const album = mediaTags.album || '未知专辑'
 
         const completeRes = await axios({
           method: 'post',
@@ -533,10 +557,10 @@
             songId: tokenData.songId,
             resourceId: tokenData.resourceId,
             md5: tokenData.md5,
-            filename: filename,
+            filename: file.name,
             song: songName,
-            artist: '未知艺术家',
-            album: '未知专辑',
+            artist: artist,
+            album: album,
           },
         })
 

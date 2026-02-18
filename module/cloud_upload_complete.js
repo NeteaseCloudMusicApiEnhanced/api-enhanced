@@ -23,7 +23,6 @@ module.exports = async (query, request) => {
   }
 
   const songName = song || filename.replace(/\.[^.]+$/, '')
-  const ext = filename.includes('.') ? filename.split('.').pop() : 'mp3'
 
   const res2 = await request(
     `/api/upload/cloud/info/v2`,
