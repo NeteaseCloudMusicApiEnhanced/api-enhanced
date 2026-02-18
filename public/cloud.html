@@ -47,6 +47,59 @@
         text-decoration: underline;
       }
 
+      .mode-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #f9f9f9;
+        border-radius: 8px;
+      }
+
+      .mode-section label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 12px;
+      }
+
+      .mode-options {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .mode-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      .mode-option input[type="radio"] {
+        margin-top: 3px;
+      }
+
+      .mode-option-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mode-option-title {
+        font-size: 14px;
+        color: #333;
+      }
+
+      .mode-option-desc {
+        font-size: 12px;
+        color: #999;
+        margin-top: 2px;
+      }
+
+      .mode-option input[type="radio"]:checked + .mode-option-text .mode-option-title {
+        color: #333;
+        font-weight: 500;
+      }
+
       .upload-section {
         margin-bottom: 32px;
       }
@@ -70,6 +123,11 @@
 
       .upload-btn input[type="file"] {
         display: none;
+      }
+
+      .upload-btn.disabled {
+        background: #ccc;
+        cursor: not-allowed;
       }
 
       .songs-list {
@@ -99,6 +157,74 @@
         padding: 20px;
         color: #666;
       }
+
+      .progress-section {
+        margin-bottom: 24px;
+        display: none;
+      }
+
+      .progress-section.active {
+        display: block;
+      }
+
+      .progress-item {
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #f9f9f9;
+        border-radius: 6px;
+      }
+
+      .progress-item .name {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 8px;
+        word-break: break-all;
+      }
+
+      .progress-item .status {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 6px;
+      }
+
+      .progress-bar {
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-bar .fill {
+        height: 100%;
+        background: #333;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .progress-item.success .fill {
+        background: #4caf50;
+      }
+
+      .progress-item.error .fill {
+        background: #f44336;
+      }
+
+      .progress-item.error .status {
+        color: #f44336;
+      }
+
+      .info-text {
+        font-size: 12px;
+        color: #999;
+        margin-top: 8px;
+      }
+
+      .warning-text {
+        font-size: 12px;
+        color: #e65100;
+        margin-top: 8px;
+      }
     </style>
   </head>
 
@@ -107,12 +233,35 @@
       <h1>云盘上传</h1>
       <a href="/qrlogin-nocookie.html" class="login-link">还没登录？点击登录</a>
 
+      <div class="mode-section">
+        <label>上传模式</label>
+        <div class="mode-options">
+          <label class="mode-option">
+            <input type="radio" name="uploadMode" value="direct" checked />
+            <span class="mode-option-text">
+              <span class="mode-option-title">客户端直传</span>
+              <span class="mode-option-desc">文件直接上传到云存储，支持大文件，适合 Vercel 等平台</span>
+            </span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="uploadMode" value="proxy" />
+            <span class="mode-option-text">
+              <span class="mode-option-title">后端代理</span>
+              <span class="mode-option-desc">文件通过服务器转发，更简洁，需要服务器支持大文件</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div class="upload-section">
-        <label class="upload-btn">
+        <label class="upload-btn" id="uploadBtn">
           选择文件（支持多选）
           <input id="file" type="file" multiple accept="audio/*" />
         </label>
+        <p class="info-text" id="modeInfo">支持大文件上传，文件将直接传输到云存储服务器</p>
       </div>
+
+      <div id="progressSection" class="progress-section"></div>
 
       <div id="app">
         <div v-if="loading" class="loading">加载中...</div>
@@ -157,55 +306,247 @@
         },
       }).mount('#app')
 
-      const fileUpdateTime = {}
-      let fileLength = 0
+      let isUploading = false
+      let uploadMode = 'direct'
+      const progressSection = document.getElementById('progressSection')
+      const uploadBtn = document.getElementById('uploadBtn')
+      const fileInput = document.querySelector('input[type="file"]')
+      const modeInfo = document.getElementById('modeInfo')
+
+      document.querySelectorAll('input[name="uploadMode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          uploadMode = this.value
+          if (uploadMode === 'direct') {
+            modeInfo.textContent = '支持大文件上传，文件将直接传输到云存储服务器'
+            modeInfo.className = 'info-text'
+          } else {
+            modeInfo.textContent = '文件将通过服务器转发，服务器需支持大文件上传（Vercel 限制 4.5MB）'
+            modeInfo.className = 'warning-text'
+          }
+        })
+      })
 
       function main() {
-        document
-          .querySelector('input[type="file"]')
-          .addEventListener('change', function (e) {
-            const files = this.files
-            if (files.length === 0) return
+        fileInput.addEventListener('change', function (e) {
+          const files = this.files
+          if (files.length === 0) return
+          if (isUploading) return
 
-            fileLength = files.length
-            for (let i = 0; i < files.length; i++) {
-              upload(files[i], i + 1)
-            }
-          })
+          uploadFilesSequentially(Array.from(files))
+          this.value = ''
+        })
       }
       main()
 
-      function upload(file, currentIndex) {
-        var formData = new FormData()
-        formData.append('songFile', file)
+      async function uploadFilesSequentially(files) {
+        isUploading = true
+        uploadBtn.classList.add('disabled')
+        progressSection.classList.add('active')
+        progressSection.innerHTML = ''
 
-        axios({
-          method: 'post',
-          url: `/cloud?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          data: formData,
-        })
-          .then((res) => {
-            console.log(`${file.name} 上传成功`)
-            if (currentIndex >= fileLength) {
-              console.log('所有文件上传完毕')
-            }
-            app.getData()
+        for (let i = 0; i < files.length; i++) {
+          if (uploadMode === 'direct') {
+            await uploadFileDirect(files[i], i + 1, files.length)
+          } else {
+            await uploadFileProxy(files[i], i + 1, files.length)
+          }
+        }
+
+        isUploading = false
+        uploadBtn.classList.remove('disabled')
+        app.getData()
+      }
+
+      function createProgressItem(file, index, total) {
+        const item = document.createElement('div')
+        item.className = 'progress-item'
+        item.id = `progress-${index}`
+        item.innerHTML = `
+          <div class="name">${file.name} (${formatSize(file.size)})</div>
+          <div class="status">准备中...</div>
+          <div class="progress-bar"><div class="fill"></div></div>
+        `
+        progressSection.appendChild(item)
+        return item
+      }
+
+      function updateProgress(index, status, percent, isError = false) {
+        const item = document.getElementById(`progress-${index}`)
+        if (!item) return
+        item.querySelector('.status').textContent = status
+        item.querySelector('.fill').style.width = `${percent}%`
+        if (isError) {
+          item.classList.add('error')
+        } else if (percent >= 100) {
+          item.classList.add('success')
+        }
+      }
+
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B'
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+      }
+
+      async function uploadFileProxy(file, index, total) {
+        createProgressItem(file, index, total)
+
+        try {
+          updateProgress(index, '上传中...', 10)
+
+          const formData = new FormData()
+          formData.append('songFile', file)
+
+          await axios({
+            method: 'post',
+            url: `/cloud?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            data: formData,
+            onUploadProgress: (progressEvent) => {
+              const percent = Math.round((progressEvent.loaded / progressEvent.total) * 90) + 10
+              updateProgress(index, `上传中... ${Math.round(progressEvent.loaded / progressEvent.total * 100)}%`, Math.min(percent, 100))
+            },
+            timeout: 600000,
           })
-          .catch((err) => {
-            console.error(`${file.name} 上传失败:`, err)
-            fileUpdateTime[file.name] = (fileUpdateTime[file.name] || 0) + 1
-            if (fileUpdateTime[file.name] >= 4) {
-              console.error(`文件 ${file.name} 上传失败次数过多，已停止重试`)
-              return
+
+          updateProgress(index, '上传完成！', 100)
+
+        } catch (err) {
+          console.error(`${file.name} 上传失败:`, err)
+          const errorMsg = err.response?.data?.msg || err.message || '未知错误'
+          if (err.response?.status === 413 || errorMsg.includes('PAYLOAD_TOO_LARGE')) {
+            updateProgress(index, '文件过大，请切换到客户端直传模式', 0, true)
+          } else {
+            updateProgress(index, `上传失败: ${errorMsg}`, 0, true)
+          }
+        }
+      }
+
+      async function calculateMD5(file) {
+        return new Promise((resolve, reject) => {
+          const chunkSize = 2 * 1024 * 1024
+          const chunks = Math.ceil(file.size / chunkSize)
+          let currentChunk = 0
+          const spark = new SparkMD5.ArrayBuffer()
+          const reader = new FileReader()
+
+          reader.onload = (e) => {
+            spark.append(e.target.result)
+            currentChunk++
+            if (currentChunk < chunks) {
+              loadNext()
             } else {
-              console.error(`${file.name} 上传失败 ${fileUpdateTime[file.name]} 次，正在重试...`)
-              upload(file, currentIndex)
+              resolve(spark.end())
             }
+          }
+
+          reader.onerror = () => reject(reader.error)
+
+          function loadNext() {
+            const start = currentChunk * chunkSize
+            const end = Math.min(start + chunkSize, file.size)
+            reader.readAsArrayBuffer(file.slice(start, end))
+          }
+
+          loadNext()
+        })
+      }
+
+      async function uploadFileDirect(file, index, total) {
+        createProgressItem(file, index, total)
+
+        try {
+          updateProgress(index, '计算文件MD5...', 5)
+
+          const md5 = await calculateMD5(file)
+          const fileSize = file.size
+          const filename = file.name
+
+          updateProgress(index, '获取上传凭证...', 10)
+
+          const tokenRes = await axios({
+            method: 'post',
+            url: `/cloud/upload/token?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
+            data: {
+              md5: md5,
+              fileSize: fileSize,
+              filename: filename,
+            },
           })
+
+          if (tokenRes.data.code !== 200) {
+            throw new Error(tokenRes.data.msg || '获取上传凭证失败')
+          }
+
+          const tokenData = tokenRes.data.data
+
+          if (!tokenData.needUpload) {
+            updateProgress(index, '文件已存在，直接导入云盘...', 80)
+            await completeUpload(tokenData, file.name)
+            updateProgress(index, '上传完成！', 100)
+            return
+          }
+
+          updateProgress(index, '开始上传到云存储...', 15)
+
+          await axios({
+            method: 'post',
+            url: tokenData.uploadUrl,
+            headers: {
+              'x-nos-token': tokenData.uploadToken,
+              'Content-MD5': md5,
+              'Content-Type': 'audio/mpeg',
+              'Content-Length': String(fileSize),
+            },
+            data: file,
+            onUploadProgress: (progressEvent) => {
+              const percent = Math.round((progressEvent.loaded / progressEvent.total) * 70) + 15
+              updateProgress(index, `上传中... ${Math.round(progressEvent.loaded / progressEvent.total * 100)}%`, Math.min(percent, 85))
+            },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+            timeout: 600000,
+          })
+
+          updateProgress(index, '上传完成，正在导入云盘...', 90)
+
+          await completeUpload(tokenData, file.name)
+
+          updateProgress(index, '上传完成！', 100)
+
+        } catch (err) {
+          console.error(`${file.name} 上传失败:`, err)
+          const errorMsg = err.response?.data?.msg || err.message || '未知错误'
+          updateProgress(index, `上传失败: ${errorMsg}`, 0, true)
+        }
+      }
+
+      async function completeUpload(tokenData, filename) {
+        const songName = filename.replace(/\.[^.]+$/, '')
+
+        const completeRes = await axios({
+          method: 'post',
+          url: `/cloud/upload/complete?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
+          data: {
+            songId: tokenData.songId,
+            resourceId: tokenData.resourceId,
+            md5: tokenData.md5,
+            filename: filename,
+            song: songName,
+            artist: '未知艺术家',
+            album: '未知专辑',
+          },
+        })
+
+        if (completeRes.data.code !== 200) {
+          throw new Error(completeRes.data.msg || '导入云盘失败')
+        }
+
+        return completeRes.data
       }
     </script>
+    <script src="https://fastly.jsdelivr.net/npm/spark-md5@3.0.2/spark-md5.min.js"></script>
   </body>
 </html>

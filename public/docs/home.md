@@ -2768,13 +2768,77 @@ type : 地区
 
 参考: https://github.com/neteasecloudmusicapienhanced/api-enhanced/blob/main/public/cloud.html
 
-访问地址: http://localhost:3000/cloud.html)
+访问地址: http://localhost:3000/cloud.html
 
 支持命令行调用,参考 module_example 目录下`song_upload.js`
 
 **接口地址 :** `/cloud`
 
 **调用例子 :** `/cloud`
+
+#### 上传模式说明
+
+云盘上传支持两种模式:
+
+**1. 后端代理模式 (默认)**
+
+文件通过服务器转发到云存储,调用简单,但受服务器限制:
+- Vercel Serverless Functions 限制请求体大小为 4.5MB
+- 自建服务器需配置足够大的请求体限制
+
+**2. 客户端直传模式 (推荐用于 Vercel)**
+
+文件直接从客户端上传到云存储服务器,绕过服务器限制:
+- 支持大文件上传
+- 适合 Vercel、Netlify 等有请求体限制的平台
+- 需要前端配合实现
+
+#### 客户端直传相关接口
+
+**获取上传凭证**
+
+**接口地址 :** `/cloud/upload/token`
+
+**必选参数 :**
+- `md5`: 文件 MD5 值
+- `fileSize`: 文件大小(字节)
+- `filename`: 文件名
+
+**返回数据 :**
+```json
+{
+  "code": 200,
+  "data": {
+    "needUpload": true,
+    "songId": "...",
+    "uploadToken": "...",
+    "uploadUrl": "...",
+    "resourceId": "..."
+  }
+}
+```
+
+**完成上传导入**
+
+**接口地址 :** `/cloud/upload/complete`
+
+**必选参数 :**
+- `songId`: 歌曲 ID
+- `resourceId`: 资源 ID
+- `md5`: 文件 MD5
+- `filename`: 文件名
+
+**可选参数 :**
+- `song`: 歌曲名
+- `artist`: 艺术家
+- `album`: 专辑名
+
+#### 客户端直传流程
+
+1. 客户端计算文件 MD5
+2. 调用 `/cloud/upload/token` 获取上传凭证
+3. 如果 `needUpload` 为 true,直接 PUT 文件到 `uploadUrl`
+4. 调用 `/cloud/upload/complete` 完成导入
 
 ### 云盘歌曲信息匹配纠正
 
