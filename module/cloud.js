@@ -1,5 +1,6 @@
 const uploadPlugin = require('../plugins/songUpload')
-const md5 = require('md5')
+const crypto = require('crypto')
+const fs = require('fs')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
 let mm
@@ -26,17 +27,40 @@ module.exports = async (query, request) => {
       },
     })
   }
-  if (!query.songFile.md5) {
-    query.songFile.md5 = md5(query.songFile.data)
-    query.songFile.size = query.songFile.data.byteLength
+
+  const useTempFile = !!query.songFile.tempFilePath
+  let fileSize = query.songFile.size
+  let fileMd5 = query.songFile.md5
+
+  if (useTempFile) {
+    const stats = fs.statSync(query.songFile.tempFilePath)
+    fileSize = stats.size
+    if (!fileMd5) {
+      fileMd5 = await new Promise((resolve, reject) => {
+        const hash = crypto.createHash('md5')
+        const stream = fs.createReadStream(query.songFile.tempFilePath)
+        stream.on('data', (chunk) => hash.update(chunk))
+        stream.on('end', () => resolve(hash.digest('hex')))
+        stream.on('error', reject)
+      })
+    }
+  } else {
+    if (!fileMd5) {
+      fileMd5 = crypto.createHash('md5').update(query.songFile.data).digest('hex')
+    }
+    fileSize = query.songFile.data.byteLength
   }
+
+  query.songFile.md5 = fileMd5
+  query.songFile.size = fileSize
+
   const res = await request(
     `/api/cloud/upload/check`,
     {
       bitrate: String(bitrate),
       ext: '',
-      length: query.songFile.size,
-      md5: query.songFile.md5,
+      length: fileSize,
+      md5: fileMd5,
       songId: '0',
       version: 1,
     },
@@ -46,10 +70,15 @@ module.exports = async (query, request) => {
   let album = ''
   let songName = ''
   try {
-    const metadata = await mm.parseBuffer(
-      query.songFile.data,
-      query.songFile.mimetype,
-    )
+    let metadata
+    if (useTempFile) {
+      metadata = await mm.parseFile(query.songFile.tempFilePath)
+    } else {
+      metadata = await mm.parseBuffer(
+        query.songFile.data,
+        query.songFile.mimetype,
+      )
+    }
     const info = metadata.common
 
     if (info.title) {
@@ -73,7 +102,7 @@ module.exports = async (query, request) => {
       local: false,
       nos_product: 3,
       type: 'audio',
-      md5: query.songFile.md5,
+      md5: fileMd5,
     },
     createOption(query),
   )
@@ -98,15 +127,22 @@ module.exports = async (query, request) => {
     } catch (uploadError) {
       logger.error('Upload failed:', uploadError)
       return Promise.reject(uploadError)
+    } finally {
+      if (useTempFile && fs.existsSync(query.songFile.tempFilePath)) {
+        fs.unlinkSync(query.songFile.tempFilePath)
+      }
     }
   } else {
     logger.info('File already exists, skip upload')
+    if (useTempFile && fs.existsSync(query.songFile.tempFilePath)) {
+      fs.unlinkSync(query.songFile.tempFilePath)
+    }
   }
 
   const res2 = await request(
     `/api/upload/cloud/info/v2`,
     {
-      md5: query.songFile.md5,
+      md5: fileMd5,
       songid: res.body.songId,
       filename: query.songFile.name,
       song: songName || filename,

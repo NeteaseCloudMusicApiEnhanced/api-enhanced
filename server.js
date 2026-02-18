@@ -183,11 +183,12 @@ async function consturctServer(moduleDefs) {
 
   app.use(fileUpload({
     limits: {
-      fileSize: 500 * 1024 * 1024 // 500MB
+      fileSize: 500 * 1024 * 1024
     },
-    useTempFiles: false,
-    tempFileDir: '/tmp/',
-    abortOnLimit: true
+    useTempFiles: true,
+    tempFileDir: require('os').tmpdir(),
+    abortOnLimit: true,
+    parseNested: true
   }))
 
   /**

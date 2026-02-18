@@ -1,4 +1,5 @@
 const { default: axios } = require('axios')
+const fs = require('fs')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
 module.exports = async (query, request) => {
@@ -71,6 +72,14 @@ module.exports = async (query, request) => {
     }
   }
 
+  const useTempFile = !!query.songFile.tempFilePath
+  let uploadData
+  if (useTempFile) {
+    uploadData = fs.createReadStream(query.songFile.tempFilePath)
+  } else {
+    uploadData = query.songFile.data
+  }
+
   try {
     await axios({
       method: 'post',
@@ -81,7 +90,7 @@ module.exports = async (query, request) => {
         'Content-Type': 'audio/mpeg',
         'Content-Length': String(query.songFile.size),
       },
-      data: query.songFile.data,
+      data: uploadData,
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
       timeout: 300000,
