@@ -154,7 +154,7 @@ module.exports = async (query, request) => {
     createOption(query),
   )
 
-  if (res2.body.code !== 200 && res2.body.code !== 200) {
+  if (res2.body.code !== 200) {
     logger.error('Cloud info upload failed:', res2.body)
     return Promise.reject({
       status: res2.status || 500,
