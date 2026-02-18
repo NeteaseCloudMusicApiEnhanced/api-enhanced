@@ -1,6 +1,5 @@
 const fs = require('fs')
 const crypto = require('crypto')
-const path = require('path')
 const logger = require('./logger')
 
 function isTempFile(file) {
@@ -61,7 +60,7 @@ async function readFileChunk(filePath, offset, length) {
   return buffer
 }
 
-async function getFileExtension(filename) {
+function getFileExtension(filename) {
   if (!filename) return 'mp3'
   if (filename.includes('.')) {
     return filename.split('.').pop().toLowerCase()
@@ -71,7 +70,6 @@ async function getFileExtension(filename) {
 
 function sanitizeFilename(filename) {
   if (!filename) return 'unknown'
-  const ext = getFileExtension(filename)
   return filename
     .replace(/\.[^.]+$/, '')
     .replace(/\s/g, '')
