@@ -490,8 +490,9 @@
 
           const tokenRes = await axios({
             method: 'post',
-            url: `/cloud/upload/token?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
+            url: `/cloud/upload/token?time=${Date.now()}`,
             data: {
+              cookie: localStorage.getItem('cookie'),
               md5: md5,
               fileSize: fileSize,
               filename: filename,
@@ -552,8 +553,9 @@
 
         const completeRes = await axios({
           method: 'post',
-          url: `/cloud/upload/complete?time=${Date.now()}&cookie=${localStorage.getItem('cookie')}`,
+          url: `/cloud/upload/complete?time=${Date.now()}`,
           data: {
+            cookie: localStorage.getItem('cookie'),
             songId: tokenData.songId,
             resourceId: tokenData.resourceId,
             md5: tokenData.md5,

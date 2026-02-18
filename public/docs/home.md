@@ -2800,6 +2800,7 @@ type : 地区
 **接口地址 :** `/cloud/upload/token`
 
 **必选参数 :**
+- `cookie`: 网易云音乐 Cookie (在请求体中传递)
 - `md5`: 文件 MD5 值
 - `fileSize`: 文件大小(字节)
 - `filename`: 文件名
@@ -2823,6 +2824,7 @@ type : 地区
 **接口地址 :** `/cloud/upload/complete`
 
 **必选参数 :**
+- `cookie`: 网易云音乐 Cookie (在请求体中传递)
 - `songId`: 歌曲 ID
 - `resourceId`: 资源 ID
 - `md5`: 文件 MD5
