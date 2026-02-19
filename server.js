@@ -178,10 +178,25 @@ async function consturctServer(moduleDefs) {
   /**
    * Body Parser and File Upload
    */
-  app.use(express.json({ limit: '50mb' }))
-  app.use(express.urlencoded({ extended: false, limit: '50mb' }))
+  const MAX_UPLOAD_SIZE_MB = 500
+  const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
-  app.use(fileUpload())
+  app.use(express.json({ limit: `${MAX_UPLOAD_SIZE_MB}mb` }))
+  app.use(
+    express.urlencoded({ extended: false, limit: `${MAX_UPLOAD_SIZE_MB}mb` }),
+  )
+
+  app.use(
+    fileUpload({
+      limits: {
+        fileSize: MAX_UPLOAD_SIZE_BYTES,
+      },
+      useTempFiles: true,
+      tempFileDir: require('os').tmpdir(),
+      abortOnLimit: true,
+      parseNested: true,
+    }),
+  )
 
   /**
    * Cache
