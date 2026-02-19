@@ -14,7 +14,9 @@ let mm
 module.exports = async (query, request) => {
   mm = require('music-metadata')
 
-  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString('utf-8')
+  query.songFile.name = Buffer.from(query.songFile.name, 'latin1').toString(
+    'utf-8',
+  )
   const ext = getFileExtension(query.songFile.name)
   const filename = sanitizeFilename(query.songFile.name)
   const bitrate = 999000
@@ -59,7 +61,10 @@ module.exports = async (query, request) => {
       if (useTemp) {
         metadata = await mm.parseFile(query.songFile.tempFilePath)
       } else {
-        metadata = await mm.parseBuffer(query.songFile.data, query.songFile.mimetype)
+        metadata = await mm.parseBuffer(
+          query.songFile.data,
+          query.songFile.mimetype,
+        )
       }
       const info = metadata.common
       if (info.title) songName = info.title

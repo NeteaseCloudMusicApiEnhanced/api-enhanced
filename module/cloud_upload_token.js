@@ -35,7 +35,10 @@ module.exports = async (query, request) => {
     {
       bucket: bucket,
       ext: ext,
-      filename: filename.replace(/\.[^.]+$/, '').replace(/\s/g, '').replace(/\./g, '_'),
+      filename: filename
+        .replace(/\.[^.]+$/, '')
+        .replace(/\s/g, '')
+        .replace(/\./g, '_'),
       local: false,
       nos_product: 3,
       type: 'audio',

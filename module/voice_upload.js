@@ -82,9 +82,16 @@ module.exports = async (query, request) => {
   while (offset < fileSize) {
     let chunk
     if (useTempFile) {
-      chunk = await readFileChunk(query.songFile.tempFilePath, offset, Math.min(blockSize, fileSize - offset))
+      chunk = await readFileChunk(
+        query.songFile.tempFilePath,
+        offset,
+        Math.min(blockSize, fileSize - offset),
+      )
     } else {
-      chunk = query.songFile.data.slice(offset, Math.min(offset + blockSize, fileSize))
+      chunk = query.songFile.data.slice(
+        offset,
+        Math.min(offset + blockSize, fileSize),
+      )
     }
 
     const res3 = await axios({

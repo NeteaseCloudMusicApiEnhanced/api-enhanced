@@ -1,7 +1,11 @@
 const { default: axios } = require('axios')
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
-const { getUploadData, getFileExtension, sanitizeFilename } = require('../util/fileHelper')
+const {
+  getUploadData,
+  getFileExtension,
+  sanitizeFilename,
+} = require('../util/fileHelper')
 
 module.exports = async (query, request) => {
   const ext = getFileExtension(query.songFile.name)
