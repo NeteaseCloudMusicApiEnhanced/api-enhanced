@@ -204,7 +204,7 @@ pnpm test
 | Java   | [JackuXL](https://github.com/JackuXL)       | [NeteaseCloudMusicApi-SDK](https://github.com/JackuXL/NeteaseCloudMusicApi-SDK)          | 第三方 |
 | Java   | [1015770492](https://github.com/1015770492) | https://github.com/1015770492/yumbo-music-utils                                          | 第三方 |
 | Python | [盧瞳](https://github.com/2061360308)         | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
-| Swift  | [yuyuanweb](https://github.com/Lincb522/)  | [NeteaseCloudMusicApi-Swift](https://github.com/Lincb522/NeteaseCloudMusicAPI-Swift)     | 第三方 |
+| Swift  | [Lincb](https://github.com/Lincb522/)  | [NeteaseCloudMusicApi-Swift](https://github.com/Lincb522/NeteaseCloudMusicAPI-Swift)     | 第三方 |
 
 
 ### 依赖此项目的优秀开源项目
