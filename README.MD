@@ -76,13 +76,13 @@ set PORT=4000 && node app.js  # Windows
 
 ## 在线体验与文档
 
-- [在线文档](https://neteasecloudmusicapienhanced.js.org/)
+- [在线文档](https://docs-neteasecloudmusicapi.focalors.ltd/#/)
 - [NPM 包地址](https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api)
 - [Dockerhub 主页](https://hub.docker.com/r/moefurina/ncm-api)
 
 ## 常见部署方式
 
-- 推荐参考[在线文档](https://neteasecloudmusicapienhanced.js.org/)
+- 推荐参考[在线文档](https://docs-neteasecloudmusicapi.focalors.ltd/#/)
 
 ## Docker 部署说明
 
