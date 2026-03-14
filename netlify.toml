@@ -1,0 +1,9 @@
+[functions]
+directory = "functions"
+node_bundler = "esbuild"
+included_files = ["module/**", "plugins/**", "util/**", "public/**", "data/**", "generateConfig.js", "server.js", "package.json"]
+
+[[redirects]]
+from = "/*"
+to = "/.netlify/functions/index/:splat"
+status = 200
