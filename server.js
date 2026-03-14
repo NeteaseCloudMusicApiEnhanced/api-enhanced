@@ -133,7 +133,7 @@ async function checkVersion() {
  * @param {ModuleDefinition[]} [moduleDefs] Customized module definitions [advanced]
  * @returns {Promise<import("express").Express>} The server instance.
  */
-async function consturctServer(moduleDefs) {
+async function constructServer(moduleDefs) {
   const app = express()
   const { CORS_ALLOW_ORIGIN } = process.env
   app.set('trust proxy', true)
@@ -359,7 +359,7 @@ async function serveNcmApi(options) {
         )
       }
     })
-  const constructServerSubmission = consturctServer(options.moduleDefs)
+  const constructServerSubmission = constructServer(options.moduleDefs)
 
   const [_, app] = await Promise.all([
     checkVersionSubmission,
