@@ -1,6 +1,6 @@
 // 歌手专辑列表
 
-const createOption = require('../util/option.js')
+const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   const data = {
     limit: query.limit || 30,

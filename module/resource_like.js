@@ -1,5 +1,5 @@
 // 点赞与取消点赞资源
-const { resourceTypeMap } = require('../util/config.json')
+const resourceTypeMap = require('../util/config.json').resourceTypeMap
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   query.t = query.t == 1 ? 'like' : 'unlike'

@@ -1,6 +1,6 @@
 // 搜索
 
-const createOption = require('../util/option.js')
+const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   const data = {
     s: query.keywords,

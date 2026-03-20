@@ -1,6 +1,6 @@
 // 视频点赞转发评论数数据
 
-const createOption = require('../util/option.js')
+const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   const data = {
     threadid: `R_VI_62_${query.vid}`,

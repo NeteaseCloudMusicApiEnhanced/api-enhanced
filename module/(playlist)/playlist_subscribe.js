@@ -1,5 +1,5 @@
 // 收藏与取消收藏歌单
-const { APP_CONF } = require('../util/config.json')
+const { APP_CONF } = require('../../util/config.json')
 const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   const path = query.t == 1 ? 'subscribe' : 'unsubscribe'

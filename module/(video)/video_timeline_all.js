@@ -1,6 +1,6 @@
 // 全部视频列表
 
-const createOption = require('../util/option.js')
+const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   const data = {
     groupId: 0,

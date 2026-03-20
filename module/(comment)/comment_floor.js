@@ -1,4 +1,4 @@
-const { resourceTypeMap } = require('../util/config.json')
+const { resourceTypeMap } = require('../../util/config.json')
 const createOption = require('../../util/option.js')
 module.exports = (query, request) => {
   query.type = resourceTypeMap[query.type]

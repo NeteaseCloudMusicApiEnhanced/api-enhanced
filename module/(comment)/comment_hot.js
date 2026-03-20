@@ -1,4 +1,4 @@
-const { resourceTypeMap } = require('../util/config.json')
+const { resourceTypeMap } = require('../../util/config.json')
 // 热门评论
 
 const createOption = require('../../util/option.js')
