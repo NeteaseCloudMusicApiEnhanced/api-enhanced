@@ -237,6 +237,7 @@ const createRequest = (uri, data, options) => {
         headers['User-Agent'] = options.ua || chooseUserAgent('api', 'iphone')
 
         if (crypto === 'eapi') {
+          // headers['x-aeapi'] = true // 服务器会使用gzip压缩返回值
           data.header = header
           data.e_r = toBoolean(
             options.e_r !== undefined
@@ -320,6 +321,7 @@ const createRequest = (uri, data, options) => {
           if (crypto === 'eapi' && data.e_r) {
             answer.body = encrypt.eapiResDecrypt(
               body.toString('hex').toUpperCase(),
+              headers['x-aeapi'],
             )
           } else {
             answer.body =
