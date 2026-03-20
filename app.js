@@ -12,7 +12,7 @@ async function start() {
   const generateConfig = require('./generateConfig')
   await generateConfig()
 
-  // 端口优先级: 环境变量 PORT > 外部配置文件 > 默认 3838
+  // NOTE: 端口优先级: 环境变量 PORT > 外部配置文件 > 默认 3838
   let configPort = Number.parseInt(process.env.PORT || '', 10);
   if (!Number.isFinite(configPort) || configPort <= 0) {
     configPort = 3838;
