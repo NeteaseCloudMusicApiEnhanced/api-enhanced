@@ -2,5 +2,5 @@
 
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
-  return request(`/api/search/defaultkeyword/get`, {}, createOption(query))
+  return request(`/api/search/default/keyword/get`, {}, createOption(query))
 }

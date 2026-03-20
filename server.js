@@ -164,14 +164,14 @@ async function consturctServer(moduleDefs) {
    */
   app.use((req, _, next) => {
     req.cookies = {}
-    //;(req.headers.cookie || '').split(/\s*;\s*/).forEach((pair) => { //  Polynomial regular expression //
-    ;(req.headers.cookie || '').split(/;\s+|(?<!\s)\s+$/g).forEach((pair) => {
-      let crack = pair.indexOf('=')
-      if (crack < 1 || crack == pair.length - 1) return
-      req.cookies[decode(pair.slice(0, crack)).trim()] = decode(
-        pair.slice(crack + 1),
-      ).trim()
-    })
+      //;(req.headers.cookie || '').split(/\s*;\s*/).forEach((pair) => { //  Polynomial regular expression //
+      ; (req.headers.cookie || '').split(/;\s+|(?<!\s)\s+$/g).forEach((pair) => {
+        let crack = pair.indexOf('=')
+        if (crack < 1 || crack == pair.length - 1) return
+        req.cookies[decode(pair.slice(0, crack)).trim()] = decode(
+          pair.slice(crack + 1),
+        ).trim()
+      })
     next()
   })
 
@@ -369,24 +369,22 @@ async function serveNcmApi(options) {
   /** @type {import('express').Express & ExpressExtension} */
   const appExt = app
   appExt.server = app.listen(port, host, () => {
-    console.log(`
-   _   _  _____ __  __  
-  | \\ | |/ ____|  \\/  |
-  |  \\| | |    | \\  / |
-  | . \` | |    | |\\/| |
-  | |\\  | |____| |  | | 
-  |_| \\_|\\_____|_|  |_|
-    `)
-    console.log(`
-    ╔═╗╔═╗╦    ╔═╗╔╗╔╦ ╦╔═╗╔╗╔╔═╗╔═╗╔╦╗
-    ╠═╣╠═╝║    ║╣ ║║║╠═╣╠═╣║║║║  ║╣  ║║
-    ╩ ╩╩  ╩    ╚═╝╝╚╝╩ ╩╩ ╩╝╚╝╚═╝╚═╝═╩╝
-    `)
+
+    console.log(`\x1b[31m
+    ███╗   ██╗███████╗████████╗███████╗ █████╗ ███████╗███████╗  █████╗ ██████╗ ██╗
+    ████╗  ██║██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔════╝██╔════╝ ██╔══██╗██╔══██╗██║
+    ██╔██╗ ██║█████╗     ██║   █████╗  ███████║███████╗█████╗   ███████║██████╔╝██║
+    ██║╚██╗██║██╔══╝     ██║   ██╔══╝  ██╔══██║╚════██║██╔══╝   ██╔══██║██╔═══╝ ██║
+    ██║ ╚████║███████╗   ██║   ███████╗██║  ██║███████║███████╗ ██║  ██║██║     ██║
+    ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═╝  ╚═╝╚═╝     ╚═╝
+    \x1b[0m`)
+
     logger.info(`
-- Server started successfully @ http://${host ? host : 'localhost'}:${port}
-- Environment: ${process.env.NODE_ENV || 'development'}
-- Node Version: ${process.version}
-- Process ID: ${process.pid}`)
+    - Server started successfully @ http://${host ? host : 'localhost'}:${port}
+    - Environment: ${process.env.NODE_ENV || 'development'}
+    - Node Version: ${process.version}
+    - Process ID: ${process.pid}`
+    )
   })
 
   return appExt
