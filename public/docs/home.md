@@ -5143,6 +5143,72 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/comment/reply?id=2058263032&commentId=123456789&content=我也觉得这首歌很棒！`
 
+### DIFM电台 - 分类
+
+说明: 调用此接口, 获取DIFM电台分类
+
+**必选参数 :**  
+
+`sources`: 来源列表, 0: 最嗨电音 1: 古典电台 2: 爵士电台
+
+**接口地址:** `/dj/difm/all/style/channel`
+
+**调用例子:** `/dj/difm/all/style/channel?sources=[0]`
+
+### DIFM电台 - 收藏列表
+
+说明: 调用此接口, 获取DIFM电台收藏列表
+
+**必选参数 :**  
+
+`sources`: 来源列表, 0: 最嗨电音 1: 古典电台 2: 爵士电台
+
+**接口地址:** `/dj/difm/subscribe/channels/get`
+
+**调用例子:** `/dj/difm/subscribe/channels/get?sources=[0]`
+
+### DIFM电台 - 收藏频道
+
+说明: 调用此接口, 可收藏DIFM频道
+
+**必选参数 :**
+
+`id`: 频道id
+
+**接口地址:** `/dj/difm/channel/subscribe`
+
+**调用例子:** `/dj/difm/channel/subscribe?id=1`
+
+### DIFM电台 - 取消收藏频道
+
+说明: 调用此接口, 可取消收藏DIFM频道
+
+**必选参数 :**
+
+`id`: 频道id
+
+**接口地址:** `/dj/difm/channel/unsubscribe`
+
+**调用例子:** `/dj/difm/channel/unsubscribe?id=1`
+
+### DIFM电台 - 播放列表
+
+说明: 调用此接口, 获取DIFM播放列表
+
+**必选参数 :**  
+
+`source`: 来源, 0: 最嗨电音 1: 古典电台 2: 爵士电台
+
+`channelId`: 频道id
+
+**可选参数 :**
+
+`limit`: 返回数量, 默认为 5
+
+**接口地址:** `/dj/difm/playing/tracks/list`
+
+**调用例子:** `/dj/difm/playing/tracks/list?source=0&channelId=1012`
+
 ## 离线访问此文档
 
 此文档同时也是 Progressive Web Apps(PWA), 加入了 serviceWorker, 可离线访问

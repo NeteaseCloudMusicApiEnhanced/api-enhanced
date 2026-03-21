@@ -75,9 +75,8 @@ async function getModulesDefinitions(
    *  - 例如 module/playlist/detail.js 对应 /playlist/detail 路由
    *  - 目录名中的下划线会被转换成斜杠，例如 module/user/_info.js 对应 /user/info 路由
    *  - 特例：如果目录名被括号包裹，例如 module/(search)/index.js，对应 /search 路由（即括号内的内容会被忽略）
-   * NOTE: 我暂且不动原先的文件，我的项目已经使用了，一动我的前端算是白写了
-   * @param {string} currentDir 当前所在的物理目录路径
-   * @param {string} basePrefix 累加的 URL 路由前缀
+   * @param {string} currentDir 当前所在的目录路径
+   * @param {string} basePrefix 累加的路由前缀，会转换会 URL 的一部分，可用 () 决定是否包含该部分
    */
   async function scanDir(currentDir, basePrefix = '/') {
     const files = await fs.promises.readdir(currentDir);
@@ -163,15 +162,45 @@ async function checkVersion() {
   })
 }
 
+function parseCorsAllowOrigins(corsAllowOrigin) {
+  if (!corsAllowOrigin) {
+    return null
+  }
+
+  const origins = corsAllowOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+
+  return origins.length > 0 ? origins : null
+}
+
+function getCorsAllowOrigin(allowOrigins, requestOrigin) {
+  if (!allowOrigins) {
+    return requestOrigin || '*'
+  }
+
+  if (allowOrigins.includes('*')) {
+    return '*'
+  }
+
+  if (requestOrigin && allowOrigins.includes(requestOrigin)) {
+    return requestOrigin
+  }
+
+  return null
+}
+
 /**
  * Construct the server of NCM API.
  *
  * @param {ModuleDefinition[]} [moduleDefs] Customized module definitions [advanced]
  * @returns {Promise<import("express").Express>} The server instance.
  */
-async function consturctServer(moduleDefs) {
+async function constructServer(moduleDefs) {
   const app = express()
   const { CORS_ALLOW_ORIGIN } = process.env
+  const allowOrigins = parseCorsAllowOrigins(CORS_ALLOW_ORIGIN)
   app.set('trust proxy', true)
 
   /**
@@ -183,10 +212,17 @@ async function consturctServer(moduleDefs) {
    */
   app.use((req, res, next) => {
     if (req.path !== '/' && !req.path.includes('.')) {
+      const corsAllowOrigin = getCorsAllowOrigin(
+        allowOrigins,
+        req.headers.origin,
+      )
+      const shouldSetVaryHeader = corsAllowOrigin && corsAllowOrigin !== '*'
       res.set({
         'Access-Control-Allow-Credentials': true,
-        'Access-Control-Allow-Origin':
-          CORS_ALLOW_ORIGIN || req.headers.origin || '*',
+        ...(corsAllowOrigin
+          ? { 'Access-Control-Allow-Origin': corsAllowOrigin }
+          : {}),
+        ...(shouldSetVaryHeader ? { Vary: 'Origin' } : {}),
         'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type',
         'Access-Control-Allow-Methods': 'PUT,POST,GET,DELETE,OPTIONS',
         'Content-Type': 'application/json; charset=utf-8',
@@ -395,7 +431,7 @@ async function serveNcmApi(options) {
         )
       }
     })
-  const constructServerSubmission = consturctServer(options.moduleDefs)
+  const constructServerSubmission = constructServer(options.moduleDefs)
 
   const [_, app] = await Promise.all([
     checkVersionSubmission,

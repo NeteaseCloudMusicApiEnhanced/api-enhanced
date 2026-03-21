@@ -1,0 +1,56 @@
+name: Node.js CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 22.x]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          # Use built-in package manager cache for pnpm
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
+      - name: Test
+        env:
+          NCM_API_TEST_LOGIN_COUNTRY_CODE: ${{ secrets.NCM_API_TEST_LOGIN_COUNTRY_CODE }}
+          NCM_API_TEST_LOGIN_PHONE: ${{ secrets.NCM_API_TEST_LOGIN_PHONE }}
+          NCM_API_TEST_LOGIN_PASSWORD: ${{ secrets.NCM_API_TEST_LOGIN_PASSWORD }}
+        run: pnpm test
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm run lint

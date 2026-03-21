@@ -130,7 +130,7 @@ $ sudo docker run -d -p 3000:3000 ncm-api
 
 | 变量名                        | 默认值                                  | 说明                                                 |
 |----------------------------|--------------------------------------|----------------------------------------------------|
-| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。若需要限制，请指定具体域名（例如 `https://example.com`）。 |
+| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。可填写单个源，或使用逗号分隔多个源（例如 `https://a.com,https://b.com`）。 |
 | **ENABLE_PROXY**           | `false`                              | 是否启用反向代理功能。                                        |
 | **PROXY_URL**              | `https://your-proxy-url.com/?proxy=` | 代理服务地址。仅当 `ENABLE_PROXY=true` 时生效。                 |
 | **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                     |

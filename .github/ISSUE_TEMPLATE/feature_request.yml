@@ -1,0 +1,72 @@
+name: ✨ 接口添加请求
+description: 希望添加新接口
+title: "[Feature] "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您提出新功能建议！请填写以下信息帮助我们理解您的需求。
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 确认事项
+      description: 在提交功能请求前，请确认以下事项
+      options:
+        - label: 我已经搜索了现有的issues，确认这不是重复请求
+          required: true
+        - label: 我已经查看了项目文档
+          required: true
+        - label: 该项目符合该项目的目标和范围
+          required: true
+        - label: 我确认我提供的接口请求是合理且有意义的
+          required: true
+
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 功能描述
+      description: 请详细描述您希望添加的功能，最好贴上对应客户端界面的截图
+      placeholder: |
+        请详细描述您期望的功能：
+        - 新的网易云音乐api 接口?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 您认为这个功能的优先级如何？
+      options:
+        - 低 (可有可无的改进)
+        - 中 (会显著改善使用体验)
+        - 高 (严重影响了我使用)
+        - 紧急 (阻塞了重要工作)
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 兼容性考虑
+      description: 这个功能是否会影响现有代码的兼容性？
+      placeholder: |
+        - 是否是破坏性变更？
+        - 是否需要语法变更？
+        - 对性能的影响？
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: 实现意愿
+      description: 您是否愿意参与这个功能的实现？
+      options:
+        - label: 我愿意提交PR来实现这个功能
+        - label: 我可以协助设计API接口
+        - label: 我可以提供测试用例
+        - label: 我可以帮助编写文档

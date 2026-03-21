@@ -1,0 +1,132 @@
+name: 🐛 Bug报告
+description: 报告API其中的错误或问题
+title: "[Bug] "
+labels: ["bug"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您报告Bug！请填写以下信息帮助我们快速定位和修复问题。
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 确认事项
+      description: 在提交Bug报告前，请确认以下事项
+      options:
+        - label: 我已经搜索了现有的issues，确认这不是重复问题
+          required: true
+        - label: 我使用的是最新版本的API, 而且是官方发布的版本，而不是fork或修改版
+          required: true
+        - label: 不处理别人搭建的线上服务的问题,此项目提供任何线上服务不保证质量
+          required: true
+        - label: 如果不是提建议,提 issues 如果不照着模版来将不会优先处理或放着不管
+          required: true
+        - label: 维护项目都是业余时间,精力有限,我只能挑容易解决的issues处理,为了节约双方时间,请尽可能提供足够的有用的信息,给的信息不够我只能根据精力和时间看情况处理,如果模板信息看都不看就删掉,我不会进行任何回复,并且一个月后close掉issue
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: API版本
+      description: 请提供您使用的API版本以及nodejs版本
+      placeholder: "v4.2x.x, Node.js v22.x.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统或平台
+      description: 您在哪个操作系统上遇到了这个问题？
+      options:
+        - Windows 10
+        - Windows 11
+        - Ubuntu 20.04
+        - Ubuntu 22.04
+        - macOS
+        - 其他 Linux 发行版
+        - 使用部署平台或其他 (请在描述中说明)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: 部署平台
+      description: 
+      options:
+        - 我使用的自己的服务器部署
+        - Vercel
+        - Heroku
+        - Railway
+        - 其他云平台 (请在描述中说明)
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug描述
+      description: 请详细描述您遇到的问题
+      placeholder: |
+        清晰简洁地描述bug的具体表现...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 重现步骤
+      description: 请提供详细的重现步骤
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 期望行为
+      description: 请描述您期望发生的行为
+      placeholder: 清晰简洁地描述您期望应该发生什么...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: 实际行为
+      description: 请描述实际发生的行为
+      placeholder: 清晰简洁地描述实际发生了什么...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: 错误输出日志
+      description: 请提供完整的错误信息日志
+      render: shell
+      placeholder: |
+        错误信息输出...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 额外信息
+      description: 添加任何其他有助于理解问题的信息
+      placeholder: |
+        - 截图
+        - 相关配置文件
+        - 其他相关信息
+
+  - type: checkboxes
+    id: help
+    attributes:
+      label: 愿意协助
+      description: 您是否愿意帮助修复这个bug？
+      options:
+        - label: 我愿意提交PR来修复这个bug
+        - label: 我可以提供更多测试用例
+        - label: 我可以帮助测试修复方案
