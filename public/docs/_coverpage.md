@@ -10,4 +10,4 @@
 [Github](https://github.com/neteasecloudmusicapienhanced/api-enhanced)
 [Get Started](#neteasecloudmusicapienhanced)
 
-![color](#ffffff)
+<!-- ![color](#ffffff) -->

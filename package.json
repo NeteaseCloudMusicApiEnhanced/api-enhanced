@@ -103,6 +103,8 @@
     "pkg": "^5.8.1",
     "power-assert": "^1.6.1",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3"
-  }
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
+  },
+  "private": true
 }

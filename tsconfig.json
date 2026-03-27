@@ -1,31 +1,31 @@
 {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "commonjs",
-      "experimentalDecorators": true,
-      "ignoreDeprecations": "6.0",
-      "moduleResolution": "node",
-      "lib": [
-        "esnext",
-        "esnext.asynciterable",
-        "dom"
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "ignoreDeprecations": "5.0",
+    "moduleResolution": "node",
+    "lib": [
+      "esnext",
+      "esnext.asynciterable",
+      "dom"
+    ],
+    "esModuleInterop": true,
+    "allowJs": true,
+    "sourceMap": true,
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": [
+        "./*"
       ],
-      "esModuleInterop": true,
-      "allowJs": true,
-      "sourceMap": true,
-      "strict": true,
-      "noEmit": true,
-      "baseUrl": ".",
-      "paths": {
-        "~/*": [
-          "./*"
-        ],
-        "@/*": [
-          "./*"
-        ]
-      },
+      "@/*": [
+        "./*"
+      ]
     },
-    "exclude": [
-      "node_modules"
-    ]
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

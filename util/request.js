@@ -17,7 +17,7 @@ const {
   generateRandomChineseIP,
 } = require('./index')
 const { URLSearchParams, URL } = require('url')
-const { APP_CONF } = require('../util/config.json')
+const { APP_CONF } = require('./config.json')
 
 // 预先读取匿名token并缓存
 const anonymous_token = fs.readFileSync(
