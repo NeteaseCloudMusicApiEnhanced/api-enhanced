@@ -9,9 +9,9 @@ class AdvancedClientSignGenerator {
     try {
       const interfaces = os.networkInterfaces()
       for (let interfaceName in interfaces) {
-        const networkInterface = interfaces[interfaceName]
-        for (let i = 0; i < networkInterface.length; i++) {
-          const alias = networkInterface[i]
+        const interfaceItem = interfaces[interfaceName]
+        for (let i = 0; i < interfaceItem.length; i++) {
+          const alias = interfaceItem[i]
           // 排除内部地址和无效地址
           if (
             alias.mac &&

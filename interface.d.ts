@@ -1715,6 +1715,8 @@ export function nickname_check(
 
 export function musician_tasks_new(params: RequestBaseConfig): Promise<Response>
 
+export function musician_vip_tasks(params: RequestBaseConfig): Promise<Response>
+
 export function playlist_update_playcount(
   params: {
     id?: number | string

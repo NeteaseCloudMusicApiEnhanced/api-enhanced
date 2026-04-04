@@ -194,11 +194,11 @@ const createRequest = (uri, data, options) => {
     // 根据加密方式处理
     switch (crypto) {
       case 'weapi':
-        headers['Referer'] = DOMAIN
+        headers['Referer'] = options.domain || DOMAIN
         headers['User-Agent'] = options.ua || chooseUserAgent('weapi')
         data.csrf_token = csrfToken
         encryptData = encrypt.weapi(data)
-        url = DOMAIN + '/weapi/' + uri.substr(5)
+        url = (options.domain || DOMAIN) + '/weapi/' + uri.substr(5)
         break
 
       case 'linuxapi':
@@ -206,10 +206,10 @@ const createRequest = (uri, data, options) => {
           options.ua || chooseUserAgent('linuxapi', 'linux')
         encryptData = encrypt.linuxapi({
           method: 'POST',
-          url: DOMAIN + uri,
+          url: (options.domain || DOMAIN) + uri,
           params: data,
         })
-        url = DOMAIN + '/api/linux/forward'
+        url = (options.domain || DOMAIN) + '/api/linux/forward'
         break
 
       case 'eapi':
@@ -240,6 +240,7 @@ const createRequest = (uri, data, options) => {
         headers['User-Agent'] = options.ua || chooseUserAgent('api', 'iphone')
 
         if (crypto === 'eapi') {
+          // headers['x-aeapi'] = true // 服务器会使用gzip压缩返回值
           data.header = header
           data.e_r = toBoolean(
             options.e_r !== undefined
@@ -249,9 +250,9 @@ const createRequest = (uri, data, options) => {
                 : ENCRYPT_RESPONSE,
           )
           encryptData = encrypt.eapi(uri, data)
-          url = API_DOMAIN + '/eapi/' + uri.substr(5)
+          url = (options.domain || API_DOMAIN) + '/eapi/' + uri.substr(5)
         } else if (crypto === 'api') {
-          url = API_DOMAIN + uri
+          url = (options.domain || API_DOMAIN) + uri
           encryptData = data
         }
         break
@@ -323,6 +324,7 @@ const createRequest = (uri, data, options) => {
           if (crypto === 'eapi' && data.e_r) {
             answer.body = encrypt.eapiResDecrypt(
               body.toString('hex').toUpperCase(),
+              headers['x-aeapi'],
             )
           } else {
             answer.body =

@@ -128,16 +128,46 @@ async function checkVersion() {
   })
 }
 
+function parseCorsAllowOrigins(corsAllowOrigin) {
+  if (!corsAllowOrigin) {
+    return null
+  }
+
+  const origins = corsAllowOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+
+  return origins.length > 0 ? origins : null
+}
+
+function getCorsAllowOrigin(allowOrigins, requestOrigin) {
+  if (!allowOrigins) {
+    return requestOrigin || '*'
+  }
+
+  if (allowOrigins.includes('*')) {
+    return '*'
+  }
+
+  if (requestOrigin && allowOrigins.includes(requestOrigin)) {
+    return requestOrigin
+  }
+
+  return null
+}
+
 /**
  * Construct the server of NCM API.
  *
  * @param {ModuleDefinition[]} [moduleDefs] Customized module definitions [advanced]
  * @returns {Promise<import("express").Express>} The server instance.
  */
-async function consturctServer(moduleDefs) {
+async function constructServer(moduleDefs) {
   const app = express()
   app.use(compression())
   const { CORS_ALLOW_ORIGIN } = process.env
+  const allowOrigins = parseCorsAllowOrigins(CORS_ALLOW_ORIGIN)
   app.set('trust proxy', true)
 
   /**
@@ -149,10 +179,17 @@ async function consturctServer(moduleDefs) {
    */
   app.use((req, res, next) => {
     if (req.path !== '/' && !req.path.includes('.')) {
+      const corsAllowOrigin = getCorsAllowOrigin(
+        allowOrigins,
+        req.headers.origin,
+      )
+      const shouldSetVaryHeader = corsAllowOrigin && corsAllowOrigin !== '*'
       res.set({
         'Access-Control-Allow-Credentials': true,
-        'Access-Control-Allow-Origin':
-          CORS_ALLOW_ORIGIN || req.headers.origin || '*',
+        ...(corsAllowOrigin
+          ? { 'Access-Control-Allow-Origin': corsAllowOrigin }
+          : {}),
+        ...(shouldSetVaryHeader ? { Vary: 'Origin' } : {}),
         'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type',
         'Access-Control-Allow-Methods': 'PUT,POST,GET,DELETE,OPTIONS',
         'Content-Type': 'application/json; charset=utf-8',
@@ -180,10 +217,25 @@ async function consturctServer(moduleDefs) {
   /**
    * Body Parser and File Upload
    */
-  app.use(express.json({ limit: '50mb' }))
-  app.use(express.urlencoded({ extended: false, limit: '50mb' }))
+  const MAX_UPLOAD_SIZE_MB = 500
+  const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
-  app.use(fileUpload())
+  app.use(express.json({ limit: `${MAX_UPLOAD_SIZE_MB}mb` }))
+  app.use(
+    express.urlencoded({ extended: false, limit: `${MAX_UPLOAD_SIZE_MB}mb` }),
+  )
+
+  app.use(
+    fileUpload({
+      limits: {
+        fileSize: MAX_UPLOAD_SIZE_BYTES,
+      },
+      useTempFiles: true,
+      tempFileDir: require('os').tmpdir(),
+      abortOnLimit: true,
+      parseNested: true,
+    }),
+  )
 
   /**
    * Cache
@@ -208,7 +260,7 @@ async function consturctServer(moduleDefs) {
 
   for (const moduleDef of moduleDefinitions) {
     // Register the route.
-    app.use(moduleDef.route, async (req, res) => {
+    app.all(moduleDef.route, async (req, res) => {
       ;[req.query, req.body].forEach((item) => {
         // item may be undefined (some environments / middlewares).
         // Guard access to avoid "Cannot read properties of undefined (reading 'cookie')".
@@ -229,25 +281,30 @@ async function consturctServer(moduleDefs) {
         const moduleResponse = await moduleDef.module(query, (...params) => {
           // 参数注入客户端IP
           const obj = [...params]
-          let ip = req.ip
+          const options = obj[2] || {}
+          if (!options.randomCNIP) {
+            let ip = req.ip
 
-          if (ip.substring(0, 7) == '::ffff:') {
-            ip = ip.substring(7)
+            if (ip.substring(0, 7) == '::ffff:') {
+              ip = ip.substring(7)
+            }
+            if (ip == '::1') {
+              ip = global.cnIp
+            }
+            // logger.info('Requested from ip:', ip)
+            obj[2] = {
+              ...options,
+              ip,
+            }
           }
-          if (ip == '::1') {
-            ip = global.cnIp
-          }
-          logger.info('Requested from ip:', ip)
-          obj[3] = {
-            ...obj[3],
-            ip,
-          }
+
           return request(...obj)
         })
         logger.info(`Request Success: ${decode(req.originalUrl)}`)
 
+        // 夹带私货部分：如果开启了通用解锁，并且是获取歌曲URL的接口，则尝试解锁（如果需要的话）ヾ(≧▽≦*)o
         if (
-          (req.baseUrl === '/song/url/v1' || req.baseUrl === '/song/url') &&
+          req.baseUrl === '/song/url/v1' &&
           process.env.ENABLE_GENERAL_UNBLOCK === 'true'
         ) {
           const song = moduleResponse.body.data[0]
@@ -262,7 +319,7 @@ async function consturctServer(moduleDefs) {
             logger.info('Starting unblock(uses general unblock):', req.query.id)
             const result = await matchID(req.query.id)
             song.url = result.data.url
-            song.freeTrialInfo = 'null'
+            song.freeTrialInfo = null
             logger.info('Unblock success! url:', song.url)
           }
           if (song.url && song.url.includes('kuwo')) {
@@ -290,6 +347,11 @@ async function consturctServer(moduleDefs) {
             }
           }
         }
+        if (moduleResponse.redirectUrl) {
+          res.redirect(moduleResponse.status || 302, moduleResponse.redirectUrl)
+          return
+        }
+
         res.status(moduleResponse.status).send(moduleResponse.body)
       } catch (/** @type {*} */ moduleResponse) {
         logger.error(`${decode(req.originalUrl)}`, {
@@ -336,7 +398,7 @@ async function serveNcmApi(options) {
         )
       }
     })
-  const constructServerSubmission = consturctServer(options.moduleDefs)
+  const constructServerSubmission = constructServer(options.moduleDefs)
 
   const [_, app] = await Promise.all([
     checkVersionSubmission,

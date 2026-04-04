@@ -12,7 +12,6 @@
     </div>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script>
-      const logger = require('../util/logger.js')
       async function main() {
         const res = await axios({
           url: `/homepage/block/page`,
@@ -22,7 +21,7 @@
           method: 'post',
         })
         let cursor = ''
-        logger.info(res.data.data)
+        console.info(res.data.data)
         if (res.data.data.hasMore) {
           cursor = res.data.data.cursor
           const res2 = await axios({

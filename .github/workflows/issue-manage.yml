@@ -15,19 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Welcome new issue
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
-            👋 感谢您提交issue！
+            ## 快速链接
 
-            我们已经收到您的反馈，维护者会尽快查看并回复。
+            在我们处理您的问题之前，您可以先查看以下资源：
 
-            由于二开作者是高中生, 只能在非工作日处理issue, 请耐心等待。
-
-            在等待回复期间，您可以：
             - 📖 查看[项目文档](https://neteasecloudmusicapienhanced.js.org)
-            - 💬 加入[QQ交流群](https://qm.qq.com/q/TpeP9Uv2yk) 进行实时讨论
+            - 💬 加入[QQ交流群](https://qm.qq.com/q/TpeP9Uv2yk) 
             - 🔍 搜索[现有issues](https://github.com/neteasecloudmusicapienhanced/api-enhanced/issues) 看是否有类似问题
 
   handle-help-wanted:
@@ -35,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add help resources
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
@@ -54,14 +51,12 @@ jobs:
 
             如果以上资源无法解决您的问题，请提供更多详细信息，我们会尽快为您解答！
 
-            由于二开作者是高中生, 只能在非工作日处理issue, 请耐心等待。
-
   stale-issues:
     if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     steps:
       - name: Mark stale issues
-        uses: actions/stale@v8
+        uses: actions/stale@v10
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           stale-issue-message: |

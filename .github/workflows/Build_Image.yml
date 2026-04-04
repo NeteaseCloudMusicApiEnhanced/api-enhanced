@@ -2,7 +2,7 @@ name: Publish Docker image
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # 读取 package.json 的版本号
       - name: Read package version

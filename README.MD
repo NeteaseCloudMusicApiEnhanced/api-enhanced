@@ -1,18 +1,53 @@
-# 网易云音乐 API Enhanced
+<p align="center">
+  <img src="./public/docs/netease.png" alt="网易云音乐 API Enhanced Logo" width="120" height="120" />
+</p>
 
-FORK后进行了修改，现在会对json进行压缩，提升数据传输速度。
+<h1 align="center">NeteaseCloudMusicAPI Enhanced</h1>
 
----
+<p align="center">
+  <a href="https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api">
+    <img src="https://img.shields.io/npm/v/@neteasecloudmusicapienhanced/api?style=flat-square" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api">
+    <img src="https://img.shields.io/npm/dm/@neteasecloudmusicapienhanced/api?style=flat-square" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced">
+    <img src="https://img.shields.io/github/license/NeteaseCloudMusicApiEnhanced/api-enhanced?style=flat-square" alt="License" />
+  </a>
+  <a href="https://nodejs.org/">
+    <img src="https://img.shields.io/node/v/@neteasecloudmusicapienhanced/api?style=flat-square" alt="Node Version" />
+  </a>
+  <a href="https://hub.docker.com/r/moefurina/ncm-api">
+    <img src="https://img.shields.io/docker/v/moefurina/ncm-api?style=flat-square" alt="Docker Version" />
+  </a>
+  <a href="https://hub.docker.com/r/moefurina/ncm-api">
+    <img src="https://img.shields.io/docker/pulls/moefurina/ncm-api?style=flat-square" alt="Docker Pulls" />
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript" alt="TypeScript" />
+  </a>
+</p>
+
+
 
 ## 项目简介
 
-本项目为网易云音乐第三方 Node.js API，基于停更的原版 API 持续维护，支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
+网易云音乐第三方 Node.js API, 支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
+
+> [!IMPORTANT]
+>
+> ## 注意
+>
+> - 本项目是一个高度去中心化的第三方 API，其维护都由社区志愿者使用`Pull Request`完成。   
+> - 使用本项目时请务必遵守相关法律法规，遵守`MIT`协议, 尊重网易云音乐的服务条款。   
+> - 原作者项目 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 并非完全停止维护, 你可以在 [NeteaseCloudMusicApi 的 NPMJS 页面](https://www.npmjs.com/package/NeteaseCloudMusicApi) 查看最新版本信息。   
+> - 感谢尊重和理解!
 
 ## 快速开始
 
 ### 环境要求
 
-- Node.js 14 及以上
+- Node.js 18 及以上
 - 推荐使用 pnpm 进行依赖管理
 
 ### 安装
@@ -53,43 +88,55 @@ set PORT=4000 && node app.js  # Windows
 
 本项目支持通过 Docker 一键部署，无需手动安装 Node.js 或依赖。
 
-### 1. 拉取镜像
+> 注意: 在 docker 中运行的时候, 由于使用了 request 来发请求, 所以会检查几个 proxy 相关的环境变量(如下所列), 这些环境变量 会影响到 request 的代理, 详情请参考[request 的文档](https://github.com/request/request#proxies), 如果这些环境变量 指向的代理不可用, 那么就会造成错误, 所以在使用 docker 的时候一定要注意这些环境变量. 不过, 要是你在 query 中加上了 proxy 参数, 那么环境变量会被覆盖, 就会用你通过 proxy 参数提供的代理了.
 
-从 Docker Hub 拉取最新版本镜像：
+request 相关的环境变量
 
-```bash
+1. http_proxy
+2. https_proxy
+3. HTTP_PROXY
+4. HTTPS_PROXY
+5. no_proxy
+6. NO_PROXY
+
+```shell
 docker pull moefurina/ncm-api:latest
+
+docker run -d -p 3000:3000 --name ncm-api moefurina/ncm-api:latest
+
+
+// 或者
+docker run -d -p 3000:3000 moefurina/ncm-api:latest
+
+// 去掉或者设置相关的环境变量
+
+docker run -d -p 3000:3000 --name ncm-api -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
+
+// 或者
+docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
 ```
 
-或指定版本（与 package.json 中版本号一致）：
+> 以下是自行 build docker 镜像方式
 
-```bash
-docker pull moefurina/ncm-api:4.29.0
+```shell
+$ git clone https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced && cd api-enhanced
 
+$ sudo docker build . -t ncm-api
+
+$ sudo docker run -d -p 3000:3000 ncm-api
 ```
-
-### 2. 运行容器
-
-```bash
-docker run -d \
-  --name ncm-api \
-  -p 3000:3000 \
-  moefurina/ncm-api:latest
-```
-
-运行后访问 http://localhost:3000 即可使用 API。
 
 ## 3. 环境变量
 
-| 变量名                     | 默认值                               | 说明                                                                           |
-| -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------ |
-| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。若需要限制，请指定具体域名（例如 `https://example.com`）。 |
-| **ENABLE_PROXY**           | `false`                              | 是否启用反向代理功能。                                                         |
-| **PROXY_URL**              | `https://your-proxy-url.com/?proxy=` | 代理服务地址。仅当 `ENABLE_PROXY=true` 时生效。                                |
-| **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                   |
-| **ENABLE_FLAC**            | `true`                               | 是否启用无损音质（FLAC）。                                                     |
-| **SELECT_MAX_BR**          | `false`                              | 启用无损音质时，是否选择最高码率音质。                                         |
-| **FOLLOW_SOURCE_ORDER**    | `true`                               | 是否严格按照音源列表顺序进行匹配。                                             |
+| 变量名                        | 默认值                                  | 说明                                                 |
+|----------------------------|--------------------------------------|----------------------------------------------------|
+| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。可填写单个源，或使用逗号分隔多个源（例如 `https://a.com,https://b.com`）。 |
+| **ENABLE_PROXY**           | `false`                              | 是否启用反向代理功能。                                        |
+| **PROXY_URL**              | `https://your-proxy-url.com/?proxy=` | 代理服务地址。仅当 `ENABLE_PROXY=true` 时生效。                 |
+| **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                     |
+| **ENABLE_FLAC**            | `true`                               | 是否启用无损音质（FLAC）。                                    |
+| **SELECT_MAX_BR**          | `false`                              | 启用无损音质时，是否选择最高码率音质。                                |
+| **FOLLOW_SOURCE_ORDER**    | `true`                               | 是否严格按照音源列表顺序进行匹配。                                  |
 
 ---
 
@@ -163,6 +210,7 @@ pnpm test
 ## 贡献与社区
 
 - 欢迎提交 PR、Issue 参与维护
+- 要贡献新接口, 请参考[这篇文章](https://www.focalors.ltd/post/how-to-contribute-ncm-api)
 
 ### 致谢
 
@@ -180,11 +228,12 @@ pnpm test
 
 ### SDK 生态
 
-| 语言   | 作者                                        | 地址                                                                                     | 类型   |
-| ------ | ------------------------------------------- | ---------------------------------------------------------------------------------------- | ------ |
+| 语言     | 作者                                          | 地址                                                                                       | 类型  |
+|--------|---------------------------------------------|------------------------------------------------------------------------------------------|-----|
 | Java   | [JackuXL](https://github.com/JackuXL)       | [NeteaseCloudMusicApi-SDK](https://github.com/JackuXL/NeteaseCloudMusicApi-SDK)          | 第三方 |
 | Java   | [1015770492](https://github.com/1015770492) | https://github.com/1015770492/yumbo-music-utils                                          | 第三方 |
-| Python | [盧瞳](https://github.com/2061360308)       | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
+| Python | [盧瞳](https://github.com/2061360308)         | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
+| Swift  | [Lincb522](https://github.com/Lincb522)  | [NeteaseCloudMusicApi-Swift](https://github.com/Lincb522/NeteaseCloudMusicAPI-Swift)     | 第三方 |
 
 
 ### 依赖此项目的优秀开源项目
@@ -192,6 +241,10 @@ pnpm test
 - [imsyy/splayer](https://github.com/imsyy/splayer)
 
 - [qier2222/YesPlayMusic](https://github.com/qier222/YesPlayMusic)
+
+- [MaigoLabs/amaoke.app](https://github.com/MaigoLabs/amaoke.app)
+
+- [Yueby/music-together](https://github.com/Yueby/music-together)
 
 ## License
 

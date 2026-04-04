@@ -2,11 +2,6 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
 
 jobs:
@@ -16,7 +11,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       # 发布到 NPM Registry
       - name: Setup Node.js for NPM

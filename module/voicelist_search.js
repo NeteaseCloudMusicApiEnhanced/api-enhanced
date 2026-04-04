@@ -1,14 +1,11 @@
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {
-    fee: '-1',
-    limit: query.limit || '200',
-    offset: query.offset || '0',
-    podcastName: query.podcastName || '',
+    keyword: query.keyword || '',
+    scene: 'normal',
+    limit: query.limit || '10',
+    offset: query.offset || '30',
+    e_r: true,
   }
-  return request(
-    `/api/voice/workbench/voicelist/search`,
-    data,
-    createOption(query),
-  )
+  return request(`/api/search/voicelist/get`, data, createOption(query))
 }
