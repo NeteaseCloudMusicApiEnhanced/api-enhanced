@@ -1,5 +1,6 @@
 const CryptoJS = require('crypto-js')
 const forge = require('node-forge')
+const zlib = require('zlib')
 const iv = '0102030405060708'
 const presetKey = '0CoJUm6Qyw8W8jud'
 const linuxapiKey = 'rFgB&h#%2?^eDg:Q'
@@ -44,7 +45,7 @@ const aesDecrypt = (ciphertext, key, iv, format = 'base64') => {
       },
     )
   }
-  return bytes.toString(CryptoJS.enc.Utf8)
+  return bytes
 }
 const rsaEncrypt = (str, key) => {
   const forgePublicKey = forge.pki.publicKeyFromPem(key)
@@ -85,20 +86,37 @@ const eapi = (url, object) => {
     params: aesEncrypt(data, 'ecb', eapiKey, '', 'hex'),
   }
 }
-const eapiResDecrypt = (encryptedParams) => {
+const eapiResDecrypt = (encryptedParams, aeapi = false) => {
   // 使用aesDecrypt解密参数
   try {
-    const decryptedData = aesDecrypt(encryptedParams, eapiKey, '', 'hex')
-    return JSON.parse(decryptedData)
+    const decrypted = aesDecrypt(encryptedParams, eapiKey, '', 'hex') // WordArray
+
+    if (aeapi) {
+      // 带压缩的解密：先转 Base64 再解压
+      const decryptedBuffer = Buffer.from(
+        decrypted.toString(CryptoJS.enc.Base64),
+        'base64',
+      )
+      const decompressed = zlib.gunzipSync(decryptedBuffer)
+      return JSON.parse(decompressed.toString())
+    } else {
+      // 普通解密：直接转 UTF-8 字符串
+      return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8))
+    }
   } catch (error) {
-    console.log('eapiResDecrypt error:', error)
+    console.log(`eapiResDecrypt error:`, error)
     return null
   }
 }
 const eapiReqDecrypt = (encryptedParams) => {
-  // 使用aesDecrypt解密参数
-  const decryptedData = aesDecrypt(encryptedParams, eapiKey, '', 'hex')
-  // 使用正则表达式解析出URL和数据
+  // 使用 aesDecrypt 解密参数
+  const decryptedData = aesDecrypt(
+    encryptedParams,
+    eapiKey,
+    '',
+    'hex',
+  ).toString(CryptoJS.enc.Utf8)
+  // 使用正则表达式解析出 URL 和数据
   const match = decryptedData.match(/(.*?)-36cd479b6b5-(.*?)-36cd479b6b5-(.*)/)
   if (match) {
     const url = match[1]
@@ -106,7 +124,7 @@ const eapiReqDecrypt = (encryptedParams) => {
     return { url, data }
   }
 
-  // 如果没有匹配到，返回null
+  // 如果没有匹配到，返回 null
   return null
 }
 const decrypt = (cipher) => {

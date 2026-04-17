@@ -25,9 +25,21 @@
   <div id="app" class="p-5 flex flex-col">
     <h1 class="text-2xl font-bold mb-5">eapi 参数和返回内容解析</h1>
     <textarea class="border border-gray-300 p-3 mb-5" v-model="hexString" rows="10"></textarea>
-    <button @click="decrypt" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-      解密
-    </button>
+    <div class="flex gap-3 mb-4">
+      <button @click="decrypt" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        解密
+      </button>
+      <button
+        @click="sendToApi"
+        :disabled="!canSend"
+        :class="[
+          'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded',
+          { 'opacity-50 cursor-not-allowed pointer-events-none': !canSend },
+        ]"
+      >
+        填入 API 调试
+      </button>
+    </div>
     <div class="mt-3">
       <input type="radio" id="format" name="format" v-model="isReq" value="true">
       <label for="format" class="ml-2">请求数据request params(针对请求数据的 params)</label>
@@ -63,6 +75,21 @@
       mounted() {
         this.decrypt()
       },
+      computed: {
+        isRequestMode() {
+          return this.isReq === true || this.isReq === 'true'
+        },
+        canSend() {
+          if (!this.isRequestMode) return false
+          if (!this.result || this.result === '{}' || this.result === 'null') return false
+          try {
+            JSON.parse(this.result)
+            return true
+          } catch (error) {
+            return false
+          }
+        },
+      },
       methods: {
         async decrypt() {
           try {
@@ -79,7 +106,23 @@
             console.error(error)
             alert(error?.response?.data?.message || '解密失败,数据格式错误')
           }
-        }
+        },
+        sendToApi() {
+          if (!this.canSend) return
+          const payload = JSON.parse(this.result)
+          const params = new URLSearchParams()
+          params.set('uri', payload.uri || payload.url || payload.path || '')
+          params.set('crypto', 'eapi')
+          const data =
+            payload.params ||
+            payload.data ||
+            payload.body ||
+            payload.payload ||
+            payload.request ||
+            {}
+          params.set('data', JSON.stringify(data))
+          window.open(`/api.html?${params.toString()}`, '_blank')
+        },
       }
     })
     app.mount('#app')

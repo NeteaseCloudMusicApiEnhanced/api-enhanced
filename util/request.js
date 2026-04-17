@@ -188,6 +188,13 @@ const createRequest = (uri, data, options) => {
 
     const answer = { status: 500, body: {}, cookie: [] }
 
+    data.e_r = toBoolean(
+      options.e_r !== undefined
+        ? options.e_r
+        : data.e_r !== undefined
+        ? data.e_r
+        : ENCRYPT_RESPONSE,
+    )
     // 根据加密方式处理
     switch (crypto) {
       case 'weapi':
@@ -239,13 +246,6 @@ const createRequest = (uri, data, options) => {
         if (crypto === 'eapi') {
           // headers['x-aeapi'] = true // 服务器会使用gzip压缩返回值
           data.header = header
-          data.e_r = toBoolean(
-            options.e_r !== undefined
-              ? options.e_r
-              : data.e_r !== undefined
-              ? data.e_r
-              : ENCRYPT_RESPONSE,
-          )
           encryptData = encrypt.eapi(uri, data)
           url = (options.domain || API_DOMAIN) + '/eapi/' + uri.substr(5)
         } else if (crypto === 'api') {
@@ -269,8 +269,9 @@ const createRequest = (uri, data, options) => {
       httpsAgent: createHttpsAgent(),
     }
 
-    // e_r处理
-    if (data.e_r) {
+    // 使用返回值加密
+    const use_e_r = (crypto === 'eapi' || crypto === 'weapi') && data.e_r
+    if (use_e_r) {
       settings.encoding = null
       settings.responseType = 'arraybuffer'
     }
@@ -318,7 +319,7 @@ const createRequest = (uri, data, options) => {
         )
 
         try {
-          if (crypto === 'eapi' && data.e_r) {
+          if (use_e_r) {
             answer.body = encrypt.eapiResDecrypt(
               body.toString('hex').toUpperCase(),
               headers['x-aeapi'],
