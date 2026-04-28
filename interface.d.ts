@@ -1167,7 +1167,10 @@ export function song_url_v1(
 ): Promise<Response>
 
 export function song_copyright_rcmd(
-  params: { songid: string | number; id?: string | number } & RequestBaseConfig,
+  params: {
+    songid?: string | number
+    id?: string | number
+  } & RequestBaseConfig,
 ): Promise<Response>
 
 export function top_album(
