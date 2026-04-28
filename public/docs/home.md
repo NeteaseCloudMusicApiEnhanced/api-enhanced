@@ -5318,6 +5318,18 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/song/creators?id=33894312`
 
+### 灰色歌曲的其他版本推荐
+
+说明 : 调用此接口, 传入灰色歌曲 id, 获取该歌曲的其他可播放版本推荐
+
+**必选参数 :**
+
+`songid`: 歌曲 id, 可使用 `id` 代替
+
+**接口地址 :** `/song/copyright/rcmd`
+
+**调用例子 :** `/song/copyright/rcmd?songid=27946878`
+
 ## 离线访问此文档
 
 此文档同时也是 Progressive Web Apps(PWA), 加入了 serviceWorker, 可离线访问
