@@ -1166,6 +1166,13 @@ export function song_url_v1(
   params: { id: string | number; level: SoundQualityType } & RequestBaseConfig,
 ): Promise<Response>
 
+export function song_copyright_rcmd(
+  params: {
+    songid?: string | number
+    id?: string | number
+  } & RequestBaseConfig,
+): Promise<Response>
+
 export function top_album(
   params: {
     area?: AlbumListArea
