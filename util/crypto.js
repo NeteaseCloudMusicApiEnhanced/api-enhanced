@@ -141,6 +141,8 @@ const decrypt = (cipher) => {
   return decryptedBytes
 }
 
+const xeapi = require('./xeapi')
+
 module.exports = {
   weapi,
   linuxapi,
@@ -150,4 +152,5 @@ module.exports = {
   aesDecrypt,
   eapiReqDecrypt,
   eapiResDecrypt,
+  xeapi,
 }

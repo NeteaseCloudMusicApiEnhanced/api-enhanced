@@ -1,5 +1,6 @@
 // 预先导入和绑定常用模块及函数
 const encrypt = require('./crypto')
+const xeapi = require('./xeapi')
 const CryptoJS = require('crypto-js')
 const { default: axios } = require('axios')
 const { PacProxyAgent } = require('pac-proxy-agent')
@@ -216,6 +217,24 @@ const createRequest = (uri, data, options) => {
         url = (options.domain || DOMAIN) + '/api/linux/forward'
         break
 
+      case 'xeapi':
+        // xeapi 加密 - 使用 Aegis 三层加密
+        headers['User-Agent'] =
+          options.ua ||
+          'NeteaseMusic/9.1.65.240927161425(9001065);Dalvik/2.1.0 (Linux; U; Android 14; 23013RK75C Build/UKQ1.230804.001)'
+        headers['Referer'] = options.domain || DOMAIN
+
+        // 执行 xeapi 三层加密
+        const xeapiResult = xeapi.xeapiEncrypt(data, {
+          serverPublicKey:
+            options.xeapiServerKey || process.env.XEAPI_SERVER_PUBLIC_KEY || '',
+        })
+        encryptData = xeapiResult.params // { B, S, R }
+        var xeapiDynamicKey = xeapiResult.dynamicKey // 用于响应解密
+
+        url = (options.domain || API_DOMAIN) + '/xeapi/' + uri.substr(5)
+        break
+
       case 'eapi':
       case 'api':
         // header创建
@@ -272,7 +291,8 @@ const createRequest = (uri, data, options) => {
 
     // 使用返回值加密
     const use_e_r = (crypto === 'eapi' || crypto === 'weapi') && data.e_r
-    if (use_e_r) {
+    const use_xeapi = crypto === 'xeapi'
+    if (use_e_r || use_xeapi) {
       settings.encoding = null
       settings.responseType = 'arraybuffer'
     }
@@ -320,7 +340,13 @@ const createRequest = (uri, data, options) => {
         )
 
         try {
-          if (use_e_r) {
+          if (use_xeapi && xeapiDynamicKey) {
+            // xeapi 响应解密: 原始 AES-256-GCM 二进制密文
+            answer.body = xeapi.xeapiDecryptResponse(
+              Buffer.from(body),
+              xeapiDynamicKey,
+            )
+          } else if (use_e_r) {
             answer.body = encrypt.eapiResDecrypt(
               body.toString('hex').toUpperCase(),
               headers['x-aeapi'],

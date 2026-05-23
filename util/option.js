@@ -9,6 +9,8 @@ const createOption = (query, crypto = '') => {
     e_r: query.e_r || undefined,
     domain: query.domain || '',
     checkToken: query.checkToken || false,
+    xeapiServerKey:
+      query.xeapiServerKey || process.env.XEAPI_SERVER_PUBLIC_KEY || '',
   }
 }
 module.exports = createOption
