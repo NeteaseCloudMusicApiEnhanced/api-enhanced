@@ -2487,7 +2487,7 @@ privilege:权限相关信息
 
 **必选参数 :** `id`: 歌曲 id, `sourceid`: 歌单或专辑 id
 
-**可选参数 :** `time`: 歌曲播放时间,单位为秒
+**可选参数 :** `time`: 歌曲播放时间，单位为秒
 
 **接口地址 :** `/scrobble`
 
@@ -5337,7 +5337,29 @@ let data = encodeURIComponent(
 
 ### 指定维度音乐排行榜列表
 
-说明 : 调用此接口,可获取城市榜、城市风格榜等指定维度音乐排行榜歌曲列表
+说明 : 调用此接口，可获取城市榜、城市风格榜等指定维度音乐排行榜歌曲列表
+
+### 提交歌曲播放状态
+
+说明 : 调用此接口 , 提交歌曲播放状态信息，支持会话追踪和播放模式记录
+
+**必选参数 :**
+
+`id`: 歌曲 id
+
+`sessionId`: 播放会话 ID（每次播放生成的唯一标识，建议使用大写字母和数字组成的 12 位字符串）
+
+**可选参数 :**
+
+`progress`: 播放进度，单位为秒，默认 0
+
+`playMode`: 播放模式，可选值：`list_loop`（列表循环）、`single_loop`（单曲循环）、`random`（随机播放）、`single`（单曲播放），默认 `list_loop`
+
+`type`: 资源类型，默认 `song`
+
+**接口地址 :** `/api/relay/play/state/submit`
+
+**调用例子 :** `/api/relay/play/state/submit?id=410801653&sessionId=6H8FAKRXFX6H&progress=0&playMode=list_loop`
 
 ## 离线访问此文档
 
