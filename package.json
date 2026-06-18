@@ -105,7 +105,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "intelli-espower-loader": "^1.1.0",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.7",
     "mocha": "^11.7.6",
     "nodemon": "^3.1.14",
     "pkg": "^5.8.1",
