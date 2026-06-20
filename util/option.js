@@ -5,7 +5,10 @@ const createOption = (query, crypto = '') => {
     ua: query.ua || '',
     proxy: query.proxy,
     realIP: query.realIP,
-    randomCNIP: query.randomCNIP || false,
+    randomCNIP:
+      process.env.ENABLE_RANDOM_CN_IP === 'true'
+        ? !['false', false].includes(query.randomCNIP)
+        : ['true', true].includes(query.randomCNIP),
     e_r: query.e_r || undefined,
     domain: query.domain || '',
     checkToken: query.checkToken || false,

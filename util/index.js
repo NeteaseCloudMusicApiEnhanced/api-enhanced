@@ -62,9 +62,9 @@ const chinaIPRanges = (function loadChinaIPRanges() {
     // attach total for convenience
     arr.totalCount = total
 
-    logger.info(
-      `Loaded ${arr.length} Chinese IP ranges from china_ip_ranges.txt, total ${total} IPs`,
-    )
+    // logger.info(
+    //   `Loaded ${arr.length} Chinese IP ranges from china_ip_ranges.txt, total ${total} IPs`,
+    // )
     return arr
   } catch (error) {
     logger.error('Failed to load china_ip_ranges.txt:', error.message)

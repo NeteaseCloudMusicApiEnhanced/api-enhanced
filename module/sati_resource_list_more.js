@@ -1,13 +1,13 @@
-// 每日推荐歌曲
+// 助眠解压 - 查看同类推荐
 
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {
-    afresh: query.afresh,
+    id: query.id,
   }
   return request(
-    `/api/v3/discovery/recommend/songs`,
+    `/api/voice/sati/resource/list/more/v1`,
     data,
-    createOption(query, 'weapi'),
+    createOption(query),
   )
 }

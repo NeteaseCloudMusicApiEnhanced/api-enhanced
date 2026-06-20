@@ -53,5 +53,9 @@ module.exports = async (query, request) => {
   if (data.level == 'sky') {
     data.immerseType = 'c51'
   }
-  return request(`/api/song/enhance/player/url/v1`, data, createOption(query))
+  return request(
+    `/api/song/enhance/player/url/v1`,
+    data,
+    createOption(query, 'xeapi'),
+  )
 }

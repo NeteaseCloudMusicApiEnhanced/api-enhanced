@@ -1,4 +1,4 @@
-// 黑胶乐签签到信息
+// 黑胶乐签未来签到信息
 
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {

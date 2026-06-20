@@ -10,6 +10,7 @@ const { cookieToJson } = require('./util/index')
 const fileUpload = require('express-fileupload')
 const decode = require('safe-decode-uri-component')
 const logger = require('./util/logger.js')
+const { APP_CONF } = require('./util/config.json')
 
 /**
  * The version check result.
@@ -127,15 +128,68 @@ async function checkVersion() {
   })
 }
 
+function parseCorsAllowOrigins(corsAllowOrigin) {
+  if (!corsAllowOrigin) {
+    return null
+  }
+
+  const origins = corsAllowOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+
+  return origins.length > 0 ? origins : null
+}
+
+function getCorsAllowOrigin(allowOrigins, requestOrigin) {
+  if (!allowOrigins) {
+    return requestOrigin || '*'
+  }
+
+  if (allowOrigins.includes('*')) {
+    return '*'
+  }
+
+  if (requestOrigin && allowOrigins.includes(requestOrigin)) {
+    return requestOrigin
+  }
+
+  return null
+}
+
+function createConsoleSpinner(message = '启动中') {
+  if (!process.stdout.isTTY) {
+    return {
+      stop() {},
+    }
+  }
+
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+  let index = 0
+  process.stdout.write(`${frames[index]} ${message}...`)
+  const timer = setInterval(() => {
+    index = (index + 1) % frames.length
+    process.stdout.write(`\r${frames[index]} ${message}...`)
+  }, 80)
+
+  return {
+    stop() {
+      clearInterval(timer)
+      process.stdout.write(`\r✔ ${message} 完成。\n`)
+    },
+  }
+}
+
 /**
  * Construct the server of NCM API.
  *
  * @param {ModuleDefinition[]} [moduleDefs] Customized module definitions [advanced]
  * @returns {Promise<import("express").Express>} The server instance.
  */
-async function consturctServer(moduleDefs) {
+async function constructServer(moduleDefs) {
   const app = express()
   const { CORS_ALLOW_ORIGIN } = process.env
+  const allowOrigins = parseCorsAllowOrigins(CORS_ALLOW_ORIGIN)
   app.set('trust proxy', true)
 
   /**
@@ -147,10 +201,17 @@ async function consturctServer(moduleDefs) {
    */
   app.use((req, res, next) => {
     if (req.path !== '/' && !req.path.includes('.')) {
+      const corsAllowOrigin = getCorsAllowOrigin(
+        allowOrigins,
+        req.headers.origin,
+      )
+      const shouldSetVaryHeader = corsAllowOrigin && corsAllowOrigin !== '*'
       res.set({
         'Access-Control-Allow-Credentials': true,
-        'Access-Control-Allow-Origin':
-          CORS_ALLOW_ORIGIN || req.headers.origin || '*',
+        ...(corsAllowOrigin
+          ? { 'Access-Control-Allow-Origin': corsAllowOrigin }
+          : {}),
+        ...(shouldSetVaryHeader ? { Vary: 'Origin' } : {}),
         'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type',
         'Access-Control-Allow-Methods': 'PUT,POST,GET,DELETE,OPTIONS',
         'Content-Type': 'application/json; charset=utf-8',
@@ -239,12 +300,17 @@ async function consturctServer(moduleDefs) {
       )
 
       try {
+        let usedCrypto = ''
         const moduleResponse = await moduleDef.module(query, (...params) => {
-          // 参数注入客户端IP
           const obj = [...params]
           const options = obj[2] || {}
-          if (!options.randomCNIP) {
-            let ip = req.ip
+          usedCrypto = options.crypto || ''
+          let ip = ''
+
+          if (options.randomCNIP) {
+            ip = global.cnIp
+          } else {
+            ip = req.ip
 
             if (ip.substring(0, 7) == '::ffff:') {
               ip = ip.substring(7)
@@ -252,16 +318,19 @@ async function consturctServer(moduleDefs) {
             if (ip == '::1') {
               ip = global.cnIp
             }
-            // logger.info('Requested from ip:', ip)
-            obj[2] = {
-              ...options,
-              ip,
-            }
+          }
+
+          obj[2] = {
+            ...options,
+            ip,
           }
 
           return request(...obj)
         })
-        logger.info(`Request Success: ${decode(req.originalUrl)}`)
+        const displayCrypto = usedCrypto || (APP_CONF.encrypt ? 'eapi' : 'api')
+        logger.info(
+          `Request Success: [${displayCrypto}] ${decode(req.originalUrl)}`,
+        )
 
         // 夹带私货部分：如果开启了通用解锁，并且是获取歌曲URL的接口，则尝试解锁（如果需要的话）ヾ(≧▽≦*)o
         if (
@@ -350,43 +419,37 @@ async function serveNcmApi(options) {
   const port = Number(options.port || process.env.PORT || '3000')
   const host = options.host || process.env.HOST || ''
 
+  const spinner = createConsoleSpinner('服务启动中')
+
   const checkVersionSubmission =
     options.checkVersion &&
     checkVersion().then(({ npmVersion, ourVersion, status }) => {
       if (status == VERSION_CHECK_RESULT.NOT_LATEST) {
-        logger.info(
+        logger.warn(
           `最新版本: ${npmVersion}, 当前版本: ${ourVersion}, 请及时更新`,
         )
       }
     })
-  const constructServerSubmission = consturctServer(options.moduleDefs)
+  const constructServerSubmission = constructServer(options.moduleDefs)
 
   const [_, app] = await Promise.all([
     checkVersionSubmission,
     constructServerSubmission,
   ])
 
+  spinner.stop()
+
   /** @type {import('express').Express & ExpressExtension} */
   const appExt = app
   appExt.server = app.listen(port, host, () => {
     console.log(`
-   _   _  _____ __  __  
-  | \\ | |/ ____|  \\/  |
-  |  \\| | |    | \\  / |
-  | . \` | |    | |\\/| |
-  | |\\  | |____| |  | | 
-  |_| \\_|\\_____|_|  |_|
+  ╔═╗╔═╗╦    ╔═╗╔╗╔╦ ╦╔═╗╔╗╔╔═╗╔═╗╔╦╗
+  ╠═╣╠═╝║    ║╣ ║║║╠═╣╠═╣║║║║  ║╣  ║║
+  ╩ ╩╩  ╩    ╚═╝╝╚╝╩ ╩╩ ╩╝╚╝╚═╝╚═╝═╩╝
     `)
-    console.log(`
-    ╔═╗╔═╗╦    ╔═╗╔╗╔╦ ╦╔═╗╔╗╔╔═╗╔═╗╔╦╗
-    ╠═╣╠═╝║    ║╣ ║║║╠═╣╠═╣║║║║  ║╣  ║║
-    ╩ ╩╩  ╩    ╚═╝╝╚╝╩ ╩╩ ╩╝╚╝╚═╝╚═╝═╩╝
-    `)
-    logger.info(`
-- Server started successfully @ http://${host ? host : 'localhost'}:${port}
-- Environment: ${process.env.NODE_ENV || 'development'}
-- Node Version: ${process.version}
-- Process ID: ${process.pid}`)
+    logger.info(
+      `Server started successfully @ http://${host ? host : 'localhost'}:${port}`,
+    )
   })
 
   return appExt

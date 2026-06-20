@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: ↑请尽量使用议题模板创建议题↑
+    url: https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/issues/new/choose
+    about: 选择适合的议题模板可以帮助我们更快地定位和解决问题
   - name: 提问的艺术
     url: https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md
     about: 默认所有 Issues 发起者均已了解此处的内容 

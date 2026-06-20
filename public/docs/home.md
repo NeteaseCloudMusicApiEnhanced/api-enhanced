@@ -2,8 +2,6 @@
 
 网易云音乐 NodeJS API Enhanced
 
-最后更新于: 2026.2.15
-
 ## 灵感来自
 
 [disoul/electron-cloud-music](https://github.com/disoul/electron-cloud-music)
@@ -90,6 +88,7 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 直接点`Continue`
 6. `PROJECT NAME`自己填,`FRAMEWORK PRESET` 选 `Other` 然后直接点 `Deploy` 接着等部署完成即可
 
+
 ## 腾讯云 serverless 部署
 
 因 `Vercel` 在国内访问太慢(不绑定自己的域名的情况下),在此提供腾讯云 serverless 部署方法
@@ -103,6 +102,7 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 输入`应用名`,上传方式选择`代码仓库`,进行 GitHub 授权(如已授权可跳过这一步),代码仓库选择刚刚 fork 的项目
 6. 启动文件填入:
 
+
 ```
 #!/bin/bash
 export PORT=9000
@@ -114,6 +114,7 @@ export PORT=9000
 - 注意
   - 腾讯云 serverless 并不是免费的,前三个月有免费额度,之后收费
   - 当前(2024-08-24), 用此法创建的话, 会`默认`关联一个"日志服务-日志主题"(创建过程中没有提醒), 此服务是计量收费的
+
 
 ## 可以使用代理
 
@@ -182,6 +183,7 @@ request 相关的环境变量
 5. no_proxy
 6. NO_PROXY
 
+
 ```shell
 docker pull moefurina/ncm-api
 
@@ -209,9 +211,21 @@ $ sudo docker build . -t netease-music-api
 $ sudo docker run -d -p 3000:3000 netease-music-api
 ```
 
+## 调试工具
+
+- 大部分请求参数或返回内容可在 `/api_decrypt.html` 里解析
+- 请求参数模式下, 解密结果可直接带到 `/api.html` 继续调试
+- 需要返回值加密时, 可传 `e_r=1`, `weapi` 和 `eapi` 都支持
+- 目前支持算法 有 `weapi`, `eapi`, `linuxapi` 和 `xeapi` (xeapi 是一种不加密的特殊算法, 主要用于调试加密前的原始请求参数)
+
+
 ## 接口文档
 
 ### 调用前须知
+
+AI 生成的图,仅供娱乐()
+
+![ai generated](./aigen.png)
 
 !> 本项目不提供线上 demo, 只提供在线文档服务, 请不要轻易信任使用他人提供的公开服务，以免发生安全问题,泄露自己的账号和密码
 
@@ -255,20 +269,16 @@ $ sudo docker run -d -p 3000:3000 netease-music-api
 
 !> ~~因网易增加了网易云盾验证,密码登录暂时不要使用,尽量使用短信验证码登录和二维码登录,否则调用某些接口会触发需要验证的错误~~
 
-!> ~~二开作者再注: 现在二维码登录也无法使用了, 网易云官方最近查的太严了, 现在尝试调用会提示环境异常, 如果各位有绕过的方法请一定开`Pull Request`~~
-
-!> ~~二开作者注: 二维码登录现在是修复了, 但是密码登录和短信登录还是不行, 如果各位有绕过的方法请一定开`Pull Request`~~
-
-!> 二开作者注: 在`v4.29.18`版本中修复了密码登录和短信登录的问题, 现在可以正常使用了
+!> 二开作者注: 在`v4.29.18`版本中修复了短信登录的问题, 现在可以正常使用了
 
 #### 1. 手机登录
 
-**必选参数 :**  
+**必选参数 :**
 `phone`: 手机号码
 
 `password`: 密码
 
-**可选参数 :**  
+**可选参数 :**
 `countrycode`: 国家码，用于国外手机号登录，例如美国传入：`1`
 
 `md5_password`: md5 加密后的密码,传入后 `password` 参数将失效
@@ -427,11 +437,11 @@ body {
 
 ### 检测手机号码是否已注册
 
-说明 : 调用此接口 ,可检测手机号码是否已注册  
-**必选参数 :**  
+说明 : 调用此接口 ,可检测手机号码是否已注册
+**必选参数 :**
 `phone` : 手机号码
 
-**可选参数 :**  
+**可选参数 :**
 `countrycode`: 国家码，用于国外手机号，例如美国传入：`1` ,默认 86 即中国
 
 **接口地址 :** `/cellphone/existence/check`
@@ -440,7 +450,7 @@ body {
 
 ### 初始化昵称
 
-说明 : 刚注册的账号(需登录),调用此接口 ,可初始化昵称  
+说明 : 刚注册的账号(需登录),调用此接口 ,可初始化昵称
 **必选参数 :**
 `nickname` : 昵称
 
@@ -695,7 +705,7 @@ tags: 歌单标签
 
 说明 : 登录后调用此接口,使用`'Content-Type': 'multipart/form-data'`上传图片 formData(name 为'imgFile'),可更新歌单封面(参考:https://github.com/neteasecloudmusicapienhanced/api-enhanced/blob/main/public/playlist_cover_update.html)
 
-**必选参数 :**  
+**必选参数 :**
 `id`: 歌单 id 3143833470
 
 **可选参数 :**
@@ -725,7 +735,7 @@ tags: 歌单标签
 
 说明 : 登录后调用此接口,可以根据歌曲 id 顺序调整歌曲顺序
 
-**必选参数 :**  
+**必选参数 :**
 `pid`: 歌单 id
 
 `ids`: 歌曲 id 列表
@@ -1205,6 +1215,7 @@ tags: 歌单标签
 
 > 如果你设置 limit=50&offset=100，你就会得到第 101-150 首歌曲
 
+
 ### 歌单详情动态
 
 说明 : 调用后可获取歌单详情动态部分,如评论数,是否收藏,播放数
@@ -1398,7 +1409,7 @@ tags: 歌单标签
 
 ### 歌单收藏者
 
-说明 : 调用此接口 , 传入歌单 id 可获取歌单的所有收藏者  
+说明 : 调用此接口 , 传入歌单 id 可获取歌单的所有收藏者
 **必选参数 :**
 
 `id` : 歌单 id
@@ -1491,6 +1502,7 @@ tags: 歌单标签
 
 - （可能存在）JSON 歌曲元数据
 
+
 ```
 {"t":0,"c":[{"tx":"作曲: "},{"tx":"柳重言","li":"http://p1.music.126.net/Icj0IcaOjH2ZZpyAM-QGoQ==/6665239487822533.jpg","or":"orpheus://nm/artist/home?id=228547&type=artist"}]}
 {"t":5403,"c":[{"tx":"编曲: "},{"tx":"Alex San","li":"http://p1.music.126.net/pSbvYkrzZ1RFKqoh-fA9AQ==/109951166352922615.jpg","or":"orpheus://nm/artist/home?id=28984845&type=artist"}]}
@@ -1507,6 +1519,7 @@ tags: 歌单标签
 
 * 逐字歌词
 
+
 ```
 [16210,3460](16210,670,0)还(16880,410,0)没...
  ~~~~1 ~~~2  ~~~~3 ~~4 5 ~6 (...)
@@ -1517,7 +1530,7 @@ tags: 歌单标签
 1. 歌词行显示开始时间戳 (毫秒)
 2. 歌词行显示总时长(毫秒)
 3. 逐字显示开始时间戳 (毫秒)
-4. 逐字显示时长 (厘秒/0.01s)
+4. 逐字显示时长 (毫秒)
 5. 未知
 6. 文字
 
@@ -1583,7 +1596,7 @@ tags: 歌单标签
 
 说明 : 调用此接口 , 传入资源 parentCommentId 和资源类型 type 和资源 id 参数, 可获得该资源的歌曲楼层评论
 
-**必选参数 :**  
+**必选参数 :**
 `parentCommentId`: 楼层评论 id
 
 `id` : 资源 id
@@ -1799,7 +1812,7 @@ tags: 歌单标签
 
 说明 : 调用此接口 , 传入资源类型和资源 id,以及排序方式,可获取对应资源的评论
 
-**必选参数 :**  
+**必选参数 :**
 `id` : 资源 id, 如歌曲 id,mv id
 
 `type`: 数字 , 资源类型 , 对应歌曲 , mv, 专辑 , 歌单 , 电台, 视频对应以下类型
@@ -1822,7 +1835,7 @@ tags: 歌单标签
 7: 电台
 ```
 
-**可选参数 :**  
+**可选参数 :**
 `pageNo`:分页参数,第 N 页,默认为 1
 
 `pageSize`:分页参数,每页多少条数据,默认 20
@@ -2195,7 +2208,7 @@ privilege:权限相关信息
 
 说明 : 调用此接口 , 可获得已收藏专辑列表
 
-**可选参数 :**  
+**可选参数 :**
 `limit`: 取出数量 , 默认为 25
 
 `offset`: 偏移数量 , 用于分页 , 如 :( 页数 -1)\*25, 其中 25 为 limit 的值 , 默认
@@ -2323,6 +2336,8 @@ privilege:权限相关信息
 ### 获取每日推荐歌曲
 
 说明 : 调用此接口 , 可获得每日推荐歌曲 ( 需要登录 )
+
+**可选参数 :** `afresh`: 是否刷新日推 , 默认为 false
 
 **接口地址 :** `/recommend/songs`
 
@@ -2485,6 +2500,30 @@ privilege:权限相关信息
 
 **调用例子 :** `/scrobble?id=518066366&sourceid=36780169&time=291`
 
+#### 听歌打卡 V2 (NCBL 加密版)
+
+说明 : 调用此接口，使用桌面客户端 NCBL 加密日志格式上报听歌记录
+
+**必选参数 :** `id`: 歌曲 id, `time`: 播放时长(秒)
+
+**可选参数 :** `sourceid`: 来源列表 id, `source`: 来源名称(默认 list), `name`: 歌曲名, `artist`: 艺术家, `bitrate`: 码率(默认 320), `level`: 音质等级(默认 exhigh), `total`: 歌曲总时长(秒)
+
+**接口地址 :** `/scrobble/v1`
+
+**调用例子 :** `/scrobble/v1?id=518066366&sourceid=36780169&time=291`
+
+### 提交歌曲播放状态
+
+说明 : 调用此接口可提交歌曲播放状态，支持会话追踪和播放模式记录，未传入 `sessionId` 时后端会自动生成
+
+**必选参数 :** `id`: 歌曲 id
+
+**可选参数 :** `sessionId`: 播放会话 ID（12 位大写字母和数字），不传则自动生成, `progress`: 播放进度（秒），默认 0, `playMode`: 播放模式，默认 `list_loop`, `type`: 资源类型，默认 `song`
+
+**接口地址 :** `/relay/play/state/submit`
+
+**调用例子 :** `/relay/play/state/submit?id=518066366&progress=30`
+
 ### 热门歌手
 
 说明 : 调用此接口 , 可获取热门歌手数据
@@ -2502,7 +2541,7 @@ privilege:权限相关信息
 
 说明 : 调用此接口 , 可获取全部 mv
 
-**可选参数 :**  
+**可选参数 :**
 `area`: 地区,可选值为全部,内地,港台,欧美,日本,韩国,不填则为全部
 `type`: 类型,可选值为全部,官方版,原生,现场版,网易出品,不填则为全部
 
@@ -2584,7 +2623,7 @@ privilege:权限相关信息
 
 **接口地址 :** `/program/recommend`
 
-**可选参数 :**  
+**可选参数 :**
 `limit`: 取出数量 , 默认为 10
 
 `offset`: 偏移数量 , 用于分页 , 如 :( 页数 -1)\*10, 其中 10 为 limit 的值 , 默认
@@ -2866,6 +2905,7 @@ type : 地区
 - 适合 Vercel、Netlify 等有请求体限制的平台
 - 需要前端配合实现
 
+
 #### 客户端直传相关接口
 
 **获取上传凭证**
@@ -2912,6 +2952,7 @@ type : 地区
 - `artist`: 艺术家
 - `album`: 专辑名
 
+
 #### 客户端直传流程
 
 1. 客户端计算文件 MD5
@@ -2919,11 +2960,12 @@ type : 地区
 3. 如果 `needUpload` 为 true,直接 PUT 文件到 `uploadUrl`
 4. 调用 `/cloud/upload/complete` 完成导入
 
+
 ### 云盘歌曲信息匹配纠正
 
 说明 : 登录后调用此接口,可对云盘歌曲信息匹配纠正,如需取消匹配,asid 需要传 0
 
-**必选参数 :**  
+**必选参数 :**
 `uid`: 用户 id
 
 `sid`: 云盘的歌曲 id
@@ -3394,7 +3436,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 `limit` : 返回数量 , 默认为 30
 
-`offset` : 偏移数量，用于分页 , 如 :( 页数 -1)\*30, 其中 30 为 limit 的值 , 默认为 0  
+`offset` : 偏移数量，用于分页 , 如 :( 页数 -1)\*30, 其中 30 为 limit 的值 , 默认为 0
 **接口地址 :** `/album/list`
 
 **调用例子 :** `/album/list?limit=10`
@@ -3553,7 +3595,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 **可选参数 :** `limit`: 取出评论数量 , 默认为 10
 
-`offset`: 偏移数量 , 用于分页 , 如 :( 评论页数 -1)\*10, 其中 10 为 limit 的值  
+`offset`: 偏移数量 , 用于分页 , 如 :( 评论页数 -1)\*10, 其中 10 为 limit 的值
 **接口地址 :** `/yunbei/tasks/expense`
 
 **调用例子 :** `/yunbei/tasks/expense?limit=1`
@@ -4190,6 +4232,7 @@ ONLINE 已发布
   - `voiceFeeType: -1`：返回所有类型的声音
   - `voiceFeeType: 0`：返回免费的声音
   - `voiceFeeType: 1`：返回收费的声音
+
 
 ### 播客声音详情
 
@@ -5023,13 +5066,28 @@ let data = encodeURIComponent(
 
 **调用例子:** `/vip/sign`
 
-### 黑胶乐签打卡信息
+### 黑胶乐签未来打卡信息
 
 说明: 登录后调用此接口, 获取黑胶乐签打卡信息
 
 **接口地址:** `/vip/sign/info`
 
 **调用例子:** `/vip/sign/info`
+
+### 广播电台 - 收藏/取消收藏电台
+
+说明: 登录后调用此接口, 传入电台 id, 可收藏或取消收藏广播电台
+
+**必选参数：**
+
+`id`: 电台 id
+
+`t`: 操作类型, `1` 为收藏, 其余值为取消收藏
+
+**接口地址:** `/broadcast/sub`
+
+**调用例子:** `/broadcast/sub?id=5&t=1`
+
 
 ### 用户的创建歌单列表
 
@@ -5097,7 +5155,7 @@ let data = encodeURIComponent(
 
 说明 : 登录后调用此接口, 获取我创建的博客声音
 
-**可选参数 :** 
+**可选参数 :**
 
 `limit` : 返回数量 , 默认为 20
 
@@ -5105,49 +5163,12 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/voicelist/my/created`
 
-### 发布评论
-
-说明 : 登录后调用此接口, 传入评论线程 id, 评论内容等信息, 发布评论
-
-**必选参数 :**
-
-`id`: 歌曲id
-`content`: 评论内容
-
-**接口地址 :** `/comment/add`
-
-**调用例子 :** `/comment/add?id=2058263032&content=这首歌太棒了！`
-
-### 删除评论
-
-说明 : 登录后调用此接口, 传入评论 id, 删除评论
-
-**必选参数 :**
-`cid`: 评论 id
-`id`: 歌曲id
-
-**接口地址 :** `/comment/delete`
-
-**调用例子 :** `/comment/delete?threadId=2058263032&commentId=123456789`
-
-### 回复评论
-
-说明 : 登录后调用此接口, 传入歌曲 id, 回复内容等信息, 回复评论
-
-**必选参数 :**
-`id`: 歌曲id
-`commentId`: 被回复的评论 id
-`content`: 回复内容
-
-**接口地址 :** `/comment/reply`
-
-**调用例子 :** `/comment/reply?id=2058263032&commentId=123456789&content=我也觉得这首歌很棒！`
 
 ### DIFM电台 - 分类
 
 说明: 调用此接口, 获取DIFM电台分类
 
-**必选参数 :**  
+**必选参数 :**
 
 `sources`: 来源列表, 0: 最嗨电音 1: 古典电台 2: 爵士电台
 
@@ -5159,7 +5180,7 @@ let data = encodeURIComponent(
 
 说明: 调用此接口, 获取DIFM电台收藏列表
 
-**必选参数 :**  
+**必选参数 :**
 
 `sources`: 来源列表, 0: 最嗨电音 1: 古典电台 2: 爵士电台
 
@@ -5195,7 +5216,7 @@ let data = encodeURIComponent(
 
 说明: 调用此接口, 获取DIFM播放列表
 
-**必选参数 :**  
+**必选参数 :**
 
 `source`: 来源, 0: 最嗨电音 1: 古典电台 2: 爵士电台
 
@@ -5208,6 +5229,200 @@ let data = encodeURIComponent(
 **接口地址:** `/dj/difm/playing/tracks/list`
 
 **调用例子:** `/dj/difm/playing/tracks/list?source=0&channelId=1012`
+
+### 助眠解压 - 特定时间场景下的推荐资源
+
+说明: 调用此接口, 获取特定时间场景下的推荐资源
+
+**接口地址:** `/sati/timescene/resources/get`
+
+**调用例子:** `/sati/timescene/resources/get`
+
+### 助眠解压 - 标签列表
+
+说明: 调用此接口, 获取标签列表
+
+**接口地址:** `/sati/tag/list`
+
+**调用例子:** `/sati/tag/list`
+
+### 助眠解压 - 获取标签下资源列表
+
+说明: 调用此接口, 获取标签下资源列表; 接口返回的`trackId`可以用于请求`/song/url/v1`接口，用于获取声音的下载地址
+
+**必选参数 :**
+
+`tag`: 标签, 由标签列表接口得到
+
+**接口地址:** `/sati/resource/list`
+
+**调用例子:** `/sati/resource/list?tag=naturalMusic`
+
+### 助眠解压 - 查看同类推荐
+
+说明: 调用此接口, 查看同类推荐
+
+**必选参数 :**
+
+`id`: id, `/sati/tag/list`接口返回的`trackId`
+
+**接口地址:** `/sati/resource/list/more`
+
+**调用例子:** `/sati/resource/list/more?id=167003`
+
+### 助眠解压 - 收藏列表
+
+说明: 调用此接口, 获取收藏列表
+
+**接口地址:** `/sati/resource/sub/list`
+
+**调用例子:** `/sati/resource/sub/list`
+
+### 助眠解压 - 收藏
+
+说明: 调用此接口, 收藏声音
+
+**必选参数 :**
+
+`id`: id, `/sati/tag/list`接口返回的`trackId`
+
+**可选参数 :**
+
+`cancel`: 是否取消收藏, 默认不取消
+
+**接口地址:** `/sati/resource/sub`
+
+**调用例子:** `/sati/resource/sub?id=167003`
+
+### 跑步漫游
+
+说明: 调用此接口，获取跑步漫游的歌曲信息
+
+**必选参数：**
+
+`bpm`: 步频
+
+**接口地址:** `/radio/sport/get`
+
+**调用例子:** `/radio/sport/get?bpm=50`
+
+### 歌曲创作者信息
+
+说明 : 调用此接口, 传入音乐 id 可获得对应音乐的创作者信息
+
+**必选参数 :** `id`: 音乐 id
+
+**接口地址 :** `/song/creators`
+
+**调用例子 :** `/song/creators?id=33894312`
+
+### 灰色歌曲的其他版本推荐
+
+说明 : 调用此接口, 传入灰色歌曲 id, 获取该歌曲的其他可播放版本推荐
+
+**必选参数 :**
+
+`songid`: 歌曲 id, 可使用 `id` 代替
+
+**接口地址 :** `/song/copyright/rcmd`
+
+**调用例子 :** `/song/copyright/rcmd?songid=27946878`
+
+### 举报评论
+
+说明 : 登录后调用此接口, 传入歌曲 id 和评论 id, 举报评论
+
+**必选参数 :**
+
+`id`: 歌曲 id
+
+`cid`: 评论 id
+
+`reason`: 举报理由
+
+**接口地址 :** `/comment/report`
+
+**调用例子 :* `/comment/report?id=2058263032&cid=123456789&reason=人身攻击`
+
+### 多级行政区划数据
+
+说明 : 调用此接口,可获取多级行政区划数据
+
+**可选参数 :** `bizCode`: 业务类型,默认空字符串。传入 `chart` 时获取支持城市榜的城市列表,传空时获取所有城市列表
+
+**接口地址 :** `/lbs/city/code`
+
+**调用例子 :** `/lbs/city/code`
+
+### 指定维度音乐排行榜详情
+
+说明 : 调用此接口,可获取城市榜、城市风格榜等指定维度音乐排行榜详情
+
+**必选参数 :**
+
+`chartCode`: 榜单编码,如 `CITY_SONG_CHART`、`CITY_STYLE_SONG_CHART`
+
+`targetId`: 目标 id,城市榜如 `110000`,城市风格榜如 北京华语流行榜 `110000_1020`。城市风格榜格式通常为 `城市 id_曲风 id`,其中曲风 id 可通过[曲风列表](#曲风列表)接口 `/style/list` 获取。城市榜的城市列表可通过[多级行政区划数据](#多级行政区划数据)接口传入 `bizCode=chart` 获取；城市风格榜的城市列表可通过该接口传空 `bizCode` 获取
+
+`targetType`: 目标类型,如 `CITY`、`CITY_STYLE`
+
+**接口地址 :** `/chart/detail`
+
+**调用例子 :** `/chart/detail?chartCode=CITY_SONG_CHART&targetId=110000&targetType=CITY`
+
+### 指定维度音乐排行榜列表
+
+说明 : 调用此接口,可获取城市榜、城市风格榜等指定维度音乐排行榜歌曲列表
+
+**必选参数 :**
+
+`chartCode`: 榜单编码,如 `CITY_SONG_CHART`、`CITY_STYLE_SONG_CHART`
+
+`targetId`: 目标 id,城市榜如 `110000`,城市风格榜如 北京华语流行榜 `110000_1020`。城市风格榜格式通常为 `城市 id_曲风 id`,其中曲风 id 可通过[曲风列表](#曲风列表)接口 `/style/list` 获取。城市榜的城市列表可通过[多级行政区划数据](#多级行政区划数据)接口传入 `bizCode=chart` 获取；城市风格榜的城市列表可通过该接口传空 `bizCode` 获取
+
+`targetType`: 目标类型,如 `CITY`、`CITY_STYLE`
+
+**接口地址 :** `/chart/song/detail`
+
+**调用例子 :** `/chart/song/detail?chartCode=CITY_STYLE_SONG_CHART&targetId=110000_1020&targetType=CITY_STYLE`
+
+### 会员任务 - 新版
+
+说明 : 登录后调用此接口, 获取会员任务
+
+**可选参数** `id`: 用户 id, 传入后可获取指定用户的会员任务, 不传入则获取当前登录用户的会员任务
+
+**接口地址 :** `/vip/task/v1`
+
+**调用例子 :** `/vip/task/v1` `/vip/task/v1?id=32953014`
+
+### 黑胶乐签详情
+
+说明 : 登录后调用此接口, 传入时间戳, 获取黑胶乐签详情
+
+**必选参数 :** `timestamp`: 时间戳, 单位毫秒, 如 `1704067200000` 表示 2024 年 12 月 31 日 0 点 (不传入会出现随机的乐签详情)
+
+**接口地址 :** `/vip/sign/detail`
+
+**调用例子 :** `/vip/sign/detail`
+
+### 黑胶乐签历史
+
+说明 : 登录后调用此接口, 获取黑胶乐签历史
+
+**接口地址 :** `/vip/sign/history`
+
+**调用例子 :** `/vip/sign/history`
+
+### 直接获取云盘歌曲下载链接
+
+说明 : 调用此接口, 传入云盘歌曲 id, 可直接获取云盘歌曲下载链接
+
+**必选参数 :** `id`: 云盘歌曲 id
+
+**接口地址 :** `/song/cloud/download`
+
+**调用例子 :** `/song/cloud/download?id=123456789`
 
 ## 离线访问此文档
 

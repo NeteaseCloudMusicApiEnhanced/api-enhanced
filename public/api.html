@@ -132,6 +132,7 @@
                     <option value="eapi">eapi</option>
                     <option value="api">api</option>
                     <option value="linuxapi">linuxapi</option>
+                    <option value="xeapi">xeapi</option>
                     <option value="" selected>(默认)</option>
                 </select>
             </div>
@@ -188,6 +189,35 @@
                 document.getElementById('result').value = 'Request failed: ' + error.message;
             }
         }
+
+        (function fillFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.toString()) return;
+            const uri = params.get('uri');
+            const crypto = params.get('crypto');
+            const dataParam = params.get('data');
+            if (uri) {
+              document.getElementById('uri').value = uri;
+            }
+            if (crypto) {
+              const cryptoSelect = document.getElementById('crypto');
+              if ([...cryptoSelect.options].some((opt) => opt.value === crypto)) {
+                cryptoSelect.value = crypto;
+              }
+            }
+            if (dataParam) {
+              const decoded = dataParam;
+              try {
+                document.getElementById('data').value = JSON.stringify(
+                  JSON.parse(decoded),
+                  null,
+                  2,
+                );
+              } catch (error) {
+                document.getElementById('data').value = decoded;
+              }
+            }
+          })();
     </script>
 </body>
 </html>

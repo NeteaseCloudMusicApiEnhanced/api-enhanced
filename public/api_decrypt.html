@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API 参数和返回内容解析</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 200px;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #333;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .radio-item input[type="radio"] {
+      cursor: pointer;
+    }
+
+    .radio-item label {
+      margin: 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button {
+      background: #333;
+      color: white;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button + button {
+      margin-left: 12px;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    .result-section {
+      margin-top: 24px;
+    }
+
+    .result-section label {
+      margin-bottom: 12px;
+    }
+
+    .decode-result {
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #f9f9f9;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #eee;
+      min-height: 200px;
+      max-height: 400px;
+      overflow: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .decode-result .json-key { color: #881391; }
+    .decode-result .json-string { color: #1a7f37; }
+    .decode-result .json-number { color: #0550ae; }
+    .decode-result .json-boolean { color: #cf222e; }
+    .decode-result .json-null { color: #656d76; }
+
+    .example-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #eee;
+    }
+
+    .example-section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .example-section img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #eee;
+    }
+
+    /* new elements for multi-crypto support */
+    .crypto-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: #fafafa;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+
+    .crypto-bar .bar-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      margin-right: 8px;
+    }
+
+    .crypto-btn {
+      padding: 5px 14px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.15s ease;
+    }
+
+    .crypto-btn:hover {
+      border-color: #333;
+      color: #333;
+      background: #f5f5f5;
+    }
+
+    .crypto-btn.active {
+      border-color: #333;
+      background: #333;
+      color: #fff;
+    }
+
+    .crypto-btn .badge {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(0,0,0,0.08);
+      border-radius: 4px;
+      padding: 0 5px;
+      margin-left: 3px;
+    }
+    .crypto-btn.active .badge {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .mode-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .mode-row .mode-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .mode-row .radio-group {
+      margin-bottom: 0;
+    }
+
+    .info-hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #fafafa;
+      border-radius: 4px;
+      border-left: 3px solid #999;
+    }
+
+    .info-hint.warn {
+      border-left-color: #e67e22;
+      background: #fef9f0;
+      color: #d35400;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .action-row button + button {
+      margin-left: 0;
+    }
+
+    button.btn-secondary {
+      background: #e8e8e8;
+      color: #444;
+    }
+    button.btn-secondary:hover {
+      background: #d5d5d5;
+    }
+    button.btn-secondary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    button.btn-success {
+      background: #4caf50;
+    }
+    button.btn-success:hover {
+      background: #43a047;
+    }
+    button.btn-success:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .result-section .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .result-section .section-header label {
+      margin: 0;
+    }
+
+    .copy-btn {
+      font-size: 12px;
+      padding: 3px 12px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover {
+      background: #333;
+      color: #fff;
+      border-color: #333;
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .example-card {
+      background: #fafafa;
+      border-radius: 6px;
+      padding: 16px;
+      border: 1px solid #eee;
+    }
+
+    .example-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .example-card pre {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      background: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      border: 1px solid #e8e8e8;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+
+    .example-card .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+
+    .tag-eapi { background: #e3f2fd; color: #1565c0; }
+    .tag-weapi { background: #fce4ec; color: #c62828; }
+    .tag-linuxapi { background: #e8f5e9; color: #2e7d32; }
+    .tag-xeapi { background: #f3e5f5; color: #7b1fa2; }
+    .tag-api { background: #fff3e0; color: #e65100; }
+
+    @media (max-width: 640px) {
+      .example-grid { grid-template-columns: 1fr; }
+      .crypto-bar { gap: 4px; }
+      .crypto-btn { padding: 4px 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="container">
+    <h1>API 参数和返回内容解析</h1>
+
+    <!-- 加密方式选择 -->
+    <div class="crypto-bar">
+      <span class="bar-label">加密方式</span>
+      <button
+        v-for="c in cryptoList"
+        :key="c.value"
+        class="crypto-btn"
+        :class="{ active: crypto === c.value }"
+        @click="selectCrypto(c.value)"
+      >
+        {{ c.label }}
+        <span class="badge">{{ c.badge }}</span>
+      </button>
+    </div>
+
+    <div class="mode-row">
+      <span class="mode-label">数据类型</span>
+      <div class="radio-group">
+        <div class="radio-item">
+          <input
+            type="radio"
+            id="mode-req"
+            :value="true"
+            v-model="isReq"
+            :disabled="cryptoInfo.reqDisabled"
+          />
+          <label for="mode-req">请求数据 request</label>
+        </div>
+        <div class="radio-item">
+          <input
+            type="radio"
+            id="mode-resp"
+            :value="false"
+            v-model="isReq"
+            :disabled="cryptoInfo.respDisabled"
+          />
+          <label for="mode-resp">返回数据 response</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="dataInput">{{ cryptoInfo.inputLabel }}</label>
+      <textarea
+        id="dataInput"
+        v-model="encryptedData"
+        :rows="crypto === 'xeapi' ? 8 : 10"
+        :placeholder="cryptoInfo.placeholder"
+      ></textarea>
+      <div class="info-hint" :class="{ warn: cryptoInfo.warning }">
+        {{ cryptoInfo.hint }}
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button @click="decrypt">解密</button>
+      <button class="btn-success" @click="sendToApi" :disabled="!canSend">
+        填入 API 调试
+      </button>
+      <button class="btn-secondary" @click="loadExample">加载示例</button>
+      <button class="btn-secondary" @click="clearAll">清空</button>
+    </div>
+
+    <div class="result-section">
+      <div class="section-header">
+        <label>解密结果：</label>
+        <button
+          v-if="result && result !== '{}' && result !== 'null'"
+          class="copy-btn"
+          @click="copyResult"
+        >
+          复制
+        </button>
+      </div>
+      <pre class="decode-result" v-html="highlightedResult"></pre>
+    </div>
+
+    <div class="example-section">
+      <h2>使用示例</h2>
+      <img src="/static/eapi_params.png" alt="请求示例" />
+      <img src="/static/eapi_response.png" alt="响应示例" />
+
+      <div class="example-grid">
+        <div class="example-card">
+          <span class="tag tag-eapi">eapi</span>
+          <h3>请求参数解密</h3>
+          <pre>输入 hex 字符串，解密后得到请求 URL 和参数</pre>
+          <button class="copy-btn" @click="loadExampleData('eapi_req')">加载示例</button>
+        </div>
+        <div class="example-card">
+          <span class="tag tag-linuxapi">linuxapi</span>
+          <h3>请求 eparams 解密</h3>
+          <pre>AES-ECB 解密 linuxapi 的 eparams 参数（hex）</pre>
+          <button class="copy-btn" @click="loadExampleData('linuxapi_req')">加载示例</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://fastly.jsdelivr.net/npm/axios"></script>
+  <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>
+
+  <script>
+    const cryptoInfos = {
+      eapi: {
+        label: 'eapi',
+        badge: 'AES-ECB',
+        inputLabel: '十六进制字符串（Hex）',
+        placeholder: '粘贴 eapi 加密后的 Hex 字符串...',
+        hint: 'eapi 使用 AES-ECB 加密，密钥 e82ckenh8dichen8。请求格式: url-36cd479b6b5-data-36cd479b6b5-md5',
+        warning: false,
+        reqDisabled: false,
+        respDisabled: false,
+      },
+      weapi: {
+        label: 'weapi',
+        badge: 'AES-CBC+RSA',
+        inputLabel: '十六进制字符串（Hex）',
+        placeholder: '粘贴 weapi 返回数据的 Hex 字符串（e_r=true 时）...',
+        hint: 'weapi 请求解密需要 RSA 私钥，暂不支持。仅支持返回数据解密（同 eapi 的 AES-ECB）',
+        warning: true,
+        reqDisabled: true,
+        respDisabled: false,
+      },
+      linuxapi: {
+        label: 'linuxapi',
+        badge: 'AES-ECB',
+        inputLabel: '十六进制字符串（Hex）',
+        placeholder: '粘贴 linuxapi 的 eparams (Hex 格式)...',
+        hint: 'linuxapi 请求 eparams 使用 AES-ECB 加密，密钥 rFgB&h#%2?^eDg:Q。返回为明文 JSON',
+        warning: false,
+        reqDisabled: false,
+        respDisabled: false,
+      },
+      xeapi: {
+        label: 'xeapi',
+        badge: 'X25519+AES',
+        inputLabel: 'Base64 编码字符串',
+        placeholder: '粘贴 xeapi 返回数据的 Base64 原始二进制...',
+        hint: 'xeapi 请求涉及 X25519 ECDH 密钥交换，暂不支持。返回数据使用 AES-ECB + eapiKey 加密，可能带 gzip',
+        warning: true,
+        reqDisabled: true,
+        respDisabled: false,
+      },
+      api: {
+        label: 'api',
+        badge: '明文',
+        inputLabel: 'JSON 文本',
+        placeholder: '粘贴 api 的请求或返回 JSON...',
+        hint: 'api（明文）不经加密，直接传递 JSON 数据',
+        warning: false,
+        reqDisabled: false,
+        respDisabled: false,
+      },
+    }
+
+    const examples = {
+      eapi_req:
+        'AD96DDB984491E79B6F429DD650C6E2AE524627AC223AC9A123C66BB0997965950FED137544A93DFC718E16F57C8C121AF537086F395570A5602A3922366D11964DAFACD7830AACABF62E5650E67F457E79C1D2E13502391FC3487216CC5BF8681843FCB8E05559487EB18AAC1BE0EFEA4F7B6A050478366153A9426C238B8869600B275704555A9EB94C92E4F3FDABE9E0BCE07645410D0AA7B675698A4CAE6CD3620633ABF0B849A4244CC8DFC5DB2646D5EA9B3954E62BFEF19AFEAFDDC34E55C3E9A1DD3167CF53D443617108141',
+      linuxapi_req:
+        'A0D9583F4C5FF68DE851D2893A49DE98CC059A8845B664AA2459CEA7271A2C0E5BCA8A188E1BE398DB4C9A3FC117E19C9BAC491F454D17D403C2389476AB0FF4296B00294AD1EBDA141C188DF918F6B9599DAA5739928FD52B4AE580D8657903CE3C6633D2E46AD242408AE219B8191E',
+    }
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          crypto: 'eapi',
+          encryptedData: '',
+          result: '{}',
+          isReq: true,
+          cryptoList: [
+            { value: 'eapi', label: 'eapi', badge: 'AES-ECB' },
+            { value: 'weapi', label: 'weapi', badge: 'AES-CBC+RSA' },
+            { value: 'linuxapi', label: 'linuxapi', badge: 'AES-ECB' },
+            { value: 'xeapi', label: 'xeapi', badge: 'X25519+AES' },
+            { value: 'api', label: 'api', badge: '明文' },
+          ],
+        }
+      },
+      mounted() {
+        this.loadExample()
+      },
+      computed: {
+        cryptoInfo() {
+          return cryptoInfos[this.crypto] || cryptoInfos.eapi
+        },
+        isRequestMode() {
+          return this.isReq === true || this.isReq === 'true'
+        },
+        canSend() {
+          if (!this.isRequestMode) return false
+          if (!this.result || this.result === '{}' || this.result === 'null') return false
+          try {
+            JSON.parse(this.result)
+            return true
+          } catch (error) {
+            return false
+          }
+        },
+        highlightedResult() {
+          if (!this.result || this.result === '') return ''
+          try {
+            const parsed = typeof this.result === 'string' ? JSON.parse(this.result) : this.result
+            const json = JSON.stringify(parsed, null, 2)
+            return this.syntaxHighlight(json)
+          } catch (error) {
+            return this.escapeHtml(String(this.result))
+          }
+        },
+      },
+      watch: {
+        crypto(val) {
+          const info = cryptoInfos[val]
+          if (this.isReq && info.reqDisabled) {
+            this.isReq = false
+          } else if (!this.isReq && info.respDisabled) {
+            this.isReq = true
+          }
+        },
+      },
+      methods: {
+        selectCrypto(val) {
+          this.crypto = val
+        },
+        syntaxHighlight(json) {
+          const escaped = this.escapeHtml(json)
+          return escaped
+            .replace(/(?:"(?:\\.|[^"\\])*")\s*:/g, '<span class="json-key">$&</span>')
+            .replace(/:(\s*)(?:"(?:\\.|[^"\\])*")/g, ':<span class="json-string">$1$2</span>')
+            .replace(/:\s*(\d+(?:\.\d+)?)/g, ': <span class="json-number">$1</span>')
+            .replace(/:\s*(true|false)/g, ': <span class="json-boolean">$1</span>')
+            .replace(/:\s*(null)/g, ': <span class="json-null">$1</span>')
+        },
+        escapeHtml(text) {
+          const div = document.createElement('div')
+          div.textContent = text
+          return div.innerHTML
+        },
+        formatResult(value) {
+          if (value == null || value === '') return ''
+          try {
+            const parsed = typeof value === 'string' ? JSON.parse(value) : value
+            return JSON.stringify(parsed, null, 2)
+          } catch (error) {
+            return String(value)
+          }
+        },
+        async decrypt() {
+          if (!this.encryptedData || !this.encryptedData.trim()) {
+            alert('请先输入要解密的数据')
+            return
+          }
+          try {
+            const res = await axios({
+              url: `/decrypt?crypto=${this.crypto}&isReq=${this.isReq}&timestamp=${Date.now()}`,
+              method: 'post',
+              data: { data: this.encryptedData },
+            })
+            this.result = JSON.stringify(res.data.data)
+          } catch (error) {
+            console.error(error)
+            const msg = error?.response?.data?.message || error?.message || '解密失败，数据格式错误'
+            alert(msg)
+            this.result = '{}'
+          }
+        },
+        sendToApi() {
+          if (!this.canSend) return
+          const payload = JSON.parse(this.result)
+          const params = new URLSearchParams()
+          const uri = payload.uri || payload.url || payload.path || ''
+          params.set('uri', uri)
+          params.set('crypto', this.crypto)
+          const data = payload.params || payload.data || payload.body || payload.payload || payload.request || {}
+          params.set('data', JSON.stringify(data))
+          window.open(`/api.html?${params.toString()}`, '_blank')
+        },
+        loadExample() {
+          switch (this.crypto) {
+            case 'eapi':
+              this.encryptedData = examples.eapi_req
+              break
+            case 'linuxapi':
+              this.isReq = true
+              this.encryptedData = examples.linuxapi_req
+              break
+            case 'xeapi':
+              this.isReq = false
+              this.encryptedData = ''
+              break
+            default:
+              this.encryptedData = ''
+          }
+          if (this.encryptedData) this.decrypt()
+        },
+        loadExampleData(type) {
+          switch (type) {
+            case 'eapi_req':
+              this.crypto = 'eapi'
+              this.isReq = true
+              this.encryptedData = examples.eapi_req
+              break
+            case 'linuxapi_req':
+              this.crypto = 'linuxapi'
+              this.isReq = true
+              this.encryptedData = examples.linuxapi_req
+              break
+          }
+          if (this.encryptedData) this.decrypt()
+        },
+        clearAll() {
+          this.encryptedData = ''
+          this.result = '{}'
+        },
+        copyResult() {
+          const text = typeof this.result === 'string' ? this.result : JSON.stringify(this.result, null, 2)
+          navigator.clipboard.writeText(text).then(() => {
+            alert('已复制到剪贴板')
+          })
+        },
+      },
+    })
+    app.mount('#app')
+  </script>
+</body>
+</html>

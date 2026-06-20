@@ -148,12 +148,12 @@
             updateStatus('二维码已过期，请刷新页面', 'error')
             clearInterval(timer)
           } else if (statusRes.code === 801) {
-            updateStatus('二维码已扫描，请在手机上确认', 'waiting')
+            updateStatus('等待手机扫码...', 'waiting')
           } else if (statusRes.code === 802) {
-            updateStatus('登录成功，正在保存信息...', 'waiting')
+            updateStatus('二维码已扫描，请在手机上确认', 'waiting')
           } else if (statusRes.code === 803) {
             clearInterval(timer)
-            updateStatus('授权登录成功！', 'success')
+            updateStatus('授权登录成功，正在保存信息...', 'success')
             await getLoginStatus(statusRes.cookie)
             localStorage.setItem('cookie', statusRes.cookie)
           }

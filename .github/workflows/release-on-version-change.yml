@@ -1,0 +1,315 @@
+name: Create Release on Version Change
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect Version Change
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+      should_release: ${{ steps.check.outputs.should_release }}
+      tag_exists: ${{ steps.tagcheck.outputs.exists }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from package.json
+        id: version
+        run: |
+          echo "value=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Check if version changed
+        id: check
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if git diff "${{ github.event.before }}" "${{ github.sha }}" -- package.json | grep -q '"version"'; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if tag already exists
+        id: tagcheck
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: detect
+
+    if: |
+      needs.detect.outputs.should_release == 'true' &&
+      needs.detect.outputs.tag_exists != 'true'
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            target: node18-linux-x64
+            output: ncm-api-linux-x64
+
+          - os: windows-latest
+            platform: windows
+            target: node18-win-x64
+            output: ncm-api-win-x64.exe
+
+          - os: macos-latest
+            platform: macos
+            target: node18-macos-x64
+            output: ncm-api-macos-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build binary
+        shell: bash
+        env:
+          PKG_TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p release-artifacts
+
+          case "${{ matrix.platform }}" in
+            linux)
+              npm run pkglinux
+              mv precompiled/app "release-artifacts/${{ matrix.output }}"
+              ;;
+
+            windows)
+              npm run pkgwin
+              mv precompiled/app.exe "release-artifacts/${{ matrix.output }}"
+              ;;
+
+            macos)
+              npm run pkgmacos
+              mv precompiled/app "release-artifacts/${{ matrix.output }}"
+              ;;
+          esac
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.platform }}-binary
+          path: release-artifacts/*
+
+  release:
+    name: Create GitHub Release
+
+    needs:
+      - detect
+      - build
+
+    if: |
+      needs.detect.outputs.should_release == 'true' &&
+      needs.detect.outputs.tag_exists != 'true'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: List flattened artifacts
+        shell: bash
+        run: |
+          mkdir -p final-artifacts
+          cp release-artifacts/* final-artifacts/
+          ls -lah final-artifacts
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          VERSION="${{ needs.detect.outputs.version }}"
+
+          PREV_TAG=$(git tag --sort=-v:refname | head -1)
+
+          {
+            echo "# Release v${VERSION}"
+            echo ""
+            echo "## 更新内容 / Changelog"
+            echo ""
+
+            if [ -n "$PREV_TAG" ]; then
+              echo "从 \`$PREV_TAG\` 到 \`v$VERSION\` 的提交记录："
+              echo ""
+
+              git log "$PREV_TAG..HEAD" \
+                --no-merges \
+                --pretty=format:"- %s (%h)"
+
+            else
+              echo "首次发布，包含以下提交："
+              echo ""
+
+              git log \
+                --no-merges \
+                --pretty=format:"- %s (%h)"
+            fi
+
+            echo ""
+            echo ""
+            echo "---"
+            echo "自动发布 via GitHub Actions"
+
+          } > release-notes.md
+
+          cat release-notes.md
+
+      - name: Create Git tag
+        run: |
+          git tag "v${{ needs.detect.outputs.version }}"
+          git push origin "v${{ needs.detect.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.detect.outputs.version }}
+          name: Release v${{ needs.detect.outputs.version }}
+          body_path: release-notes.md
+          files: final-artifacts/*
+          draft: false
+          prerelease: false
+
+  publish-docker:
+    name: Publish Docker Image
+    needs: detect
+
+    if: |
+      needs.detect.outputs.should_release == 'true' &&
+      needs.detect.outputs.tag_exists != 'true'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read package version
+        id: pkg
+        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            moefurina/ncm-api:latest
+            moefurina/ncm-api:${{ env.VERSION }}
+            ghcr.io/neteasecloudmusicapienhanced/ncm-api:latest
+            ghcr.io/neteasecloudmusicapienhanced/ncm-api:${{ env.VERSION }}
+          platforms: linux/amd64,linux/arm64/v8
+
+  publish-npm:
+    name: Publish to npm
+    needs: detect
+
+    if: |
+      needs.detect.outputs.should_release == 'true' &&
+      needs.detect.outputs.tag_exists != 'true'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm publish --access public --provenance 

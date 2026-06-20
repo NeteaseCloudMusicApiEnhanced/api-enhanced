@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="./public/docs/netease.png" alt="网易云音乐 API Enhanced Logo" width="120" height="120" />
+  <img src="./public/static/neteaselogo.png" alt="网易云音乐 API Enhanced Logo" />
 </p>
-
-<h1 align="center">NeteaseCloudMusicAPI Enhanced</h1>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api">
@@ -32,14 +30,14 @@
 
 ## 项目简介
 
-网易云音乐第三方 Node.js API, 支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
+网易云音乐第三方 Node.js API, 支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署
 
 > [!IMPORTANT]
 >
 > ## 注意
 >
-> - 本项目是一个高度去中心化的第三方 API，其维护都由社区志愿者使用`Pull Request`完成。   
-> - 使用本项目时请务必遵守相关法律法规，遵守`MIT`协议, 尊重网易云音乐的服务条款。   
+> - 本项目是自由项目, 不带任何担保, 在基于`MIT License`的许可下, 任何人都可以自由使用、修改和分发本项目的代码, 包括用于商业目的. 
+> - 该项目是个合作计划, 有很多人参与了此次贡献, 前往 [Contributors](https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced/graphs/contributors) 页面查看所有贡献者
 > - 原作者项目 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 并非完全停止维护, 你可以在 [NeteaseCloudMusicApi 的 NPMJS 页面](https://www.npmjs.com/package/NeteaseCloudMusicApi) 查看最新版本信息。   
 > - 感谢尊重和理解!
 
@@ -130,9 +128,10 @@ $ sudo docker run -d -p 3000:3000 ncm-api
 
 | 变量名                        | 默认值                                  | 说明                                                 |
 |----------------------------|--------------------------------------|----------------------------------------------------|
-| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。若需要限制，请指定具体域名（例如 `https://example.com`）。 |
+| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。可填写单个源，或使用逗号分隔多个源（例如 `https://a.com,https://b.com`）。 |
 | **ENABLE_PROXY**           | `false`                              | 是否启用反向代理功能。                                        |
 | **PROXY_URL**              | `https://your-proxy-url.com/?proxy=` | 代理服务地址。仅当 `ENABLE_PROXY=true` 时生效。                 |
+| **ENABLE_RANDOM_CN_IP**    | `false`                              | 是否默认启用随机中国IP。启用后，所有请求默认使用随机中国IP，除非请求参数 `randomCNIP` 显式关闭。 |
 | **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                     |
 | **ENABLE_FLAC**            | `true`                               | 是否启用无损音质（FLAC）。                                    |
 | **SELECT_MAX_BR**          | `false`                              | 启用无损音质时，是否选择最高码率音质。                                |
@@ -216,7 +215,7 @@ pnpm test
 
 原作者 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 项目为本项目基础 (该项目在`npmjs`网站上仍持续维护, 但 github 仓库已不再更新)
 
-感谢大佬们为逆向eapi, weapi等加密算法所做的贡献
+感谢大佬们为逆向eapi, weapi, xeapi等加密算法所做的贡献
 
 项目参考:
 
@@ -226,25 +225,28 @@ pnpm test
 
 [chaunsin/netease-cloud-music](https://github.com/chaunsin/netease-cloud-music)
 
+[folltoshe/netease-report-listen-song](https://github.com/folltoshe/netease-report-listen-song)
+
 ### SDK 生态
 
 | 语言     | 作者                                          | 地址                                                                                       | 类型  |
 |--------|---------------------------------------------|------------------------------------------------------------------------------------------|-----|
 | Java   | [JackuXL](https://github.com/JackuXL)       | [NeteaseCloudMusicApi-SDK](https://github.com/JackuXL/NeteaseCloudMusicApi-SDK)          | 第三方 |
-| Java   | [1015770492](https://github.com/1015770492) | https://github.com/1015770492/yumbo-music-utils                                          | 第三方 |
+| Java   | [1015770492](https://github.com/1015770492) | [yumbo-music-utils](https://github.com/1015770492/yumbo-music-utils)      | 第三方 |
 | Python | [盧瞳](https://github.com/2061360308)         | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
 | Swift  | [Lincb522](https://github.com/Lincb522)  | [NeteaseCloudMusicApi-Swift](https://github.com/Lincb522/NeteaseCloudMusicAPI-Swift)     | 第三方 |
+| Rust   | [SPlayer-Dev](https://github.com/splayer-dev)  | [ncm-api-rs](https://github.com/SPlayer-Dev/ncm-api-rs)     | 第三方 |
 
 
 ### 依赖此项目的优秀开源项目
-
-- [imsyy/splayer](https://github.com/imsyy/splayer)
 
 - [qier2222/YesPlayMusic](https://github.com/qier222/YesPlayMusic)
 
 - [MaigoLabs/amaoke.app](https://github.com/MaigoLabs/amaoke.app)
 
 - [Yueby/music-together](https://github.com/Yueby/music-together)
+
+- [chthollyphlie/folia-major](https://github.com/chthollyphile/folia-major)
 
 ## License
 

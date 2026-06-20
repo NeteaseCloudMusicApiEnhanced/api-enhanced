@@ -1,13 +1,13 @@
-// 每日推荐歌曲
+// 黑胶乐签打卡历史
 
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {
-    afresh: query.afresh,
+    type: '0',
   }
   return request(
-    `/api/v3/discovery/recommend/songs`,
+    `/api/vipnewcenter/app/minidesk/music/sign/pc`,
     data,
-    createOption(query, 'weapi'),
+    createOption(query, 'xeapi'),
   )
 }

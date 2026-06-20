@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>听歌打卡 - 网易云音乐 API Enhanced</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .login-link {
+      display: block;
+      margin-bottom: 20px;
+      color: #666;
+      font-size: 14px;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .login-link:hover {
+      color: #333;
+      text-decoration: underline;
+    }
+
+    /* ---- Tabs ---- */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #555;
+    }
+
+    .tab-btn.active {
+      color: #333;
+      border-bottom-color: #333;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ---- Form ---- */
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    label .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 400;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+
+    label .tag.r {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    label .tag.o {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus {
+      border-color: #333;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row .form-group {
+      flex: 1;
+    }
+
+    .quick-fill {
+      margin-top: 5px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .quick-fill span {
+      color: #0066cc;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .quick-fill span:hover {
+      text-decoration: underline;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #333;
+      color: white;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .btn:hover {
+      background: #555;
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-family: monospace;
+    }
+
+    .result.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .result.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .result.info {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .footer-link {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+    }
+
+    .footer-link a {
+      color: #666;
+      text-decoration: none;
+    }
+
+    .footer-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>听歌打卡</h1>
+    <p class="subtitle">同步听歌记录至网易云音乐，增加听歌排行计数</p>
+
+    <a href="/qrlogin-nocookie.html" class="login-link">还没登录？点击登录</a>
+
+    <!-- Cookie (共享) -->
+    <div class="form-group">
+      <label for="cookie">Cookie <span class="tag o">可选</span></label>
+      <textarea id="cookie" placeholder="留空则默认读取本地存储的登录态" rows="2"></textarea>
+      <div class="quick-fill">
+        <span onclick="loadLocalCookie()">读取本地 Cookie</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="v0" onclick="switchTab('v0')">原版</button>
+      <button class="tab-btn" data-tab="v1" onclick="switchTab('v1')">V2 (NCBL 加密版)</button>
+    </div>
+
+    <!-- ============ Tab: v0 (原版 /scrobble) ============ -->
+    <div class="tab-content active" id="tab-v0">
+      <div class="form-group">
+        <label>歌曲 ID <span class="tag r">必填</span></label>
+        <input type="text" id="v0-songId" placeholder="例如: 2756058128" value="2756058128" />
+        <div class="quick-fill">
+          示例:
+          <span onclick="fillV0('2756058128', '288651229')">妖精小姐的魔法邀约</span>
+          <span onclick="fillV0('2637402867', '251025018')">Echoes of Memoria</span>
+          <span onclick="fillV0('36307815', '3394198')">Lose Control</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>来源 ID (歌单或专辑 ID) <span class="tag r">必填</span></label>
+        <input type="text" id="v0-sourceId" placeholder="例如: 2756058128" value="2756058128" />
+      </div>
+      <div class="form-group">
+        <label>播放时间 (秒) <span class="tag o">可选</span></label>
+        <input type="number" id="v0-time" placeholder="300" value="300" />
+      </div>
+      <button class="btn" onclick="submitV0()">立即打卡 (原版)</button>
+    </div>
+
+    <!-- ============ Tab: v1 (NCBL 加密版 /scrobble/v1) ============ -->
+    <div class="tab-content" id="tab-v1">
+      <div class="form-group">
+        <label>歌曲 ID <span class="tag r">必填</span></label>
+        <input type="text" id="v1-songId" placeholder="例如: 518066366" value="518066366" />
+        <div class="quick-fill">
+          示例:
+          <span onclick="fillV1('518066366', '36780169', '291')">默认示例</span>
+          <span onclick="fillV1('2756058128', '288651229', '300')">妖精小姐的魔法邀约</span>
+          <span onclick="fillV1('2637402867', '251025018', '300')">Echoes of Memoria</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>播放时间 (秒) <span class="tag r">必填</span></label>
+        <input type="number" id="v1-time" placeholder="例如: 291" value="291" />
+      </div>
+      <div class="form-group">
+        <label>来源 ID <span class="tag o">可选</span></label>
+        <input type="text" id="v1-sourceId" placeholder="歌单或专辑 ID" value="36780169" />
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>歌曲名 <span class="tag o">可选</span></label>
+          <input type="text" id="v1-name" placeholder="歌曲名称" />
+        </div>
+        <div class="form-group">
+          <label>艺术家 <span class="tag o">可选</span></label>
+          <input type="text" id="v1-artist" placeholder="歌手名" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>码率 <span class="tag o">可选</span></label>
+          <input type="number" id="v1-bitrate" placeholder="默认 320" value="320" />
+        </div>
+        <div class="form-group">
+          <label>音质等级 <span class="tag o">可选</span></label>
+          <input type="text" id="v1-level" placeholder="默认 exhigh" value="exhigh" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>歌曲总时长 (秒) <span class="tag o">可选</span></label>
+        <input type="number" id="v1-total" placeholder="留空则与播放时间相同" />
+      </div>
+      <button class="btn" onclick="submitV1()">立即打卡 (NCBL 加密版)</button>
+    </div>
+
+    <!-- Result -->
+    <div id="result" class="result" style="display: none;"></div>
+
+    <div class="footer-link">
+      <a href="/">返回首页</a>
+    </div>
+  </div>
+
+  <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+  <script>
+    /* ---- DOM refs ---- */
+    const cookieInput = document.getElementById('cookie')
+    const resultDiv = document.getElementById('result')
+
+    /* ---- init ---- */
+    if (localStorage.getItem('cookie')) {
+      cookieInput.value = localStorage.getItem('cookie')
+    }
+
+    /* ---- Tab switching ---- */
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name))
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + name))
+      hideResult()
+    }
+
+    /* ---- Cookie ---- */
+    function loadLocalCookie() {
+      const local = localStorage.getItem('cookie')
+      if (local) {
+        cookieInput.value = local
+        showResult('已成功读取本地 Cookie', 'success')
+      } else {
+        showResult('未在本地发现登录 Cookie，请先登录或手动粘贴', 'error')
+      }
+    }
+
+    /* ---- Quick fill ---- */
+    function fillV0(id, sourceId) {
+      document.getElementById('v0-songId').value = id
+      document.getElementById('v0-sourceId').value = sourceId
+    }
+
+    function fillV1(id, sourceId, time) {
+      document.getElementById('v1-songId').value = id
+      document.getElementById('v1-sourceId').value = sourceId
+      document.getElementById('v1-time').value = time
+    }
+
+    /* ---- Result ---- */
+    function hideResult() {
+      resultDiv.style.display = 'none'
+    }
+
+    function showResult(message, type) {
+      resultDiv.textContent = message
+      resultDiv.className = 'result ' + type
+      resultDiv.style.display = 'block'
+    }
+
+    function disableAll(disabled) {
+      document.querySelectorAll('.btn').forEach(b => b.disabled = disabled)
+    }
+
+    /* ---- Submit: 原版 /scrobble ---- */
+    async function submitV0() {
+      const id = document.getElementById('v0-songId').value.trim()
+      const sourceid = document.getElementById('v0-sourceId').value.trim()
+      const time = document.getElementById('v0-time').value.trim() || '300'
+
+      if (!id) { showResult('请输入歌曲 ID ！', 'error'); return }
+      if (!sourceid) { showResult('请输入来源 ID ！', 'error'); return }
+
+      disableAll(true)
+      showResult('打卡中，请稍候...', 'info')
+
+      try {
+        const params = { id, sourceid: sourceid || id, time, timestamp: Date.now() }
+        const cookie = cookieInput.value.trim()
+        if (cookie) params.cookie = cookie
+
+        const res = await axios({ method: 'get', url: '/scrobble', params })
+        if (res.data.code === 200) {
+          showResult('✅ 打卡成功! \n\n' + JSON.stringify(res.data, null, 2), 'success')
+        } else {
+          showResult('请求已发送，返回：\n\n' + JSON.stringify(res.data, null, 2), 'info')
+        }
+      } catch (error) {
+        const errData = error.response ? error.response.data : { error: error.message }
+        showResult('❌ 打卡失败\n\n' + JSON.stringify(errData, null, 2), 'error')
+      } finally {
+        disableAll(false)
+      }
+    }
+
+    /* ---- Submit: NCBL 加密版 /scrobble/v1 ---- */
+    async function submitV1() {
+      const id = document.getElementById('v1-songId').value.trim()
+      const time = document.getElementById('v1-time').value.trim()
+
+      if (!id) { showResult('请输入歌曲 ID ！', 'error'); return }
+      if (!time || isNaN(+time) || +time <= 0) { showResult('请输入有效的播放时长（秒）！', 'error'); return }
+
+      disableAll(true)
+      showResult('打卡中（NCBL 加密），请稍候...', 'info')
+
+      try {
+        const params = {
+          id,
+          time,
+          sourceid: document.getElementById('v1-sourceId').value.trim() || undefined,
+          name: document.getElementById('v1-name').value.trim() || undefined,
+          artist: document.getElementById('v1-artist').value.trim() || undefined,
+          bitrate: document.getElementById('v1-bitrate').value.trim() || undefined,
+          level: document.getElementById('v1-level').value.trim() || undefined,
+          total: document.getElementById('v1-total').value.trim() || undefined,
+          timestamp: Date.now(),
+        }
+        const cookie = cookieInput.value.trim()
+        if (cookie) params.cookie = cookie
+
+        // 清理 undefined 参数
+        Object.keys(params).forEach(k => params[k] === undefined && delete params[k])
+
+        const res = await axios({ method: 'get', url: '/scrobble/v1', params })
+        if (res.data.code === 200) {
+          showResult('✅ NCBL 加密打卡成功! \n\n' + JSON.stringify(res.data, null, 2), 'success')
+        } else {
+          showResult('请求已发送，返回：\n\n' + JSON.stringify(res.data, null, 2), 'info')
+        }
+      } catch (error) {
+        const errData = error.response ? error.response.data : { error: error.message }
+        showResult('❌ 打卡失败\n\n' + JSON.stringify(errData, null, 2), 'error')
+      } finally {
+        disableAll(false)
+      }
+    }
+  </script>
+</body>
+
+</html>
