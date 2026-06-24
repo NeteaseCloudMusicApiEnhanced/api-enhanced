@@ -1501,18 +1501,24 @@ export function topic_detail_event_hot(
   } & RequestBaseConfig,
 ): Promise<Response>
 
-export function login_qr_key(params: RequestBaseConfig): Promise<Response>
+export function login_qr_key(
+  params: { platform?: 'web' | 'pc' | string } & RequestBaseConfig,
+): Promise<Response>
 
 export function login_qr_create(
   params: {
     key?: number | string
     qrimg?: boolean | string
+    platform?: 'web' | 'pc' | string
+    chainId?: string
   } & RequestBaseConfig,
 ): Promise<Response>
 
 export function login_qr_check(
   params: {
     key?: number | string
+    platform?: 'web' | 'pc' | string
+    chainId?: string
   } & RequestBaseConfig,
 ): Promise<Response>
 

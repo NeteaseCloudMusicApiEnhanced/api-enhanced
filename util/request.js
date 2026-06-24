@@ -118,7 +118,9 @@ const DOMAIN = APP_CONF.domain
 const API_DOMAIN = APP_CONF.apiDomain
 const XEAPI_DOMAIN = APP_CONF.xeapiDomain
 const ENCRYPT_RESPONSE = APP_CONF.encryptResponse
-const SPECIAL_STATUS_CODES = new Set([201, 302, 400, 502, 800, 801, 802, 803])
+const SPECIAL_STATUS_CODES = new Set([
+  201, 302, 400, 502, 800, 801, 802, 803, 8821,
+])
 
 let xeapiSessionId = ''
 let xeapiSessionKey = ''
@@ -223,7 +225,7 @@ const createRequest = (uri, data, options) => {
     // 根据加密方式处理
     switch (crypto) {
       case 'weapi':
-        headers['Referer'] = options.domain || DOMAIN
+        headers['Referer'] = headers['Referer'] || options.domain || DOMAIN
         headers['User-Agent'] = options.ua || chooseUserAgent('weapi')
         data.csrf_token = csrfToken
         encryptData = encrypt.weapi(data)

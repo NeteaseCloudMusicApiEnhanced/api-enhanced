@@ -164,7 +164,9 @@ module.exports = {
     const version = 'v1'
     const randomNum = Math.floor(Math.random() * 1e6)
     const deviceId =
-      getCookieValue(cookie, 'sDeviceId') || 'unknown-' + randomNum
+      (cookie && typeof cookie === 'object'
+        ? cookie.sDeviceId
+        : getCookieValue(cookie, 'sDeviceId')) || 'unknown-' + randomNum
     const platform = 'web'
     const action = 'login'
     const timestamp = Date.now()
