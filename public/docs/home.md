@@ -350,7 +350,7 @@ body {
 
 可选参数: `qrimg` 传入后会额外返回二维码图片 base64 编码
 
-可选参数: `platform` 默认为 `web`, 会生成更接近网页版登录的二维码并返回 `chainId`; 如需旧版二维码可传 `pc`
+可选参数: `platform` 默认为 `web`, 会生成网页版 `/st/platform/scanlogin` 二维码并返回 `chainId`; 如需旧版二维码可传 `pc`
 
 可选参数: `chainId` 网页版登录链路 ID, 不传时会自动生成并在返回的 `data.chainId` 中给出
 

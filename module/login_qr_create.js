@@ -17,13 +17,10 @@ module.exports = (query) => {
     }
 
     // 构建基础URL
-    let url = `https://music.163.com/login?codekey=${query.key}`
-
-    // 如果是web平台，则添加chainId参数
-
-    if (platform === 'web') {
-      url += `&chainId=${encodeURIComponent(chainId)}`
-    }
+    let url =
+      platform === 'web'
+        ? `https://music.163.com/st/platform/scanlogin?codekey=${query.key}&chainId=${encodeURIComponent(chainId)}&hdw_device=web&hdw_appid=web&hitExp=1`
+        : `https://music.163.com/login?codekey=${query.key}`
     return resolve({
       code: 200,
       status: 200,
