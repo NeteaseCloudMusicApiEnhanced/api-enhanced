@@ -1531,6 +1531,7 @@ export function login_qr_check(
     key?: number | string
     platform?: LoginPlatform
     chainId?: string
+    ydDeviceToken?: string
   } & RequestBaseConfig,
 ): Promise<Response>
 

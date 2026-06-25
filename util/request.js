@@ -206,7 +206,11 @@ const createRequest = (uri, data, options) => {
       cookie = cookieToJson(cookie)
     }
 
-    if (typeof cookie === 'object') {
+    if (options.skipCookieProcessing) {
+      headers['Cookie'] =
+        options.rawCookie ||
+        (typeof cookie === 'object' ? cookieObjToString(cookie) : '')
+    } else if (typeof cookie === 'object') {
       cookie = processCookieObject(cookie, uri)
       headers['Cookie'] = cookieObjToString(cookie)
     }

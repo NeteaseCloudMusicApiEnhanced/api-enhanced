@@ -1,5 +1,9 @@
 const createOption = require('../util/option.js')
 const { generateChainId } = require('../util/index')
+const {
+  createWebQrOption,
+  mergeCookieLists,
+} = require('../util/web_qr_login.js')
 
 const qrLoginChainIds =
   globalThis.__neteaseQrLoginChainIds ||
@@ -13,21 +17,16 @@ module.exports = async (query, request) => {
     (platform === 'web' ? generateChainId(query.cookie || '') : '')
   const data = {
     key: query.key,
-    type: 3,
+    type: platform === 'web' ? 1 : 3,
   }
-  const option = createOption(query, platform === 'web' ? 'weapi' : '')
+  if (platform === 'web') data.ydDeviceToken = query.ydDeviceToken || ''
 
+  let option = createOption(query, '')
   if (platform === 'web') {
-    option.headers = {
-      ...option.headers,
-      Referer: 'https://music.163.com/',
-      Origin: 'https://music.163.com',
+    option = createWebQrOption(query, {
       'X-LoginMethod': 'QrCode',
       'X-Login-Chain-Id': chainId,
-      'X-OS': 'web',
-      'X-ChannelSource': 'undefined',
-      'NM-GCORE-STATUS': '1',
-    }
+    })
   }
 
   try {
@@ -39,9 +38,11 @@ module.exports = async (query, request) => {
       status: 200,
       body: {
         ...result.body,
-        cookie: result.cookie.join(';'),
+        cookie: mergeCookieLists(option.webQrCookieSet, result.cookie).join(
+          ';',
+        ),
       },
-      cookie: result.cookie,
+      cookie: mergeCookieLists(option.webQrCookieSet, result.cookie),
     }
     return result
   } catch (error) {
@@ -51,7 +52,10 @@ module.exports = async (query, request) => {
     return {
       status: 200,
       body: error.body || {},
-      cookie: error.cookie || [],
+      cookie:
+        platform === 'web'
+          ? mergeCookieLists(option.webQrCookieSet, error.cookie)
+          : error.cookie || [],
     }
   }
 }
