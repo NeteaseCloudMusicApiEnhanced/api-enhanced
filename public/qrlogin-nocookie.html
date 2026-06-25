@@ -153,7 +153,8 @@
           } else if (statusRes.code === 802) {
             updateStatus('二维码已扫描，请在手机上确认', 'waiting')
           } else if (statusRes.code === 8821) {
-            updateStatus('正在等待网页登录确认...', 'waiting')
+            updateStatus('需要完成网页登录安全验证', 'error')
+            clearInterval(timer)
           } else if (statusRes.code === 803) {
             clearInterval(timer)
             updateStatus('授权登录成功，正在保存信息...', 'success')

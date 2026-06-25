@@ -1514,7 +1514,7 @@ export function topic_detail_event_hot(
 ): Promise<Response>
 
 export function login_qr_key(
-  params: { platform?: LoginPlatform } & RequestBaseConfig,
+  params: { platform?: LoginPlatform; lastUnikey?: string } & RequestBaseConfig,
 ): Promise<Response>
 
 export function login_qr_create(
@@ -1531,6 +1531,7 @@ export function login_qr_check(
     key?: number | string
     platform?: LoginPlatform
     chainId?: string
+    secureCaptcha?: string
     ydDeviceToken?: string
   } & RequestBaseConfig,
 ): Promise<Response>

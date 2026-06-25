@@ -8,6 +8,10 @@ module.exports = async (query, request) => {
   const data = {
     type: platform === 'web' ? 1 : 3,
   }
+  if (platform === 'web') {
+    data.noCheckToken = true
+    if (query.lastUnikey) data.lastUnikey = query.lastUnikey
+  }
   const option =
     platform === 'web' ? createWebQrOption(query) : createOption(query, '')
 

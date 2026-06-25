@@ -20,13 +20,17 @@ module.exports = async (query, request) => {
     key: query.key,
     type: platform === 'web' ? 1 : 3,
   }
-  if (platform === 'web') data.ydDeviceToken = query.ydDeviceToken || ''
+  if (platform === 'web') {
+    data.noCheckToken = true
+    if (query.secureCaptcha) data.secureCaptcha = query.secureCaptcha
+    data.ydDeviceToken = query.ydDeviceToken || ''
+  }
 
   let option = createOption(query, '')
   if (platform === 'web') {
     option = createWebQrOption(query, {
-      'X-LoginMethod': 'QrCode',
-      'X-Login-Chain-Id': chainId,
+      'X-loginMethod': 'QrCode',
+      'x-login-chain-id': chainId,
     })
   }
 
