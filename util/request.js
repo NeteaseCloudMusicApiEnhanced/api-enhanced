@@ -15,6 +15,7 @@ const {
   cookieObjToString,
   toBoolean,
   generateRandomChineseIP,
+  generateDeviceId,
 } = require('./index')
 const { URLSearchParams, URL } = require('url')
 const { APP_CONF } = require('../util/config.json')
@@ -84,8 +85,9 @@ const osMap = {
   },
   iphone: {
     os: 'iPhone OS',
-    appver: '9.0.90',
-    osver: '16.2',
+    appver: '9.5.37',
+    osver: '18.7.2',
+    buildver: '7010',
     channel: 'distribution',
   },
   osx: {
@@ -109,7 +111,7 @@ const userAgentMap = {
     pc: 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.0.18.203152',
     android:
       'NeteaseMusic/9.1.65.240927161425(9001065);Dalvik/2.1.0 (Linux; U; Android 14; 23013RK75C Build/UKQ1.230804.001)',
-    iphone: 'NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)',
+    iphone: 'neteasemusic/9.5.37 (iPhone; iOS 18.7.2; Scale/3.00)',
   },
 }
 
@@ -134,6 +136,9 @@ const chooseUserAgent = (crypto, uaType = 'pc') => {
 const processCookieObject = (cookie, uri) => {
   const _ntes_nuid = CryptoJS.lib.WordArray.random(32).toString()
   const os = osMap[cookie.os] || osMap['pc']
+  const normalizedOs = osMap[cookie.os] ? os.os : cookie.os || os.os
+  const deviceId = cookie.deviceId || global.deviceId || generateDeviceId()
+  global.deviceId = deviceId
 
   const processedCookie = {
     ...cookie,
@@ -144,10 +149,12 @@ const processCookieObject = (cookie, uri) => {
     WNMCID: cookie.WNMCID || WNMCID,
     WEVNSM: cookie.WEVNSM || '1.0.0',
     osver: cookie.osver || os.osver,
-    deviceId: cookie.deviceId || global.deviceId,
-    os: cookie.os || os.os,
+    deviceId,
+    sDeviceId: cookie.sDeviceId || cookie.sdeviceid || deviceId,
+    os: normalizedOs,
     channel: cookie.channel || os.channel,
     appver: cookie.appver || os.appver,
+    buildver: cookie.buildver || os.buildver,
   }
 
   if (uri.indexOf('login') === -1) {
@@ -321,8 +328,21 @@ const createRequest = (uri, data, options) => {
             : chooseUserAgent('api', 'iphone'))
 
         if (crypto === 'eapi') {
+          if (cookie.deviceId) {
+            headers['x-deviceid'] = headers['x-deviceid'] || cookie.deviceId
+            headers['x-sdeviceid'] =
+              headers['x-sdeviceid'] || cookie.sDeviceId || cookie.deviceId
+          }
+          headers['x-os'] = headers['x-os'] || cookie.os
+          headers['x-osver'] = headers['x-osver'] || cookie.osver
+          headers['x-appver'] = headers['x-appver'] || cookie.appver
+          headers['x-buildver'] = headers['x-buildver'] || header.buildver
+          if (cookie.MUSIC_U) headers['x-music-u'] = cookie.MUSIC_U
+          if (options.mobileEapi && cookie.deviceId && !data.deviceId) {
+            data.deviceId = cookie.deviceId
+          }
           // headers['x-aeapi'] = true // 服务器会使用gzip压缩返回值
-          data.header = header
+          data.header = options.emptyHeader ? {} : header
 
           encryptData = encrypt.eapi(uri, data)
           url = (options.domain || API_DOMAIN) + '/eapi/' + uri.substr(5)

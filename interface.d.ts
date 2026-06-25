@@ -5,6 +5,8 @@ export interface RequestBaseConfig {
   randomCNIP?: boolean // Whether to use a random Chinese IP address filled in X-Real-IP
 }
 
+export type LoginPlatform = 'web' | 'pc' | 'ios' | 'iphone' | 'mobile' | string
+
 export interface MultiPageConfig {
   limit?: string | number
   offset?: string | number
@@ -272,14 +274,21 @@ export function batch(
 ): Promise<Response>
 
 export function captcha_sent(
-  params: { phone: string; ctcode?: number | string } & RequestBaseConfig,
+  params: {
+    phone: string
+    ctcode?: number | string
+    countrycode?: number | string
+    platform?: LoginPlatform
+  } & RequestBaseConfig,
 ): Promise<Response>
 
 export function captcha_verify(
   params: {
     ctcode?: number | string
+    countrycode?: number | string
     phone: number | string
     captcha: string
+    platform?: LoginPlatform
   } & RequestBaseConfig,
 ): Promise<Response>
 
@@ -691,6 +700,7 @@ export function login_cellphone(
     phone: number | string
     countrycode?: number | string
     password: string
+    platform?: LoginPlatform
   } & RequestBaseConfig,
 ): Promise<Response>
 
@@ -699,6 +709,7 @@ export function login_cellphone(
     phone: number | string
     countrycode?: number | string
     md5_password: string
+    platform?: LoginPlatform
   } & RequestBaseConfig,
 ): Promise<Response>
 
@@ -707,6 +718,7 @@ export function login_cellphone(
     phone: number | string
     countrycode?: number | string
     captcha: number | string
+    platform?: LoginPlatform
   } & RequestBaseConfig,
 ): Promise<Response>
 
@@ -1502,14 +1514,14 @@ export function topic_detail_event_hot(
 ): Promise<Response>
 
 export function login_qr_key(
-  params: { platform?: 'web' | 'pc' | string } & RequestBaseConfig,
+  params: { platform?: LoginPlatform } & RequestBaseConfig,
 ): Promise<Response>
 
 export function login_qr_create(
   params: {
     key?: number | string
     qrimg?: boolean | string
-    platform?: 'web' | 'pc' | string
+    platform?: LoginPlatform
     chainId?: string
   } & RequestBaseConfig,
 ): Promise<Response>
@@ -1517,7 +1529,7 @@ export function login_qr_create(
 export function login_qr_check(
   params: {
     key?: number | string
-    platform?: 'web' | 'pc' | string
+    platform?: LoginPlatform
     chainId?: string
   } & RequestBaseConfig,
 ): Promise<Response>
