@@ -46,7 +46,13 @@ const createWebQrCookie = (cookie) => {
 const cookieToSetCookieList = (cookie) =>
   Object.keys(cookie).map((key) => `${key}=${cookie[key]}`)
 
-const mergeCookieLists = (base = [], extra = []) => {
+const cookieHeaderToList = (cookie = '') =>
+  String(cookie)
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+const mergeCookieLists = (...lists) => {
   const merged = new Map()
   const add = (cookie) => {
     const value = String(cookie || '').split(';')[0]
@@ -55,8 +61,7 @@ const mergeCookieLists = (base = [], extra = []) => {
     merged.set(value.slice(0, index), value)
   }
 
-  base.forEach(add)
-  extra.forEach(add)
+  lists.flat().forEach(add)
   return [...merged.values()]
 }
 
@@ -83,6 +88,7 @@ const createWebQrOption = (query = {}, headers = {}) => {
 }
 
 module.exports = {
+  cookieHeaderToList,
   createWebQrOption,
   mergeCookieLists,
 }

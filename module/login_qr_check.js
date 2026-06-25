@@ -1,6 +1,7 @@
 const createOption = require('../util/option.js')
 const { generateChainId } = require('../util/index')
 const {
+  cookieHeaderToList,
   createWebQrOption,
   mergeCookieLists,
 } = require('../util/web_qr_login.js')
@@ -31,6 +32,15 @@ module.exports = async (query, request) => {
 
   try {
     let result = await request(`/api/login/qrcode/client/login`, data, option)
+    let responseCookies = result.cookie
+    if (platform === 'web') {
+      responseCookies = mergeCookieLists(
+        option.webQrCookieSet,
+        result.cookie,
+        cookieHeaderToList(result.body.cookie),
+      )
+    }
+    const responseCookie = result.body.cookie || responseCookies.join(';')
     if ([800, 803].includes(result.body.code)) {
       qrLoginChainIds.delete(String(query.key))
     }
@@ -38,24 +48,34 @@ module.exports = async (query, request) => {
       status: 200,
       body: {
         ...result.body,
-        cookie: mergeCookieLists(option.webQrCookieSet, result.cookie).join(
-          ';',
-        ),
+        cookie: responseCookie,
       },
-      cookie: mergeCookieLists(option.webQrCookieSet, result.cookie),
+      cookie: responseCookies,
     }
     return result
   } catch (error) {
     if ([800, 803].includes(error.body && error.body.code)) {
       qrLoginChainIds.delete(String(query.key))
     }
+    let body = error.body || {}
+    let cookies = error.cookie || []
+    if (platform === 'web') {
+      cookies = mergeCookieLists(
+        option.webQrCookieSet,
+        error.cookie,
+        cookieHeaderToList(error.body && error.body.cookie),
+      )
+      if (error.body) {
+        body = {
+          ...error.body,
+          cookie: error.body.cookie || cookies.join(';'),
+        }
+      }
+    }
     return {
       status: 200,
-      body: error.body || {},
-      cookie:
-        platform === 'web'
-          ? mergeCookieLists(option.webQrCookieSet, error.cookie)
-          : error.cookie || [],
+      body,
+      cookie: cookies,
     }
   }
 }
