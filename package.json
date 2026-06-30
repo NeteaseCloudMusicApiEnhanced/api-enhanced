@@ -84,7 +84,7 @@
     "gzip": "^0.1.0",
     "music-metadata": "^11.13.0",
     "node-forge": "^1.4.0",
-    "pac-proxy-agent": "^7.2.0",
+    "pac-proxy-agent": "^9.1.0",
     "qrcode": "^1.5.4",
     "safe-decode-uri-component": "^1.2.1",
     "tunnel": "^0.0.6",
