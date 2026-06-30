@@ -338,6 +338,8 @@ body {
 
 说明: 调用此接口可生成一个 key
 
+可选参数: `platform` 默认为 `web`, 会使用网页版二维码登录链路; 如需旧版链路可传 `pc`
+
 **接口地址 :** `/login/qr/key`
 
 ##### 2. 二维码生成接口
@@ -348,19 +350,29 @@ body {
 
 可选参数: `qrimg` 传入后会额外返回二维码图片 base64 编码
 
+可选参数: `platform` 默认为 `web`, 会生成网页版 `/st/platform/scanlogin` 二维码并返回 `chainId`; 如需旧版二维码可传 `pc`
+
+可选参数: `chainId` 网页版登录链路 ID, 不传时会自动生成并在返回的 `data.chainId` 中给出
+
 **接口地址 :** `/login/qr/create`
 
-**调用例子 :** `/login/qr/create?key=xxx`
+**调用例子 :** `/login/qr/create?key=xxx&platform=web&qrimg=true`
 
 ##### 3. 二维码检测扫码状态接口
 
-说明: 轮询此接口可获取二维码扫码状态,800 为二维码过期,801 为等待扫码,802 为待确认,803 为授权登录成功(803 状态码下会返回 cookies),如扫码后返回 502,则需加上 noCookie 参数,如`&noCookie=true`
+说明: 轮询此接口可获取二维码扫码状态,800 为二维码过期,801 为等待扫码,802 为待确认,8821 为网页端安全验证,803 为授权登录成功(803 状态码下会返回 cookies),如扫码后返回 502,则需加上 noCookie 参数,如`&noCookie=true`
 
 必选参数: `key`,由第一个接口生成
 
+可选参数: `platform` 默认为 `web`, 与二维码生成接口保持一致
+
+可选参数: `chainId` 建议传入 `/login/qr/create` 返回的 `data.chainId`
+
+可选参数: `secureCaptcha` 网页端返回 8821 后, 需完成易盾验证码并将 `validate` 值传入后继续轮询
+
 **接口地址 :** `/login/qr/check`
 
-**调用例子 :** `/login/qr/check?key=xxx`
+**调用例子 :** `/login/qr/check?key=xxx&platform=web&chainId=xxx`
 
 调用可参考项目文件例子
 
