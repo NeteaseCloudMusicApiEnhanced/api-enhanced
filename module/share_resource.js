@@ -7,5 +7,9 @@ module.exports = (query, request) => {
     msg: query.msg || '',
     id: query.id || '',
   }
-  return request(`/api/share/friends/resource`, data, createOption(query))
+  return request(
+    `/api/share/friends/resource`,
+    data,
+    createOption(query, 'xeapi', 'v3'),
+  )
 }
