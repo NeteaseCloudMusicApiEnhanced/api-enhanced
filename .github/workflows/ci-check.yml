@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint / Unit / Docs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 22, 24]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      # frozen-lockfile: 顺带校验 package.json 与 pnpm-lock.yaml 是否一致
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      # 纯单测，不需要网络，稳定必过
+      - name: Unit tests
+        run: pnpm exec mocha -r intelli-espower-loader -t 60000 main.test.js --exit
+
+      - name: Docs format check
+        run: pnpm docs:check
+
+  integration:
+    # server.test.js 会启动真实服务器并请求真实网易云 API，
+    # 可能因上游风控/限流偶发失败，因此不阻塞合并
+    name: Integration tests (real NetEase API)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run full test suite
+        run: pnpm test

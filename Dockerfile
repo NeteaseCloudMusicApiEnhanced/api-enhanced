@@ -3,13 +3,16 @@ FROM node:lts-alpine
 RUN apk add --no-cache tini
 
 ENV NODE_ENV production
+
+RUN npm install -g pnpm@9
+
 USER node
 
 WORKDIR /app
 
 COPY --chown=node:node . ./
 
-RUN yarn --network-timeout=100000
+RUN pnpm install --frozen-lockfile --prod
 
 EXPOSE 3000
 
