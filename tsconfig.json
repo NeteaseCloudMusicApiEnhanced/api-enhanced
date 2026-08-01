@@ -1,31 +1,21 @@
 {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "commonjs",
-      "experimentalDecorators": true,
-      "ignoreDeprecations": "6.0",
-      "moduleResolution": "node",
-      "lib": [
-        "esnext",
-        "esnext.asynciterable",
-        "dom"
-      ],
-      "esModuleInterop": true,
-      "allowJs": true,
-      "sourceMap": true,
-      "strict": true,
-      "noEmit": true,
-      "baseUrl": ".",
-      "paths": {
-        "~/*": [
-          "./*"
-        ],
-        "@/*": [
-          "./*"
-        ]
-      },
-    },
-    "exclude": [
-      "node_modules"
-    ]
-  }
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "node16",
+    "experimentalDecorators": true,
+    "moduleResolution": "node16",
+    "lib": ["esnext", "esnext.asynciterable", "dom"],
+    "esModuleInterop": true,
+    "allowJs": true,
+    "sourceMap": true,
+    "strict": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"],
+      "@neteasecloudmusicapienhanced/api": ["./interface.d.ts"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
