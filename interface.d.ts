@@ -626,6 +626,20 @@ export function event_del(
   params: { evId: string | number } & RequestBaseConfig,
 ): Promise<Response>
 
+export const enum EventPrivacy {
+  everyone = 0,
+  following = 1,
+  onlyMe = 2,
+  mutualFollowing = 6,
+}
+
+export function event_privacy(
+  params: {
+    evId: string | number
+    privacy: EventPrivacy
+  } & RequestBaseConfig,
+): Promise<Response>
+
 export function event_forward(
   params: {
     forwords: string
