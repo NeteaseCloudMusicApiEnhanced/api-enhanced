@@ -626,6 +626,20 @@ export function event_del(
   params: { evId: string | number } & RequestBaseConfig,
 ): Promise<Response>
 
+export const enum EventPrivacy {
+  everyone = 0,
+  following = 1,
+  onlyMe = 2,
+  mutualFollowing = 6,
+}
+
+export function event_privacy(
+  params: {
+    evId: string | number
+    privacy: EventPrivacy
+  } & RequestBaseConfig,
+): Promise<Response>
+
 export function event_forward(
   params: {
     forwords: string
@@ -1266,6 +1280,25 @@ export function user_event(
     uid: string | number
   } & RequestBaseConfig,
 ): Promise<Response>
+
+export interface UserEventAllResponse {
+  code: number
+  events: Record<string, unknown>[]
+  /** Upstream account statistic; it can include events no longer returned. */
+  size: number | null
+  /** Number of unique events in `events`. */
+  retrievedCount: number
+  /** Positive difference between `size` and `retrievedCount`. */
+  unavailableCount: number | null
+  sizeMismatch: boolean | null
+  pageCount: number
+  more: false
+  lasttime: string | number | null
+}
+
+export function user_event_all(
+  params: RequestBaseConfig,
+): Promise<Response<UserEventAllResponse>>
 
 export function user_followeds(
   params: {
