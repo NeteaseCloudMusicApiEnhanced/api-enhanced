@@ -1281,6 +1281,25 @@ export function user_event(
   } & RequestBaseConfig,
 ): Promise<Response>
 
+export interface UserEventAllResponse {
+  code: number
+  events: Record<string, unknown>[]
+  /** Upstream account statistic; it can include events no longer returned. */
+  size: number | null
+  /** Number of unique events in `events`. */
+  retrievedCount: number
+  /** Positive difference between `size` and `retrievedCount`. */
+  unavailableCount: number | null
+  sizeMismatch: boolean | null
+  pageCount: number
+  more: false
+  lasttime: string | number | null
+}
+
+export function user_event_all(
+  params: RequestBaseConfig,
+): Promise<Response<UserEventAllResponse>>
+
 export function user_followeds(
   params: {
     uid: string | number

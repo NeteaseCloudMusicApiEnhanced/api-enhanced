@@ -4,9 +4,10 @@ const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {
     getcounts: true,
-    time: query.lasttime || -1,
-    limit: query.limit || 30,
+    time: query.lasttime ?? -1,
+    limit: query.limit ?? 30,
     total: false,
+    fromRN: 'true',
   }
   return request(`/api/event/get/${query.uid}`, data, createOption(query))
 }
