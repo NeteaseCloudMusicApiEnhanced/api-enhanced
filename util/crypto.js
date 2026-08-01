@@ -95,22 +95,30 @@ const eapi = (url, object) => {
   }
 }
 const eapiResDecrypt = (encryptedParams, aeapi = false) => {
-  // 使用aesDecrypt解密参数
-  try {
-    const decrypted = aesDecrypt(encryptedParams, eapiKey, '', 'hex') // WordArray
-
-    if (aeapi) {
-      // 带压缩的解密：先转 Base64 再解压
-      const decryptedBuffer = Buffer.from(
-        decrypted.toString(CryptoJS.enc.Base64),
-        'base64',
-      )
-      const decompressed = zlib.gunzipSync(decryptedBuffer)
-      return JSON.parse(decompressed.toString())
-    } else {
-      // 普通解密：直接转 UTF-8 字符串
-      return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8))
+  const maybeGunzip = (buffer) => {
+    if (buffer.length > 2 && buffer[0] === 0x1f && buffer[1] === 0x8b) {
+      return zlib.gunzipSync(buffer)
     }
+    return buffer
+  }
+
+  try {
+    let encryptedBuffer = Buffer.from(encryptedParams, 'hex')
+    if (aeapi) encryptedBuffer = maybeGunzip(encryptedBuffer)
+
+    const decrypted = aesDecrypt(
+      encryptedBuffer.toString('hex'),
+      eapiKey,
+      '',
+      'hex',
+    )
+    let decryptedBuffer = Buffer.from(
+      decrypted.toString(CryptoJS.enc.Base64),
+      'base64',
+    )
+    if (aeapi) decryptedBuffer = maybeGunzip(decryptedBuffer)
+
+    return JSON.parse(decryptedBuffer.toString())
   } catch (error) {
     console.log(`eapiResDecrypt error:`, error)
     return null
