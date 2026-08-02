@@ -4371,27 +4371,33 @@ ONLINE 已发布
 
 ### 播客上传声音
 
-说明: 可以上传声音到播客,例子在 `/public/voice_upload.html` 访问地址: <a href="/voice_upload.html" target="_blank">/voice_upload.html</a>
+说明: 登录后调用此接口,使用`'Content-Type': 'multipart/form-data'`上传声音文件 formData(name 为`songFile`),可通过 formData(name 为`imgFile`)同时上传声音封面。例子在 `/public/voice_upload.html` 访问地址: <a href="/voice_upload.html" target="_blank">/voice_upload.html</a>
 
 **接口地址:** `/voice/upload`
 
 **必选参数：**
-`voiceListId`: 播客 id
 
-`coverImgId`: 播客封面
+`songFile`: 声音文件
+
+`voiceListId`: 播客 id
 
 `categoryId`: 分类 id
 
-`secondCategoryId`:次级分类 id
+`secondCategoryId`: 次级分类 id
 
 `description`: 声音介绍
 
 **可选参数：**
+
+`imgFile`: 声音封面图片文件,上传后会自动生成图片 id。与`coverImgId`同时传入时,优先使用`imgFile`
+
+`coverImgId`: 已上传的声音封面图片 id,未传入`imgFile`时使用该值
+
 `songName`: 声音名称
 
-`privacy`: 设为隐私声音,播客如果是隐私博客,则必须设为 1
+`privacy`: 设为隐私声音,播客如果是隐私播客,则必须设为 1
 
-`publishTime`:默认立即发布,定时发布的话需传入时间戳
+`publishTime`: 默认立即发布,定时发布的话需传入时间戳
 
 `autoPublish`: 是否发布动态,是则传入 1
 

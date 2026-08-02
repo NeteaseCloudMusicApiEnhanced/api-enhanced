@@ -217,8 +217,13 @@
           </div>
 
           <div class="form-group">
-            <label>选择文件</label>
-            <input type="file" name="songFile" accept="audio/*" />
+            <label for="songFile">选择声音文件</label>
+            <input id="songFile" type="file" name="songFile" accept="audio/*" />
+          </div>
+
+          <div class="form-group">
+            <label for="imgFile">选择声音封面（可选）</label>
+            <input id="imgFile" type="file" name="imgFile" accept="image/*" />
           </div>
 
           <button class="btn" @click="submit">上传</button>
@@ -251,12 +256,13 @@
         methods: {
           submit() {
             console.info('submit')
-            const file = document.querySelector('input[type=file]').files[0]
-            if (!file) {
-              alert('请选择文件')
+            const songFile = document.querySelector('input[name=songFile]').files[0]
+            const imgFile = document.querySelector('input[name=imgFile]').files[0]
+            if (!songFile) {
+              alert('请选择声音文件')
               return
             }
-            this.upload(file)
+            this.upload(songFile, imgFile)
           },
 
           async getData() {
@@ -286,14 +292,17 @@
             }
           },
 
-          upload(file) {
+          upload(songFile, imgFile) {
             if (!this.currentVoice) {
               alert('请先选择播客列表')
               return
             }
 
             var formData = new FormData()
-            formData.append('songFile', file)
+            formData.append('songFile', songFile)
+            if (imgFile) {
+              formData.append('imgFile', imgFile)
+            }
 
             axios({
               method: 'post',
@@ -312,7 +321,7 @@
               data: formData,
             })
               .then((res) => {
-                alert(`${file.name} 上传成功`)
+                alert(`${songFile.name} 上传成功`)
               })
               .catch((err) => {
                 console.error('上传失败:', err)

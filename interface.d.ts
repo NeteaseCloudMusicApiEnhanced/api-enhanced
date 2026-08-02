@@ -2802,6 +2802,22 @@ export function voice_upload(
       name: string
       data: string | Buffer
     }
+    imgFile?: {
+      name: string
+      data: string | Buffer
+    }
+    voiceListId: string | number
+    coverImgId?: string | number
+    categoryId: string | number
+    secondCategoryId: string | number
+    description: string
+    songName?: string
+    privacy?: string | number
+    publishTime?: string | number
+    autoPublish?: string | number
+    autoPublishText?: string
+    orderNo?: string | number
+    composedSongs?: string
   } & RequestBaseConfig,
 ): Promise<Response>
 

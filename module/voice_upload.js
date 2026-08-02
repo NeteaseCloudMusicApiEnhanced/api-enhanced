@@ -2,6 +2,7 @@ const { default: axios } = require('axios')
 const fs = require('fs')
 var xml2js = require('xml2js')
 
+const uploadPlugin = require('../plugins/upload')
 const createOption = require('../util/option.js')
 const { getFileExtension, readFileChunk } = require('../util/fileHelper')
 
@@ -19,15 +20,7 @@ function createDupkey() {
   return s.join('')
 }
 
-module.exports = async (query, request) => {
-  const ext = getFileExtension(query.songFile.name)
-  const filename =
-    query.songName ||
-    query.songFile.name
-      .replace('.' + ext, '')
-      .replace(/\s/g, '')
-      .replace(/\./g, '_')
-
+module.exports = async (query, request, dependencies = {}) => {
   if (!query.songFile) {
     return Promise.reject({
       status: 500,
@@ -37,6 +30,19 @@ module.exports = async (query, request) => {
       },
     })
   }
+
+  const axiosRequest = dependencies.axios || axios
+  const uploadImage = dependencies.uploadPlugin || uploadPlugin
+  const ext = getFileExtension(query.songFile.name)
+  const filename =
+    query.songName ||
+    query.songFile.name
+      .replace('.' + ext, '')
+      .replace(/\s/g, '')
+      .replace(/\./g, '_')
+  const coverImgId = query.imgFile
+    ? (await uploadImage(query, request)).imgId
+    : query.coverImgId
 
   const tokenRes = await request(
     `/api/nos/token/alloc`,
@@ -53,7 +59,7 @@ module.exports = async (query, request) => {
 
   const objectKey = tokenRes.body.result.objectKey.replace(/\//g, '%2F')
   const docId = tokenRes.body.result.docId
-  const res = await axios({
+  const res = await axiosRequest({
     method: 'post',
     url: `https://ymusic.nos-hz.163yun.com/${objectKey}?uploads`,
     headers: {
@@ -94,7 +100,7 @@ module.exports = async (query, request) => {
       )
     }
 
-    const res3 = await axios({
+    const res3 = await axiosRequest({
       method: 'put',
       url: `https://ymusic.nos-hz.163yun.com/${objectKey}?partNumber=${blockIndex}&uploadId=${res2.InitiateMultipartUploadResult.UploadId[0]}`,
       headers: {
@@ -117,7 +123,7 @@ module.exports = async (query, request) => {
   }
   completeStr += '</CompleteMultipartUpload>'
 
-  await axios({
+  await axiosRequest({
     method: 'post',
     url: `https://ymusic.nos-hz.163yun.com/${objectKey}?uploadId=${res2.InitiateMultipartUploadResult.UploadId[0]}`,
     headers: {
@@ -128,29 +134,29 @@ module.exports = async (query, request) => {
     data: completeStr,
   })
 
+  const voiceData = JSON.stringify([
+    {
+      name: filename,
+      autoPublish: query.autoPublish == 1 ? true : false,
+      autoPublishText: query.autoPublishText || '',
+      description: query.description,
+      voiceListId: query.voiceListId,
+      coverImgId,
+      dfsId: docId,
+      categoryId: query.categoryId,
+      secondCategoryId: query.secondCategoryId,
+      composedSongs: query.composedSongs ? query.composedSongs.split(',') : [],
+      privacy: query.privacy == 1 ? true : false,
+      publishTime: query.publishTime || 0,
+      orderNo: query.orderNo || 1,
+    },
+  ])
+
   await request(
     `/api/voice/workbench/voice/batch/upload/preCheck`,
     {
       dupkey: createDupkey(),
-      voiceData: JSON.stringify([
-        {
-          name: filename,
-          autoPublish: query.autoPublish == 1 ? true : false,
-          autoPublishText: query.autoPublishText || '',
-          description: query.description,
-          voiceListId: query.voiceListId,
-          coverImgId: query.coverImgId,
-          dfsId: docId,
-          categoryId: query.categoryId,
-          secondCategoryId: query.secondCategoryId,
-          composedSongs: query.composedSongs
-            ? query.composedSongs.split(',')
-            : [],
-          privacy: query.privacy == 1 ? true : false,
-          publishTime: query.publishTime || 0,
-          orderNo: query.orderNo || 1,
-        },
-      ]),
+      voiceData,
     },
     {
       ...createOption(query),
@@ -163,25 +169,7 @@ module.exports = async (query, request) => {
     `/api/voice/workbench/voice/batch/upload/v2`,
     {
       dupkey: createDupkey(),
-      voiceData: JSON.stringify([
-        {
-          name: filename,
-          autoPublish: query.autoPublish == 1 ? true : false,
-          autoPublishText: query.autoPublishText || '',
-          description: query.description,
-          voiceListId: query.voiceListId,
-          coverImgId: query.coverImgId,
-          dfsId: docId,
-          categoryId: query.categoryId,
-          secondCategoryId: query.secondCategoryId,
-          composedSongs: query.composedSongs
-            ? query.composedSongs.split(',')
-            : [],
-          privacy: query.privacy == 1 ? true : false,
-          publishTime: query.publishTime || 0,
-          orderNo: query.orderNo || 1,
-        },
-      ]),
+      voiceData,
     },
     {
       ...createOption(query),
