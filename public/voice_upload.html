@@ -269,17 +269,23 @@
             this.loading = true
             try {
               const res = await axios({
-                url: `/voicelist/search?cookie=${localStorage.getItem('cookie')}`,
+                url: `/voicelist/my/created?limit=100&cookie=${localStorage.getItem(
+                  'cookie',
+                )}`,
               })
 
               console.info(res.data.data)
-              this.voicelist = res.data.data.list || []
+              this.voicelist = res.data.data.data || []
               this.voicelist.forEach(async (i) => {
                 try {
                   const res2 = await axios({
-                    url: `/voicelist/list?voiceListId=${i.voiceListId}&limit=5`,
+                    url: `/voicelist/list?voiceListId=${
+                      i.voiceListId
+                    }&limit=5&cookie=${localStorage.getItem('cookie')}`,
                   })
-                  i.voiceListData = res2.data.data.list || []
+                  i.voiceListData = res2.data.data
+                    ? res2.data.data.list || []
+                    : []
                   console.info(res2)
                 } catch (err) {
                   console.error('获取播客详情失败:', err)
