@@ -38,6 +38,11 @@ jobs:
           persist-credentials: false
           token: ${{ steps.token.outputs.token }}
 
+      - name: Configure git identity
+        run: |
+          git config --global user.name "takanashi-hoshino-agent[bot]"
+          git config --global user.email "takanashi-hoshino-agent[bot]@users.noreply.github.com"
+
       - name: Run opencode
         uses: anomalyco/opencode/github@latest
         env:
