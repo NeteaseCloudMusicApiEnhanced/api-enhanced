@@ -34,12 +34,12 @@ const aesEncrypt = (text, mode, key, iv, format = 'base64') => {
 
   return encrypted.ciphertext.toString().toUpperCase()
 }
-const aesDecrypt = (ciphertext, key, iv, format = 'base64') => {
+const aesDecrypt = (ciphertext, mode, key, iv, format = 'base64') => {
   let bytes
   if (format === 'base64') {
     bytes = CryptoJS.AES.decrypt(ciphertext, CryptoJS.enc.Utf8.parse(key), {
       iv: CryptoJS.enc.Utf8.parse(iv),
-      mode: CryptoJS.mode.ECB,
+      mode: CryptoJS.mode[mode.toUpperCase()],
       padding: CryptoJS.pad.Pkcs7,
     })
   } else {
@@ -48,7 +48,7 @@ const aesDecrypt = (ciphertext, key, iv, format = 'base64') => {
       CryptoJS.enc.Utf8.parse(key),
       {
         iv: CryptoJS.enc.Utf8.parse(iv),
-        mode: CryptoJS.mode.ECB,
+        mode: CryptoJS.mode[mode.toUpperCase()],
         padding: CryptoJS.pad.Pkcs7,
       },
     )
@@ -97,7 +97,7 @@ const eapi = (url, object) => {
 const eapiResDecrypt = (encryptedParams, aeapi = false) => {
   // 使用aesDecrypt解密参数
   try {
-    const decrypted = aesDecrypt(encryptedParams, eapiKey, '', 'hex') // WordArray
+    const decrypted = aesDecrypt(encryptedParams, 'ecb', eapiKey, '', 'hex') // WordArray
 
     if (aeapi) {
       // 带压缩的解密：先转 Base64 再解压
@@ -120,6 +120,7 @@ const eapiReqDecrypt = (encryptedParams) => {
   // 使用 aesDecrypt 解密参数
   const decryptedData = aesDecrypt(
     encryptedParams,
+    'ecb',
     eapiKey,
     '',
     'hex',

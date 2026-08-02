@@ -48,7 +48,7 @@ module.exports = async (query, request) => {
       case 'linuxapi': {
         if (isReq) {
           const pureHex = data.replace(/\s/g, '')
-          const decrypted = aesDecrypt(pureHex, linuxapiKey, '', 'hex')
+          const decrypted = aesDecrypt(pureHex, 'ecb', linuxapiKey, '', 'hex')
           result = JSON.parse(decrypted.toString(CryptoJS.enc.Utf8))
         } else {
           result = typeof data === 'string' ? JSON.parse(data) : data
