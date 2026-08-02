@@ -255,9 +255,13 @@
         }
         logs.write(`[index] 查询完成。结果数量=${resp.data.result.length}`)
         for (var song of resp.data.result) {
-          logs.write(
-            `[result] <a target="_blank" href="https://music.163.com/song?id=${song.song.id}">${song.song.name} - ${song.song.album.name} (${song.startTime / 1000}s)</a>`
-          )
+          var a = document.createElement('a');
+          a.href = 'https://music.163.com/song?id=' + encodeURIComponent(song.song.id);
+          a.target = '_blank';
+          a.textContent = song.song.name + ' - ' + song.song.album.name + ' (' + (song.startTime / 1000) + 's)';
+          logs.appendChild(document.createTextNode('[result] '));
+          logs.appendChild(a);
+          logs.appendChild(document.createElement('br'));
         }
       })
     })
