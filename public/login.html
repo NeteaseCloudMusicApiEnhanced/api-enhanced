@@ -4,137 +4,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="docs/netease.png" />
+  <link rel="stylesheet" href="/static/shell.css" />
   <title>登录</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 1.25rem;
     }
-
-    .container {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 32px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 15px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #333;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: #333;
-      color: white;
-      font-size: 15px;
-      font-weight: 500;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .btn:hover {
-      background: #555;
-    }
-
-    .btn:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
-    .result {
-      margin-top: 24px;
-      padding: 16px;
-      background: #f9f9f9;
-      border-radius: 6px;
-      font-size: 13px;
-      color: #666;
-      text-align: left;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    .error {
-      color: #ef4444;
-      background: #fef2f2;
-    }
-
-    .success {
-      color: #10b981;
-      background: #f0fdf4;
-    }
+    .shell-header { text-align: center; }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>登录</h1>
-    <p class="subtitle">使用手机号和密码登录网易云音乐</p>
+  <div class="shell-card shell-container shell-narrow" style="text-align:center;padding:2.5rem">
+    <header class="shell-header">
+      <h1>登录</h1>
+      <p class="sub">使用手机号和密码登录网易云音乐</p>
+    </header>
 
-    <div class="form-group">
+    <div class="form-group" style="text-align:left">
       <label for="phone">手机号</label>
       <input type="tel" id="phone" placeholder="请输入手机号" />
     </div>
 
-    <div class="form-group">
+    <div class="form-group" style="text-align:left">
       <label for="password">密码</label>
       <input type="password" id="password" placeholder="请输入密码" />
     </div>
 
-    <button id="loginBtn" class="btn" onclick="handleLogin()">登录</button>
+    <button id="loginBtn" class="shell-btn shell-btn--default shell-btn--block" onclick="handleLogin()">登录</button>
 
     <div id="result" class="result" style="display: none;"></div>
+
+    <div class="shell-flex shell-flex--center shell-mt-4">
+      <a class="shell-btn shell-btn--outline shell-btn--sm" href="/qrlogin.html">改用二维码登录</a>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </div>
   </div>
 
   <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>

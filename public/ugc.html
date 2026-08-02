@@ -6,472 +6,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
   <link rel="icon" href="docs/netease.png" />
-  <meta name="referrer" content="no-referrer" />
-  <link rel="icon" href="docs/netease.png" />
+  <link rel="stylesheet" href="/static/shell.css" />
   <title>云小编任务中心 - 网易云音乐 API Enhanced</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    body { padding: 1.25rem; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .login-link {
-      display: block;
-      margin-bottom: 20px;
-      color: #666;
-      font-size: 14px;
-      text-decoration: none;
-      text-align: center;
-    }
-
-    .login-link:hover {
-      color: #333;
-      text-decoration: underline;
-    }
-
-    /* ---- Section ---- */
     .section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #eee;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
     }
-
     .section:last-of-type {
       border-bottom: none;
       margin-bottom: 0;
       padding-bottom: 0;
     }
-
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 0.75rem;
     }
-
     .section-title {
-      font-size: 16px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
       font-weight: 600;
-      color: #333;
     }
 
-    /* ---- Form ---- */
-    .form-group {
-      margin-bottom: 16px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 6px;
-    }
-
-    label .tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 400;
-      padding: 1px 6px;
-      border-radius: 3px;
-      margin-left: 6px;
-    }
-
-    label .tag.r {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    label .tag.o {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    label .tag.g {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    textarea:focus {
-      border-color: #333;
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .row .form-group {
-      flex: 1;
-    }
-
-    .quick-fill {
-      margin-top: 5px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    .quick-fill span {
-      color: #0066cc;
-      cursor: pointer;
-      margin-right: 8px;
-    }
-
-    .quick-fill span:hover {
-      text-decoration: underline;
-    }
-
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      background: #333;
-      color: white;
-      font-size: 15px;
-      font-weight: 500;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      border: none;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    .btn:hover {
-      background: #555;
-    }
-
-    .btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-sm {
-      display: inline-block;
-      width: auto;
-      padding: 6px 16px;
-      background: #333;
-      color: white;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      border: none;
-      text-align: center;
-      margin-top: 0;
-    }
-
-    .btn-sm:hover {
-      background: #555;
-    }
-
-    .btn-sm:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-sm.green {
-      background: #059669;
-    }
-
-    .btn-sm.green:hover {
-      background: #047857;
-    }
-
-    .btn-sm.green:disabled {
-      background: #a7f3d0;
-    }
-
-    .btn-sm.red {
-      background: #dc2626;
-    }
-
-    .btn-sm.red:hover {
-      background: #b91c1c;
-    }
-
-    .btn-sm.red:disabled {
-      background: #fca5a5;
-    }
-
-    .btn-sm.gray {
-      background: #6b7280;
-    }
-
-    .btn-sm.gray:hover {
-      background: #4b5563;
-    }
-
-    .btn-sm.gray:disabled {
-      background: #d1d5db;
-    }
-
-    .result {
-      margin-top: 16px;
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-size: 14px;
-      text-align: left;
-      white-space: pre-wrap;
-      word-break: break-all;
-      font-family: monospace;
-    }
-
-    .result.success {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .result.error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .result.info {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    .footer-link {
-      text-align: center;
-      margin-top: 24px;
-      font-size: 13px;
-    }
-
-    .footer-link a {
-      color: #666;
-      text-decoration: none;
-    }
-
-    .footer-link a:hover {
-      text-decoration: underline;
-    }
-
-    /* ---- Info Card ---- */
     .info-card {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #eee;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
     }
-
     .info-card .avatar {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
+      width: 3.125rem;
+      height: 3.125rem;
+      border-radius: 9999px;
       object-fit: cover;
-      background: #e5e7eb;
+      background: var(--gray-4);
     }
-
     .info-card .info-text {
       flex: 1;
-      font-size: 14px;
-      color: #333;
+      font-size: 0.875rem;
+      color: var(--foreground);
     }
-
-    .info-card .btn-sm {
-      flex-shrink: 0;
-    }
-
+    .info-card .btn-sm { flex-shrink: 0; }
     #userPoint {
-      font-size: 14px;
+      font-size: 0.875rem;
+      font-family: var(--font-mono);
+      color: var(--success);
     }
 
     /* ---- Song Review ---- */
     .song-review {
-      margin-top: 16px;
-      padding: 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #eee;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
     }
-
     .song-review .cover {
-      width: 100px;
-      height: 100px;
-      border-radius: 6px;
+      width: 6.25rem;
+      height: 6.25rem;
+      border-radius: 2px;
       object-fit: cover;
-      background: #e5e7eb;
+      background: var(--gray-4);
       display: block;
-      margin-bottom: 12px;
+      margin-bottom: 0.75rem;
     }
-
     .song-review .song-title {
-      font-size: 14px;
+      font-size: 0.875rem;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
+      color: var(--foreground);
+      margin-bottom: 0.5rem;
     }
-
-    .song-review audio {
-      width: 100%;
-      margin-bottom: 8px;
-    }
-
+    .song-review audio { width: 100%; margin-bottom: 0.5rem; }
     .song-review .song-tag {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 10px;
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.625rem;
     }
-
     .song-review .btn-group {
       display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 0.5rem;
+      margin-bottom: 0.625rem;
       flex-wrap: wrap;
     }
-
     .song-review .lyric {
-      font-size: 13px;
-      color: #555;
-      background: #fff;
-      padding: 10px 12px;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      background: var(--gray-1);
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border);
       white-space: pre-wrap;
-      max-height: 160px;
+      max-height: 10rem;
       overflow-y: auto;
-      font-family: monospace;
+      font-family: var(--font-mono);
       line-height: 1.6;
     }
 
-    .status-text {
-      font-size: 14px;
-      color: #888;
+    .status-text { font-size: 0.875rem; color: var(--muted-foreground); }
+    .footer-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8125rem;
     }
+    .footer-link a { color: var(--muted-foreground); }
+    .footer-link a:hover { color: var(--foreground); text-decoration: underline; }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>云小编任务中心</h1>
-    <p class="subtitle">管理云音乐审核任务、签到与会员权益领取</p>
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="docs/netease.png" alt="logo">云小编任务中心</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/qrlogin-nocookie.html">登录</a>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
 
-    <a href="/qrlogin-nocookie.html" class="login-link">还没登录？点击登录</a>
+  <main class="shell-main">
+    <div class="shell-container shell-narrow">
+      <header class="shell-header">
+        <h1>云小编任务中心</h1>
+        <p class="sub">管理云音乐审核任务、签到与会员权益领取</p>
+      </header>
 
-    <!-- Cookie -->
-    <div class="form-group">
-      <label for="cookie">Cookie <span class="tag o">可选</span></label>
-      <textarea id="cookie" placeholder="留空则默认读取本地存储的登录态" rows="2"></textarea>
-      <div class="quick-fill">
-        <span onclick="loadLocalCookie()">读取本地 Cookie</span>
-        <span onclick="clearCookie()">清除 Cookie</span>
-        <span onclick="saveCookie()">保存 Cookie</span>
-        <span onclick="loadAll()">一键载入</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">用户信息</span>
-        <button class="btn-sm" id="userGet">获取用户详情</button>
-      </div>
-      <div class="info-card" id="user">
-        <img src="docs/netease.png" alt="头像" class="avatar" id="userAvatar" />
-        <span class="info-text" id="userName">未登录</span>
-        <span id="userPoint">0</span>
-        <button class="btn-sm green" id="userSign" disabled>签到</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">会员领取</span>
-        <button class="btn-sm" id="vipGet">获取会员详情</button>
-      </div>
-      <div class="info-card" id="vip">
-        <span class="info-text" id="vipStatus">未载入</span>
-        <button class="btn-sm" id="vipCollect" disabled>领取</button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">审核任务</span>
-        <button class="btn-sm" id="taskGet">获取任务详情</button>
-      </div>
-      <div class="info-card" id="task">
-        <span class="info-text" id="taskInfo">[<span id="taskCount">0</span>/<span id="taskGoal">0</span>] 审核歌曲赚贡献分 (+<span id="taskPoint">0</span>)</span>
-        <button class="btn-sm" id="taskStart" disabled>去完成</button>
-      </div>
-
-      <!-- Song Review -->
-      <div class="song-review" id="song" style="display: none;">
-        <img alt="封面" class="cover" id="songCover" />
-        <div class="song-title" id="songTitle">未载入</div>
-        <audio controls id="songAudio"></audio>
-        <div class="song-tag" id="songTag"></div>
-        <div class="btn-group">
-          <button class="btn-sm green" id="songApprove" disabled>同意</button>
-          <button class="btn-sm red" id="songReject" disabled>否决</button>
-          <button class="btn-sm gray" id="songSkip" disabled>跳过 (不计次数)</button>
+      <section class="shell-card">
+        <!-- Cookie -->
+        <div class="form-group">
+          <label for="cookie">Cookie <span class="tag o">可选</span></label>
+          <textarea id="cookie" placeholder="留空则默认读取本地存储的登录态" rows="2"></textarea>
+          <div class="quick-fill">
+            <span onclick="loadLocalCookie()">读取本地 Cookie</span>
+            <span onclick="clearCookie()">清除 Cookie</span>
+            <span onclick="saveCookie()">保存 Cookie</span>
+            <span onclick="loadAll()">一键载入</span>
+          </div>
         </div>
-        <div class="lyric" id="songLyric">[00:00.00] 暂无歌词</div>
-      </div>
-    </div>
 
-    <div id="result" class="result" style="display: none;"></div>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-title">用户信息</span>
+            <button class="btn-sm" id="userGet">获取用户详情</button>
+          </div>
+          <div class="info-card" id="user">
+            <img src="docs/netease.png" alt="头像" class="avatar" id="userAvatar" />
+            <span class="info-text" id="userName">未登录</span>
+            <span id="userPoint">0</span>
+            <button class="btn-sm green" id="userSign" disabled>签到</button>
+          </div>
+        </div>
 
-    <div class="footer-link">
-      <a href="/">返回首页</a>
+        <div class="section">
+          <div class="section-header">
+            <span class="section-title">会员领取</span>
+            <button class="btn-sm" id="vipGet">获取会员详情</button>
+          </div>
+          <div class="info-card" id="vip">
+            <span class="info-text" id="vipStatus">未载入</span>
+            <button class="btn-sm" id="vipCollect" disabled>领取</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span class="section-title">审核任务</span>
+            <button class="btn-sm" id="taskGet">获取任务详情</button>
+          </div>
+          <div class="info-card" id="task">
+            <span class="info-text" id="taskInfo">[<span id="taskCount">0</span>/<span id="taskGoal">0</span>] 审核歌曲赚贡献分 (+<span id="taskPoint">0</span>)</span>
+            <button class="btn-sm" id="taskStart" disabled>去完成</button>
+          </div>
+
+          <!-- Song Review -->
+          <div class="song-review" id="song" style="display: none;">
+            <img alt="封面" class="cover" id="songCover" />
+            <div class="song-title" id="songTitle">未载入</div>
+            <audio controls id="songAudio"></audio>
+            <div class="song-tag" id="songTag"></div>
+            <div class="btn-group">
+              <button class="btn-sm green" id="songApprove" disabled>同意</button>
+              <button class="btn-sm red" id="songReject" disabled>否决</button>
+              <button class="btn-sm gray" id="songSkip" disabled>跳过 (不计次数)</button>
+            </div>
+            <div class="lyric" id="songLyric">[00:00.00] 暂无歌词</div>
+          </div>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+
+        <div class="footer-link">
+          <a href="/">返回首页</a>
+        </div>
+      </section>
     </div>
-  </div>
+  </main>
 
   <script>
     (function () {

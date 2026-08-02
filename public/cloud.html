@@ -3,276 +3,184 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="docs/netease.png" />
+    <link rel="stylesheet" href="/static/shell.css" />
     <title>云盘上传</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        min-height: 100vh;
-        background: #f5f5f5;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 12px;
-        padding: 32px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      h1 {
-        font-size: 24px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 24px;
-      }
-
-      .login-link {
-        display: block;
-        margin-bottom: 24px;
-        color: #666;
-        font-size: 14px;
-        text-decoration: none;
-      }
-
-      .login-link:hover {
-        color: #333;
-        text-decoration: underline;
-      }
-
       .mode-section {
-        margin-bottom: 24px;
-        padding: 16px;
-        background: #f9f9f9;
-        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--gray-2);
+        border: 1px solid var(--border);
       }
-
       .mode-section label {
         display: block;
-        font-size: 14px;
+        font-size: 0.875rem;
         font-weight: 500;
-        color: #333;
-        margin-bottom: 12px;
+        color: var(--foreground);
+        margin-bottom: 0.75rem;
       }
-
       .mode-options {
         display: flex;
-        gap: 16px;
+        gap: 1rem;
         flex-wrap: wrap;
       }
-
       .mode-option {
         display: flex;
         align-items: flex-start;
-        gap: 8px;
+        gap: 0.5rem;
         cursor: pointer;
       }
-
-      .mode-option input[type="radio"] {
-        margin-top: 3px;
-      }
-
+      .mode-option input[type="radio"] { margin-top: 3px; }
       .mode-option-text {
         display: flex;
         flex-direction: column;
       }
-
       .mode-option-title {
-        font-size: 14px;
-        color: #333;
+        font-size: 0.875rem;
+        color: var(--foreground);
       }
-
       .mode-option-desc {
-        font-size: 12px;
-        color: #999;
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
         margin-top: 2px;
       }
 
-      .mode-option input[type="radio"]:checked + .mode-option-text .mode-option-title {
-        color: #333;
-        font-weight: 500;
-      }
-
-      .upload-section {
-        margin-bottom: 32px;
-      }
-
+      .upload-section { margin-bottom: 2rem; }
       .upload-btn {
         display: inline-block;
-        padding: 12px 28px;
-        background: #333;
-        color: white;
-        font-size: 15px;
+        padding: 0.75rem 1.75rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font-family: var(--font-mono);
+        font-size: 0.9375rem;
         font-weight: 500;
-        border-radius: 6px;
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: opacity var(--transition);
         border: none;
       }
-
-      .upload-btn:hover {
-        background: #555;
-      }
-
-      .upload-btn input[type="file"] {
-        display: none;
-      }
-
+      .upload-btn:hover { opacity: 0.85; }
+      .upload-btn input[type="file"] { display: none; }
       .upload-btn.disabled {
-        background: #ccc;
+        opacity: 0.4;
         cursor: not-allowed;
+        pointer-events: none;
       }
 
-      .songs-list {
-        list-style: none;
-      }
-
+      .songs-list { list-style: none; }
       .song-item {
-        padding: 12px 16px;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-        color: #333;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.875rem;
+        color: var(--foreground);
+        font-family: var(--font-mono);
       }
-
-      .song-item:last-child {
-        border-bottom: none;
-      }
-
+      .song-item:last-child { border-bottom: none; }
       .empty-state {
         text-align: center;
-        padding: 40px 20px;
-        color: #999;
-        font-size: 14px;
+        padding: 2.5rem 1.25rem;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
       }
-
       .loading {
         text-align: center;
-        padding: 20px;
-        color: #666;
+        padding: 1.25rem;
+        color: var(--muted-foreground);
       }
 
-      .progress-section {
-        margin-bottom: 24px;
-        display: none;
-      }
-
-      .progress-section.active {
-        display: block;
-      }
-
+      .progress-section { margin-bottom: 1.5rem; display: none; }
+      .progress-section.active { display: block; }
       .progress-item {
-        margin-bottom: 12px;
-        padding: 12px;
-        background: #f9f9f9;
-        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        background: var(--gray-2);
+        border: 1px solid var(--border);
       }
-
       .progress-item .name {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 8px;
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
         word-break: break-all;
       }
-
       .progress-item .status {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 6px;
-      }
-
-      .progress-bar {
-        height: 6px;
-        background: #e0e0e0;
-        border-radius: 3px;
-        overflow: hidden;
-      }
-
-      .progress-bar .fill {
-        height: 100%;
-        background: #333;
-        border-radius: 3px;
-        transition: width 0.3s ease;
-        width: 0%;
-      }
-
-      .progress-item.success .fill {
-        background: #4caf50;
-      }
-
-      .progress-item.error .fill {
-        background: #f44336;
-      }
-
-      .progress-item.error .status {
-        color: #f44336;
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        margin-bottom: 0.375rem;
       }
 
       .info-text {
-        font-size: 12px;
-        color: #999;
-        margin-top: 8px;
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        margin-top: 0.5rem;
       }
-
       .warning-text {
-        font-size: 12px;
-        color: #e65100;
-        margin-top: 8px;
+        font-size: 0.75rem;
+        color: var(--warning);
+        margin-top: 0.5rem;
       }
     </style>
   </head>
 
   <body>
-    <div class="container">
-      <h1>云盘上传</h1>
-      <a href="/qrlogin-nocookie.html" class="login-link">还没登录？点击登录</a>
+    <header class="shell-topbar">
+      <a class="brand" href="/"><img src="docs/netease.png" alt="logo">云盘上传</a>
+      <nav>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/qrlogin-nocookie.html">登录</a>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+      </nav>
+    </header>
 
-      <div class="mode-section">
-        <label>上传模式</label>
-        <div class="mode-options">
-          <label class="mode-option">
-            <input type="radio" name="uploadMode" value="direct" checked />
-            <span class="mode-option-text">
-              <span class="mode-option-title">客户端直传</span>
-              <span class="mode-option-desc">文件直接上传到云存储，支持大文件，适合 Vercel 等平台</span>
-            </span>
-          </label>
-          <label class="mode-option">
-            <input type="radio" name="uploadMode" value="proxy" />
-            <span class="mode-option-text">
-              <span class="mode-option-title">后端代理</span>
-              <span class="mode-option-desc">文件通过服务器转发，更简洁，需要服务器支持大文件</span>
-            </span>
-          </label>
-        </div>
+    <main class="shell-main">
+      <div class="shell-container shell-narrow" style="max-width:50rem">
+        <header class="shell-header">
+          <h1>云盘上传</h1>
+          <p class="sub">上传本地音频文件到网易云音乐云盘</p>
+        </header>
+
+        <section class="shell-card">
+          <div class="mode-section">
+            <label>上传模式</label>
+            <div class="mode-options">
+              <label class="mode-option">
+                <input type="radio" name="uploadMode" value="direct" checked />
+                <span class="mode-option-text">
+                  <span class="mode-option-title">客户端直传</span>
+                  <span class="mode-option-desc">文件直接上传到云存储，支持大文件，适合 Vercel 等平台</span>
+                </span>
+              </label>
+              <label class="mode-option">
+                <input type="radio" name="uploadMode" value="proxy" />
+                <span class="mode-option-text">
+                  <span class="mode-option-title">后端代理</span>
+                  <span class="mode-option-desc">文件通过服务器转发，更简洁，需要服务器支持大文件</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="upload-section">
+            <label class="upload-btn" id="uploadBtn">
+              选择文件（支持多选）
+              <input id="file" type="file" multiple accept="audio/*" />
+            </label>
+            <p class="info-text" id="modeInfo">支持大文件上传，文件将直接传输到云存储服务器</p>
+          </div>
+
+          <div id="progressSection" class="progress-section"></div>
+
+          <div id="app">
+            <div v-if="loading" class="loading">加载中...</div>
+            <ul v-else-if="songs.length > 0" class="songs-list">
+              <li v-for="(item, index) in songs" :key="index" class="song-item">
+                {{ item.songName }}
+              </li>
+            </ul>
+            <div v-else class="empty-state">暂无云盘歌曲</div>
+          </div>
+        </section>
       </div>
-
-      <div class="upload-section">
-        <label class="upload-btn" id="uploadBtn">
-          选择文件（支持多选）
-          <input id="file" type="file" multiple accept="audio/*" />
-        </label>
-        <p class="info-text" id="modeInfo">支持大文件上传，文件将直接传输到云存储服务器</p>
-      </div>
-
-      <div id="progressSection" class="progress-section"></div>
-
-      <div id="app">
-        <div v-if="loading" class="loading">加载中...</div>
-        <ul v-else-if="songs.length > 0" class="songs-list">
-          <li v-for="(item, index) in songs" :key="index" class="song-item">
-            {{ item.songName }}
-          </li>
-        </ul>
-        <div v-else class="empty-state">暂无云盘歌曲</div>
-      </div>
-    </div>
+    </main>
 
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/vue@3"></script>

@@ -3,360 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="docs/netease.png">
+<link rel="stylesheet" href="/static/shell.css">
 <title>API 调试界面</title>
 <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 24px;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #555;
-      min-width: 80px;
-    }
-
-    input, select {
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      flex: 1;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: #333;
-    }
-
-    button {
-      background: #333;
-      color: white;
-      padding: 10px 24px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    button:hover {
-      background: #555;
-    }
-
-    .data-result {
-      display: flex;
-      gap: 16px;
-      min-height: 400px;
-    }
-
-    .data-result > div {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .data-result label {
-      margin-bottom: 8px;
-      padding: 0;
-    }
-
-    textarea {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      resize: vertical;
-      min-height: 350px;
-      outline: none;
-    }
-
-    textarea:focus {
-      border-color: #333;
-    }
-
     /* ===== 自定义选项区域 ===== */
     .section-container {
-      margin-top: 20px;
-      padding: 16px 20px;
-      background: #fafafa;
-      border: 1px solid #e8e8e8;
-      border-radius: 8px;
+      margin-top: 1.25rem;
+      padding: 1rem 1.25rem;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
     }
-
-    .section-container + .section-container {
-      margin-top: 12px;
-    }
-
+    .section-container + .section-container { margin-top: 0.75rem; }
     .section-title {
-      font-size: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
       font-weight: 600;
-      color: #555;
-      margin-bottom: 12px;
+      color: var(--foreground);
+      margin-bottom: 0.75rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.5rem;
     }
-
     .section-title .count-badge {
-      font-size: 11px;
-      background: #ddd;
-      color: #666;
-      padding: 1px 8px;
-      border-radius: 10px;
+      font-size: 0.6875rem;
+      background: var(--gray-4);
+      color: var(--muted-foreground);
+      padding: 0 0.5rem;
+      border-radius: 9999px;
       font-weight: 400;
     }
-
     .dynamic-row {
       display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
       align-items: center;
     }
-
     .dynamic-row .key-input {
-      flex: 0 0 200px;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
+      flex: 0 0 14rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--gray-1);
+      border: 1px solid var(--input);
+      color: var(--foreground);
+      font-size: 0.8125rem;
+      font-family: var(--font-mono);
       outline: none;
-      font-family: 'Courier New', monospace;
     }
-
     .dynamic-row .value-input {
       flex: 1;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
+      padding: 0.5rem 0.75rem;
+      background: var(--gray-1);
+      border: 1px solid var(--input);
+      color: var(--foreground);
+      font-size: 0.8125rem;
       outline: none;
     }
-
     .dynamic-row .key-input:focus,
-    .dynamic-row .value-input:focus {
-      border-color: #333;
-    }
-
+    .dynamic-row .value-input:focus { border-color: var(--ring); }
     .remove-btn {
-      width: 28px;
-      height: 28px;
+      width: 1.75rem;
+      height: 1.75rem;
       padding: 0;
-      background: #fff;
-      color: #999;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      background: var(--gray-2);
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
       cursor: pointer;
-      font-size: 14px;
+      font-size: 0.875rem;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all var(--transition);
       flex-shrink: 0;
     }
-
     .remove-btn:hover {
-      background: #fee;
-      color: #e33;
-      border-color: #fcc;
+      background: var(--destructive);
+      color: var(--gray-1);
+      border-color: var(--destructive);
     }
-
     .add-btn {
-      background: #fff;
-      color: #333;
-      border: 1px dashed #ccc;
-      padding: 6px 16px;
-      border-radius: 6px;
-      font-size: 13px;
+      background: transparent;
+      color: var(--foreground);
+      border: 1px dashed var(--border);
+      padding: 0.375rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
       cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 4px;
+      transition: all var(--transition);
+      margin-top: 0.25rem;
     }
-
     .add-btn:hover {
-      border-color: #999;
-      background: #f5f5f5;
+      border-color: var(--foreground);
+      background: var(--gray-2);
     }
 
     /* ===== 参数编辑区 Tab ===== */
-    .param-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
+    .param-container { flex: 1; display: flex; flex-direction: column; }
     .param-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 0.5rem;
     }
-
     .param-header-title {
-      font-size: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
       font-weight: 500;
-      color: #555;
+      color: var(--foreground);
     }
-
     .param-tabs {
       display: flex;
       gap: 0;
-      background: #f0f0f0;
-      border-radius: 6px;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
       padding: 2px;
     }
-
     .tab-btn {
-      padding: 4px 14px;
+      padding: 0.25rem 0.875rem;
       border: none;
       background: transparent;
-      color: #888;
-      font-size: 12px;
+      color: var(--muted-foreground);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
       font-weight: 500;
       cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s;
+      transition: all var(--transition);
     }
-
-    .tab-btn:hover {
-      color: #555;
-    }
-
+    .tab-btn:hover { color: var(--foreground); }
     .tab-btn.active {
-      background: #fff;
-      color: #333;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      background: var(--foreground);
+      color: var(--background);
     }
+    .param-panel { flex: 1; display: flex; flex-direction: column; }
+    .param-panel textarea { flex: 1; min-height: 21.875rem; }
 
-    .param-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .param-panel textarea {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      resize: vertical;
-      min-height: 350px;
-      outline: none;
-    }
-
-    .param-panel textarea:focus {
-      border-color: #333;
+    /* 双栏响应式 */
+    .data-result { display: flex; gap: 1rem; min-height: 25rem; }
+    .data-result > div { flex: 1; display: flex; flex-direction: column; }
+    .data-result textarea { flex: 1; min-height: 21.875rem; }
+    @media (max-width: 640px) {
+      .data-result { flex-direction: column; }
+      .dynamic-row .key-input { flex: 0 0 8rem; }
     }
 </style>
 </head>
 <body>
-    <div class="container">
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="docs/netease.png" alt="logo">API 调试</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
+
+  <main class="shell-main">
+    <div class="shell-container shell-narrow" style="max-width:none">
+      <header class="shell-header">
         <h1>API 调试界面</h1>
+        <p class="sub">发送任意请求，支持自定义请求头、加密方式与 JSON / 键值对参数</p>
+      </header>
+
+      <section class="shell-card">
         <form onsubmit="event.preventDefault(); sendRequest();">
-            <div class="form-row">
-                <label for="uri">URI</label>
-                <input type="text" id="uri" name="uri" value="/api/song/lyric/v1">
-            </div>
-            <div class="form-row">
-                <label for="method">请求方法</label>
-                <select id="method" name="method">
-                    <option value="POST" selected>POST</option>
-                    <option value="GET">GET</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                    <option value="PATCH">PATCH</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label for="crypto">加密方式</label>
-                <select id="crypto" name="crypto">
-                    <option value="weapi">weapi</option>
-                    <option value="eapi">eapi</option>
-                    <option value="api">api</option>
-                    <option value="linuxapi">linuxapi</option>
-                    <option value="xeapi">xeapi</option>
-                    <option value="" selected>(默认)</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <label for="timeout">超时(ms)</label>
-                <input type="number" id="timeout" name="timeout" value="30000" min="0" step="1000" placeholder="0 表示无超时">
-            </div>
-            <div class="form-row">
-                <label></label>
-                <button type="submit">发送请求</button>
-            </div>
+          <div class="shell-flex" style="margin-bottom:0.75rem">
+            <label for="uri" style="flex:0 0 5rem;margin:0">URI</label>
+            <input type="text" id="uri" name="uri" value="/api/song/lyric/v1">
+          </div>
+          <div class="shell-flex" style="margin-bottom:0.75rem">
+            <label for="method" style="flex:0 0 5rem;margin:0">请求方法</label>
+            <select id="method" name="method">
+              <option value="POST" selected>POST</option>
+              <option value="GET">GET</option>
+              <option value="PUT">PUT</option>
+              <option value="DELETE">DELETE</option>
+              <option value="PATCH">PATCH</option>
+            </select>
+          </div>
+          <div class="shell-flex" style="margin-bottom:0.75rem">
+            <label for="crypto" style="flex:0 0 5rem;margin:0">加密方式</label>
+            <select id="crypto" name="crypto">
+              <option value="weapi">weapi</option>
+              <option value="eapi">eapi</option>
+              <option value="api">api</option>
+              <option value="linuxapi">linuxapi</option>
+              <option value="xeapi">xeapi</option>
+              <option value="" selected>(默认)</option>
+            </select>
+          </div>
+          <div class="shell-flex" style="margin-bottom:1rem">
+            <label for="timeout" style="flex:0 0 5rem;margin:0">超时(ms)</label>
+            <input type="number" id="timeout" name="timeout" value="30000" min="0" step="1000" placeholder="0 表示无超时">
+          </div>
+          <div class="shell-flex">
+            <span style="flex:0 0 5rem"></span>
+            <button type="submit" class="shell-btn shell-btn--default">发送请求</button>
+          </div>
         </form>
+      </section>
 
-        <!-- ===== 自定义请求头 ===== -->
-        <div class="section-container" id="headersSection">
-            <div class="section-title">
-                请求头 (Headers)
-                <span class="count-badge" id="headerCount">4</span>
-            </div>
-            <div id="headersList"></div>
-            <button class="add-btn" onclick="addHeaderRow('', '')">+ 添加请求头</button>
+      <!-- ===== 自定义请求头 ===== -->
+      <section class="shell-card shell-mt-6">
+        <div class="section-title">
+          请求头 (Headers)
+          <span class="count-badge" id="headerCount">4</span>
         </div>
+        <div id="headersList"></div>
+        <button class="add-btn" onclick="addHeaderRow('', '')">+ 添加请求头</button>
+      </section>
 
+      <section class="shell-card shell-mt-6">
         <div class="data-result">
-            <div>
-                <label for="result">响应结果</label>
-                <textarea id="result" name="result" readonly></textarea>
+          <div>
+            <label for="result" style="font-family:var(--font-mono)">响应结果</label>
+            <textarea id="result" name="result" readonly></textarea>
+          </div>
+          <div class="param-container">
+            <div class="param-header">
+              <span class="param-header-title">请求参数</span>
+              <div class="param-tabs">
+                <button class="tab-btn active" data-mode="json" onclick="switchParamTab('json')">JSON</button>
+                <button class="tab-btn" data-mode="kv" onclick="switchParamTab('kv')">键值对</button>
+              </div>
             </div>
-            <div class="param-container">
-                <div class="param-header">
-                    <span class="param-header-title">请求参数</span>
-                    <div class="param-tabs">
-                        <button class="tab-btn active" data-mode="json" onclick="switchParamTab('json')">JSON</button>
-                        <button class="tab-btn" data-mode="kv" onclick="switchParamTab('kv')">键值对</button>
-                    </div>
-                </div>
-                <div class="param-panel" id="jsonPanel">
-                    <textarea id="data" name="data">
+            <div class="param-panel" id="jsonPanel">
+              <textarea id="data" name="data">
 {
     "cp": false,
     "id": "2058263032",
@@ -368,17 +237,19 @@
     "ytv": 0,
     "yv": 0
 }</textarea>
-                </div>
-                <div class="param-panel" id="kvPanel" style="display:none">
-                    <div id="kvList"></div>
-                    <button class="add-btn" onclick="addKvRow('', '')">+ 添加参数</button>
-                </div>
             </div>
+            <div class="param-panel" id="kvPanel" style="display:none">
+              <div id="kvList"></div>
+              <button class="add-btn" onclick="addKvRow('', '')">+ 添加参数</button>
+            </div>
+          </div>
         </div>
+      </section>
     </div>
+  </main>
 
-    <script src="https://fastly.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
+  <script src="https://fastly.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
         // ===== 动态行管理 =====
         function escapeHtml(str) {
             if (!str) return '';
@@ -423,6 +294,12 @@
 
         function removeRow(btn) {
             btn.parentElement.remove();
+        }
+
+        function updateCount() {
+            const count = document.querySelectorAll('#headersList .dynamic-row').length;
+            const badge = document.getElementById('headerCount');
+            if (badge) badge.textContent = count;
         }
 
         function collectHeaders() {

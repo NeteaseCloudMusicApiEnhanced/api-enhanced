@@ -3,123 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="docs/netease.png">
+    <link rel="stylesheet" href="/static/shell.css">
     <title>音乐解灰测试</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            padding: 32px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #555;
-            margin-bottom: 8px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 15px;
-            outline: none;
-        }
-
-        input:focus {
-            border-color: #333;
-        }
-
-        button {
-            background: #333;
-            color: white;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        button:hover {
-            background: #555;
-        }
-
-        button:disabled {
-            background: #999;
-            cursor: not-allowed;
-        }
-
-        #result {
-            margin-top: 24px;
-            padding: 16px;
-            background: #f9f9f9;
-            border-radius: 6px;
-            border: 1px solid #eee;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            min-height: 100px;
-        }
-
+        body { padding: 1.25rem; }
         .hint {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>音乐解灰测试</h1>
-        
-        <div class="form-group">
-            <label for="songId">音乐 ID</label>
-            <input type="number" id="songId" placeholder="请输入音乐ID" />
-            <div class="hint">例如: 1372188635</div>
-        </div>
-        
-        <div class="form-group">
-            <label for="sources">音源列表（可选）</label>
-            <input type="text" id="sources" placeholder="请输入音源" />
-            <div class="hint">例如: kuwo, kugou, migu</div>
-        </div>
-        
-        <button id="testBtn" onclick="testSong()">开始测试</button>
-        
-        <div id="result"></div>
-    </div>
+    <header class="shell-topbar">
+      <a class="brand" href="/"><img src="docs/netease.png" alt="logo">解灰测试</a>
+      <nav>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+      </nav>
+    </header>
+
+    <main class="shell-main">
+      <div class="shell-container shell-narrow" style="max-width:50rem">
+        <header class="shell-header">
+          <h1>音乐解灰测试</h1>
+          <p class="sub">测试多音源替换匹配，解除灰色歌曲限制</p>
+        </header>
+
+        <section class="shell-card">
+          <div class="form-group">
+              <label for="songId">音乐 ID</label>
+              <input type="number" id="songId" placeholder="请输入音乐ID" />
+              <div class="hint">例如: 1372188635</div>
+          </div>
+
+          <div class="form-group">
+              <label for="sources">音源列表（可选）</label>
+              <input type="text" id="sources" placeholder="请输入音源" />
+              <div class="hint">例如: kuwo, kugou, migu</div>
+          </div>
+
+          <button id="testBtn" class="shell-btn shell-btn--default" onclick="testSong()">开始测试</button>
+
+          <pre id="result" style="margin-top:1.5rem;min-height:6.25rem"></pre>
+        </section>
+      </div>
+    </main>
 
     <script>
         async function testSong() {

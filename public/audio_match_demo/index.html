@@ -1,221 +1,127 @@
 <!DOCTYPE html>
-
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/shell.css">
   <title>听歌识曲 Demo</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 24px;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 20px 0;
-    }
-
-    p {
-      font-size: 14px;
-      color: #555;
-      line-height: 1.6;
-      margin-bottom: 12px;
-    }
-
-    a {
-      color: #333;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .section {
-      margin-bottom: 24px;
-    }
-
+    body { padding: 1.25rem; }
+    .subtitle { font-size: 0.8125rem; color: var(--muted-foreground); margin-bottom: 1.5rem; }
+    .subtitle a { color: var(--info); }
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+    p { font-size: 0.875rem; color: var(--muted-foreground); line-height: 1.6; margin-bottom: 0.75rem; }
+    a { color: var(--info); }
+    .section { margin-bottom: 1.5rem; }
     .section h3 {
-      font-size: 16px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
       font-weight: 600;
-      color: #333;
-      margin-bottom: 12px;
+      margin-bottom: 0.75rem;
     }
-
     .control-group {
       display: flex;
-      gap: 12px;
+      gap: 0.75rem;
       flex-wrap: wrap;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 1rem;
     }
-
-    button {
-      padding: 10px 20px;
-      background: #333;
-      color: white;
-      font-size: 14px;
-      font-weight: 500;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    button:hover {
-      background: #555;
-    }
-
-    button:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-
     input[type="file"] {
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid var(--input);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      background: var(--gray-1);
+      color: var(--foreground);
     }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-      cursor: pointer;
-    }
-
-    .checkbox-group label {
-      margin: 0;
-      cursor: pointer;
-      font-size: 14px;
-      color: #555;
-    }
-
-    audio {
-      width: 100%;
-      margin-bottom: 16px;
-    }
-
     canvas {
       width: 100%;
       height: 0;
-      transition: all linear 0.1s;
-      background: #f9f9f9;
-      border-radius: 6px;
+      transition: height linear 0.1s;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
     }
-
-    .canvas-active {
-      height: 15vh;
-    }
-
+    .canvas-active { height: 15vh; }
     pre {
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      color: #666;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      max-height: 400px;
+      max-height: 25rem;
       overflow-y: auto;
-      padding: 16px;
-      background: #f9f9f9;
-      border-radius: 6px;
-      border: 1px solid #eee;
     }
-
+    pre a { color: var(--info); }
     .warning {
-      padding: 12px 16px;
-      background: #fef3c7;
-      border-radius: 6px;
-      font-size: 14px;
-      color: #92400e;
-      margin-bottom: 16px;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--warning);
+      background: color-mix(in srgb, var(--warning) 8%, transparent);
+      font-size: 0.875rem;
+      color: var(--warning);
+      margin-bottom: 1rem;
     }
+    .warning a { color: inherit; }
+    .warning strong { font-weight: 600; }
+    ul.steps { padding-left: 1.25rem; font-size: 0.875rem; color: var(--muted-foreground); }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>听歌识曲 Demo</h1>
-    <p class="subtitle">Credit: <a href="https://github.com/mos9527/ncm-afp" target="_blank">https://github.com/mos9527/ncm-afp</a></p>
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="/docs/netease.png" alt="logo">听歌识曲</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
 
-    <hr>
+  <main class="shell-main">
+    <div class="shell-container shell-narrow" style="max-width:50rem">
+      <header class="shell-header">
+        <h1>听歌识曲 Demo</h1>
+        <p class="subtitle">Credit: <a href="https://github.com/mos9527/ncm-afp" target="_blank">https://github.com/mos9527/ncm-afp</a></p>
+      </header>
 
-    <div class="warning">
-      <strong>免责声明：</strong>本站点使用网易云音乐官方音频识别API（逆向自 <a href="https://fn.music.163.com/g/chrome-extension-home-page-beta/" target="_blank">Chrome 扩展页面</a>），不鼓励版权侵犯或知识产权盗窃。
-    </div>
+      <hr>
 
-    <div class="section">
-      <h3>使用说明</h3>
-      <p>在使用本站点之前，您可能需要先访问以下链接：</p>
-      <p><a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">https://cors-anywhere.herokuapp.com/corsdemo</a></p>
-      <p>由于网易云音乐API没有CORS头，这是解决此限制的必要步骤。</p>
-    </div>
-
-    <div class="section">
-      <h3>使用方法</h3>
-      <ul style="padding-left: 20px; font-size: 14px; color: #555;">
-        <li>通过"选择文件"选择您的音频文件</li>
-        <li>点击"识别"按钮并等待结果</li>
-      </ul>
-    </div>
-
-    <hr>
-
-    <audio id="audio" controls autoplay></audio>
-    <canvas id="canvas"></canvas>
-
-    <div class="control-group">
-      <button id="invoke">识别</button>
-      <input type="file" name="picker" accept="*" id="file">
-    </div>
-
-    <div class="control-group">
-      <div class="checkbox-group">
-        <input type="checkbox" name="use-mic" id="usemic">
-        <label for="usemic">混合麦克风输入</label>
+      <div class="warning">
+        <strong>免责声明：</strong>本站点使用网易云音乐官方音频识别API（逆向自 <a href="https://fn.music.163.com/g/chrome-extension-home-page-beta/" target="_blank">Chrome 扩展页面</a>），不鼓励版权侵犯或知识产权盗窃。
       </div>
+
+      <section class="shell-card">
+        <div class="section">
+          <h3>使用说明</h3>
+          <p>在使用本站点之前，您可能需要先访问以下链接：</p>
+          <p><a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">https://cors-anywhere.herokuapp.com/corsdemo</a></p>
+          <p>由于网易云音乐API没有CORS头，这是解决此限制的必要步骤。</p>
+        </div>
+
+        <div class="section">
+          <h3>使用方法</h3>
+          <ul class="steps">
+            <li>通过"选择文件"选择您的音频文件</li>
+            <li>点击"识别"按钮并等待结果</li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <audio id="audio" controls autoplay></audio>
+        <canvas id="canvas"></canvas>
+
+        <div class="control-group shell-mt-3">
+          <button id="invoke" class="shell-btn shell-btn--default">识别</button>
+          <input type="file" name="picker" accept="*" id="file">
+        </div>
+
+        <div class="control-group">
+          <div class="checkbox-group">
+            <input type="checkbox" name="use-mic" id="usemic">
+            <label for="usemic">混合麦克风输入</label>
+          </div>
+        </div>
+
+        <hr>
+
+        <h3 style="font-family:var(--font-mono);font-size:1rem;font-weight:600;margin-bottom:0.75rem">日志</h3>
+        <pre id="logs"></pre>
+      </section>
     </div>
-
-    <hr>
-
-    <h3 style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px;">日志</h3>
-    <pre id="logs"></pre>
-  </div>
+  </main>
 </body>
 
 <script src="./afp.wasm.js"></script>
@@ -348,7 +254,7 @@
     canvasCtx.fillStyle = 'rgba(0,0,0,0)';
     canvasCtx.fillRect(0, 0, w, h);
     if (audioBuffer) {
-      canvasCtx.fillStyle = 'black';
+      canvasCtx.fillStyle = '#e4e4e4'; /* 深色主题下用前景色绘制波形 */
       for (var x = 0; x < w * bufferHealth; x++) {
         var y = audioBuffer[Math.ceil((x / w) * audioBuffer.length)]
         var z = Math.abs(y) * h / 2

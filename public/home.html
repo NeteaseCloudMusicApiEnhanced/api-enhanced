@@ -3,12 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/static/shell.css" />
     <title>home</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+      }
+      .shell-header { text-align: center; }
+    </style>
   </head>
 
   <body>
-    <div>
-      <a href="/qrlogin-nocookie.html"> 如果没登录,请先登录 </a>
+    <div class="shell-card shell-container shell-narrow" style="text-align:center;padding:2.5rem">
+      <header class="shell-header">
+        <h1>首页数据</h1>
+        <p class="sub">获取网易云音乐首页推荐板块数据</p>
+      </header>
+
+      <div class="shell-flex shell-flex--center">
+        <a class="shell-btn shell-btn--outline shell-btn--sm" href="/qrlogin-nocookie.html">
+          如果没登录，请先登录
+        </a>
+      </div>
     </div>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <script>

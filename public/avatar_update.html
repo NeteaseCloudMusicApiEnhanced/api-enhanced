@@ -4,120 +4,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="docs/netease.png" />
+  <link rel="stylesheet" href="/static/shell.css" />
   <title>更新头像</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 1.25rem;
     }
-
-    .container {
-      background: white;
-      border-radius: 12px;
-      padding: 40px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 32px;
-    }
-
+    .shell-header { text-align: center; }
     .avatar-wrapper {
       position: relative;
       width: 160px;
       height: 160px;
-      margin: 0 auto 32px;
+      margin: 0 auto 2rem;
     }
-
     .avatar {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
+      border-radius: 9999px;
       object-fit: cover;
-      border: 3px solid #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: 3px solid var(--gray-5);
+      background: var(--gray-4);
     }
-
-    .avatar-wrapper.loading .avatar {
-      opacity: 0.5;
-    }
-
+    .avatar-wrapper.loading .avatar { opacity: 0.5; }
     .loading-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
+      border-radius: 9999px;
+      background: color-mix(in srgb, var(--background) 90%, transparent);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       transition: opacity 0.2s ease;
+      pointer-events: none;
     }
-
-    .avatar-wrapper.loading .loading-overlay {
-      opacity: 1;
-    }
-
+    .avatar-wrapper.loading .loading-overlay { opacity: 1; }
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #e0e0e0;
-      border-top-color: #333;
-      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 3px solid var(--gray-4);
+      border-top-color: var(--foreground);
+      border-radius: 9999px;
       animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      to { transform: rotate(360deg); }
     }
-
     .upload-btn {
       display: inline-block;
       position: relative;
-      padding: 12px 28px;
-      background: #333;
-      color: white;
-      font-size: 15px;
+      padding: 0.75rem 1.75rem;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-family: var(--font-mono);
+      font-size: 0.9375rem;
       font-weight: 500;
-      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: opacity var(--transition);
       border: none;
     }
-
-    .upload-btn:hover {
-      background: #555;
-    }
-
+    .upload-btn:hover { opacity: 0.85; }
     .upload-btn input[type="file"] {
       position: absolute;
       top: 0;
@@ -127,67 +80,20 @@
       opacity: 0;
       cursor: pointer;
     }
-
-    .login-link {
-      display: block;
-      margin-top: 24px;
-      color: #666;
-      font-size: 14px;
-      text-decoration: none;
-    }
-
-    .login-link:hover {
-      color: #333;
-      text-decoration: underline;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      padding: 12px 20px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      opacity: 0;
-      transition: all 0.3s ease;
-      z-index: 1000;
-      max-width: 90%;
-      text-align: center;
-    }
-
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    .toast.success {
-      background: #10b981;
-    }
-
-    .toast.error {
-      background: #ef4444;
-    }
-
-    .toast.info {
-      background: #3b82f6;
-    }
-
     .hint {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #999;
+      margin-top: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>更新头像</h1>
-    <p class="subtitle">选择一张图片作为您的新头像</p>
+  <div class="shell-card shell-container shell-narrow" style="text-align:center;padding:2.5rem">
+    <header class="shell-header">
+      <h1>更新头像</h1>
+      <p class="sub">选择一张图片作为您的新头像</p>
+    </header>
 
     <div class="avatar-wrapper" id="avatarWrapper">
       <img id="avatar" class="avatar" src="" alt="头像" />
@@ -196,16 +102,24 @@
       </div>
     </div>
 
-    <label class="upload-btn">
-      选择图片
-      <input id="file" type="file" accept="image/*" />
-    </label>
+    <div class="shell-flex shell-flex--center">
+      <label class="upload-btn">
+        选择图片
+        <input id="file" type="file" accept="image/*" />
+      </label>
+    </div>
 
-    <a href="/qrlogin-nocookie.html" class="login-link">
-      还没有登录？点击登录
-    </a>
+    <div class="shell-flex shell-flex--center shell-mt-4">
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/qrlogin-nocookie.html">
+        还没有登录？点击登录
+      </a>
+    </div>
 
     <p class="hint">支持 JPG、PNG 格式，建议尺寸 200x200</p>
+
+    <div class="shell-flex shell-flex--center shell-mt-4">
+      <a class="shell-btn shell-btn--outline shell-btn--sm" href="/">返回首页</a>
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>

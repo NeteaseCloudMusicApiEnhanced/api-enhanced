@@ -4,74 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" href="docs/netease.png">
+  <link rel="stylesheet" href="/static/shell.css">
   <title>Token 注册器 — 网易云音乐 API Enhanced</title>
   <style>
-    :root {
-      --fg: #333;
-      --muted: #666;
-      --border: #ddd;
-      --bg: #f5f5f5;
-      --panel: #ffffff;
-      --accent: #333;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
-    .container { max-width: 720px; margin: 40px auto; padding: 0 20px; }
-    @media (max-width: 480px) {
-      .container { margin: 20px auto; padding: 0 16px; }
-      header.site-header h1 { font-size: 22px; }
-      .block { padding: 16px; }
-    }
-    header.site-header { margin-bottom: 24px; }
-    header.site-header h1 { font-size: 24px; font-weight: 600; margin: 0; }
-    .sub { margin-top: 4px; color: var(--muted); font-size: 14px; }
-    .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-    .block h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
-    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', monospace; font-size: 13px; max-height: 160px; overflow: auto; }
-    .row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-    button { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; font-weight: 500; cursor: pointer; background: var(--panel); color: var(--fg); transition: all .15s; }
-    button:hover { background: #eee; }
-    button.primary { background: var(--fg); color: var(--panel); border-color: var(--fg); }
-    button.primary:hover { opacity: .85; }
-    button:disabled { opacity: .4; cursor: not-allowed; }
-    .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); }
-    .tag.ok { background: #e6f7e6; color: #1a7a1a; border-color: #b7e6b7; }
-    .tag.no { background: #ffe6e6; color: #a11; border-color: #f5c6c6; }
-    .tag.busy { background: #fff3cd; color: #856404; border-color: #ffeeba; }
-    .flex { display: flex; align-items: center; gap: 10px; }
+    body { padding: 1.25rem; }
+    .flex { display: flex; align-items: center; gap: 0.625rem; }
     .flex.sb { justify-content: space-between; }
-    .mt-2 { margin-top: 14px; }
-    footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; font-size: 13px; }
+    .token-display {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--success);
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
-  <main class="container">
-    <header class="site-header">
-      <h1>🔑 Token 注册器</h1>
-      <p class="sub">从易盾获取反作弊 token 并注册到服务器，供广告等需要 checkToken 的接口使用</p>
-    </header>
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="docs/netease.png" alt="logo">Token 注册器</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
 
-    <div class="block">
-      <div class="flex sb">
-        <h3>当前 Token</h3>
-        <span id="statusTag" class="tag no">未注册</span>
-      </div>
-      <pre id="tokenDisplay">（空）</pre>
-      <div class="row">
-        <button id="btnGet" class="primary">获取 Token</button>
-        <button id="btnRefresh">强制刷新</button>
-      </div>
+  <main class="shell-main">
+    <div class="shell-container shell-narrow" style="max-width:45rem">
+      <header class="shell-header">
+        <h1>🔑 Token 注册器</h1>
+        <p class="sub">从易盾获取反作弊 token 并注册到服务器，供广告等需要 checkToken 的接口使用</p>
+      </header>
+
+      <section class="shell-card">
+        <div class="flex sb" style="margin-bottom:0.625rem">
+          <h3>当前 Token</h3>
+          <span id="statusTag" class="tag no">未注册</span>
+        </div>
+        <pre id="tokenDisplay">（空）</pre>
+        <div class="shell-flex shell-mt-3">
+          <button id="btnGet" class="shell-btn shell-btn--default">获取 Token</button>
+          <button id="btnRefresh" class="shell-btn shell-btn--outline">强制刷新</button>
+        </div>
+      </section>
+
+      <section class="shell-card shell-mt-6">
+        <h3>服务器响应</h3>
+        <pre id="respDisplay">{}</pre>
+      </section>
+
+      <footer class="shell-footer">
+        <a href="/">← 返回首页</a>
+      </footer>
     </div>
-
-    <div class="block">
-      <h3>服务器响应</h3>
-      <pre id="respDisplay">{}</pre>
-    </div>
-
-    <footer class="site-footer">
-      <a href="/">← 返回首页</a>
-    </footer>
   </main>
 
   <script>

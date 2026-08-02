@@ -6,230 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
   <link rel="icon" href="docs/netease.png" />
+  <link rel="stylesheet" href="/static/shell.css" />
   <title>云小编每日抽奖 - 网易云音乐 API Enhanced</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 520px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .subtitle b {
-      color: #d63031;
-    }
-
-    /* ---- Section ---- */
-    .section {
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .section:last-of-type {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    /* ---- Form Elements ---- */
-    .form-group {
-      margin-bottom: 16px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 6px;
-    }
-
-    label .tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 400;
-      padding: 1px 6px;
-      border-radius: 3px;
-      margin-left: 6px;
-    }
-
-    label .tag.o {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    textarea:focus {
-      border-color: #333;
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      background: #333;
-      color: white;
-      font-size: 15px;
-      font-weight: 500;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      border: none;
-      text-align: center;
-      margin-top: 16px;
-    }
-
-    .btn:hover {
-      background: #555;
-    }
-
-    .btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-sm {
-      display: inline-block;
-      width: auto;
-      padding: 6px 16px;
-      background: #333;
-      color: white;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      border: none;
-      text-align: center;
-      margin-top: 0;
-    }
-
-    .btn-sm:hover {
-      background: #555;
-    }
-
-    .btn-sm:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-sm.gray {
-      background: #6b7280;
-    }
-
-    .btn-sm.gray:hover {
-      background: #4b5563;
-    }
-
-    .btn-sm.gray:disabled {
-      background: #d1d5db;
-    }
-
-    .btn-sm.green {
-      background: #059669;
-    }
-
-    .btn-sm.green:hover {
-      background: #047857;
-    }
-
-    .btn-sm.green:disabled {
-      background: #a7f3d0;
-    }
-
-    .quick-fill {
-      margin-top: 5px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    .quick-fill span {
-      color: #0066cc;
-      cursor: pointer;
-      margin-right: 8px;
-    }
-
-    .quick-fill span:hover {
-      text-decoration: underline;
-    }
+    body { padding: 1.25rem; }
+    .shell-header { text-align: center; }
+    .subtitle { text-align: center; }
+    .subtitle b { color: var(--destructive); }
 
     /* ---- Lottery Display ---- */
     .lottery-display {
       text-align: center;
-      padding: 24px 16px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 1px solid #eee;
-      margin-bottom: 16px;
+      padding: 1.5rem 1rem;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
     }
-
     .rolling-display {
       font-size: 2.4rem;
       font-weight: 800;
-      color: #333;
+      color: var(--foreground);
       min-height: 4rem;
       display: flex;
       align-items: center;
@@ -237,200 +33,155 @@
       letter-spacing: 1px;
       word-break: break-all;
     }
-
     .rolling-display.idle {
-      color: #999;
+      color: var(--muted-foreground);
       font-size: 1.2rem;
       font-weight: 500;
     }
 
     /* ---- Winner Result ---- */
     .winner-display {
-      background: #f0fdf4;
-      border: 1px solid #86efac;
-      border-radius: 8px;
-      padding: 20px 16px;
-      margin-top: 16px;
+      background: color-mix(in srgb, var(--success) 8%, var(--gray-2));
+      border: 1px solid var(--success);
+      padding: 1.25rem 1rem;
+      margin-top: 1rem;
       text-align: center;
     }
-
     .winner-label {
-      font-size: 14px;
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
       font-weight: 600;
-      color: #065f46;
-      margin-bottom: 8px;
+      color: var(--success);
+      margin-bottom: 0.5rem;
     }
-
     .winner-name {
       font-size: 2rem;
       font-weight: 800;
-      color: #dc2626;
+      color: var(--foreground);
       letter-spacing: 1px;
       word-break: break-all;
     }
-
     .confetti-row {
-      margin-top: 8px;
+      margin-top: 0.5rem;
       display: flex;
       justify-content: center;
       gap: 0.5rem;
     }
-
     .confetti-emoji {
       font-size: 1.6rem;
       animation: bounce 0.6s ease infinite alternate;
     }
-
-    .confetti-emoji:nth-child(2) {
-      animation-delay: 0.15s;
-    }
-
-    .confetti-emoji:nth-child(3) {
-      animation-delay: 0.3s;
-    }
-
+    .confetti-emoji:nth-child(2) { animation-delay: 0.15s; }
+    .confetti-emoji:nth-child(3) { animation-delay: 0.3s; }
     @keyframes bounce {
-      from {
-        transform: translateY(0);
-      }
-
-      to {
-        transform: translateY(-8px);
-      }
+      from { transform: translateY(0); }
+      to { transform: translateY(-8px); }
     }
 
     /* ---- Status ---- */
     .status-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: #f9fafb;
-      border-radius: 6px;
-      margin-top: 16px;
-      font-size: 13px;
-      color: #666;
+      gap: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      background: var(--gray-2);
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
     }
-
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #059669;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 9999px;
+      background: var(--success);
       flex-shrink: 0;
       animation: pulse 1.5s ease infinite;
     }
-
-    .status-dot.error {
-      background: #dc2626;
-    }
-
-    .status-dot.idle {
-      background: #9ca3af;
-      animation: none;
-    }
-
+    .status-dot.error { background: var(--destructive); }
+    .status-dot.idle { background: var(--gray-5); animation: none; }
     @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.4;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
-
-    .status-text {
-      flex: 1;
-    }
+    .status-text { flex: 1; }
 
     /* ---- Footer ---- */
     .footer-link {
       text-align: center;
-      margin-top: 24px;
-      padding-top: 16px;
-      border-top: 1px solid #eee;
-      font-size: 13px;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
     }
+    .footer-link a { color: var(--muted-foreground); }
+    .footer-link a:hover { color: var(--foreground); text-decoration: underline; }
 
-    .footer-link a {
-      color: #666;
-      text-decoration: none;
-    }
-
-    .footer-link a:hover {
-      text-decoration: underline;
-    }
-
-    /* ---- Responsive ---- */
     @media (max-width: 500px) {
-      .container {
-        padding: 20px 16px;
-        margin: 20px auto;
-      }
-
-      h1 {
-        font-size: 20px;
-      }
-
-      .rolling-display {
-        font-size: 1.8rem;
-        min-height: 3rem;
-      }
-
-      .winner-name {
-        font-size: 1.5rem;
-      }
+      .rolling-display { font-size: 1.8rem; min-height: 3rem; }
+      .winner-name { font-size: 1.5rem; }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>云小编每日抽奖</h1>
-    <p class="subtitle">每次抽奖消耗 <b>200 个曲库编辑部积分</b>，每日最多可抽奖 3 次</p>
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="docs/netease.png" alt="logo">云小编抽奖</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/ugc.html">任务中心</a>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
 
-    <!-- Cookie 管理 -->
-    <div class="form-group">
-      <label for="cookieInput">令牌 <span class="tag o">可选</span></label>
-      <input type="text" id="cookieInput" placeholder="留空则默认读取本地存储的令牌" autocomplete="off" />
-      <div class="quick-fill">
-        <span onclick="readLocalCookie()">读取本地令牌</span>
-        <span onclick="clearCookie()">清除令牌</span>
-        <span onclick="saveCookie()">保存令牌</span>
-      </div>
+  <main class="shell-main">
+    <div class="shell-container shell-narrow" style="max-width:32rem">
+      <header class="shell-header">
+        <h1>云小编每日抽奖</h1>
+        <p class="subtitle">每次抽奖消耗 <b>200 个曲库编辑部积分</b>，每日最多可抽奖 3 次</p>
+      </header>
+
+      <section class="shell-card">
+        <!-- Cookie 管理 -->
+        <div class="form-group">
+          <label for="cookieInput">令牌 <span class="tag o">可选</span></label>
+          <input type="text" id="cookieInput" placeholder="留空则默认读取本地存储的令牌" autocomplete="off" />
+          <div class="quick-fill">
+            <span onclick="readLocalCookie()">读取本地令牌</span>
+            <span onclick="clearCookie()">清除令牌</span>
+            <span onclick="saveCookie()">保存令牌</span>
+          </div>
+        </div>
+
+        <!-- 抽奖区域 -->
+        <div class="section" style="border-bottom:none;padding-bottom:0;margin-bottom:0">
+          <div class="section-header">
+            <span class="section-title" style="font-family:var(--font-mono);font-size:1rem;font-weight:600">每日抽奖</span>
+          </div>
+
+          <div class="lottery-display">
+            <div class="rolling-display idle" id="rollingDisplay">等待抽奖</div>
+            <div id="resultContainer"></div>
+          </div>
+
+          <button class="shell-btn shell-btn--default shell-btn--block" id="lotteryBtn">
+            🎲 开始抽奖
+          </button>
+
+          <div class="status-bar" id="statusBar">
+            <span class="status-dot idle" id="statusDot"></span>
+            <span class="status-text" id="statusText">就绪，点击按钮开始抽奖</span>
+          </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer-link">
+          <a href="/">← 返回首页</a>
+          <span style="margin: 0 0.5rem; color: var(--border);">·</span>
+          <a href="/ugc.html">云小编任务中心</a>
+        </div>
+      </section>
     </div>
-
-    <!-- 抽奖区域 -->
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">每日抽奖</span>
-      </div>
-
-      <div class="lottery-display">
-        <div class="rolling-display idle" id="rollingDisplay">等待抽奖</div>
-        <div id="resultContainer"></div>
-      </div>
-
-      <button class="btn" id="lotteryBtn">
-        🎲 开始抽奖
-      </button>
-
-      <div class="status-bar" id="statusBar">
-        <span class="status-dot idle" id="statusDot"></span>
-        <span class="status-text" id="statusText">就绪，点击按钮开始抽奖</span>
-      </div>
-    </div>
-
-    <!-- 页脚 -->
-    <div class="footer-link">
-      <a href="/">← 返回首页</a>
-      <span style="margin: 0 8px; color: #ddd;">·</span>
-      <a href="/ugc.html">云小编任务中心</a>
-    </div>
-  </div>
+  </main>
 
   <script>
     (function () {

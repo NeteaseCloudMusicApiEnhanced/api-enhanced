@@ -4,196 +4,184 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="icon" href="docs/netease.png">
+  <link rel="stylesheet" href="/static/shell.css">
   <title>免费听 — 网易云音乐 API Enhanced</title>
   <style>
-    :root {
-      --fg: #333;
-      --muted: #666;
-      --border: #ddd;
-      --bg: #f5f5f5;
-      --panel: #ffffff;
-      --accent: #333;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
-    .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-    @media (max-width: 480px) {
-      .container { margin: 20px auto; padding: 0 16px; }
-      header.site-header h1 { font-size: 22px; }
-      .block { padding: 16px; }
-    }
-    header.site-header { margin-bottom: 24px; }
-    header.site-header h1 { font-size: 24px; font-weight: 600; margin: 0; }
-    .sub { margin-top: 4px; color: var(--muted); font-size: 14px; }
-    .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-    .block h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
-    .block .desc { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
-    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', monospace; font-size: 13px; max-height: 200px; overflow: auto; }
-    pre.data { max-height: 360px; }
-    .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    button { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; font-weight: 500; cursor: pointer; background: var(--panel); color: var(--fg); transition: all .15s; }
-    button:hover { background: #eee; }
-    button.primary { background: var(--fg); color: var(--panel); border-color: var(--fg); }
-    button.primary:hover { opacity: .85; }
-    button:disabled { opacity: .4; cursor: not-allowed; }
-    button.danger { background: #a11; color: #fff; border-color: #a11; }
-    button.danger:hover { opacity: .85; }
-    .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); }
-    .tag.ok { background: #e6f7e6; color: #1a7a1a; border-color: #b7e6b7; }
-    .tag.no { background: #ffe6e6; color: #a11; border-color: #f5c6c6; }
-    .tag.busy { background: #fff3cd; color: #856404; border-color: #ffeeba; }
-    .flex { display: flex; align-items: center; gap: 10px; }
+    body { padding: 1.25rem; }
+    .block { margin-bottom: 1rem; }
+    .block h3 { font-size: 0.9375rem; font-weight: 600; margin: 0; }
+    .block .desc { margin: 0.25rem 0 0.75rem; color: var(--muted-foreground); font-size: 0.8125rem; }
+    pre.data { max-height: 22.5rem; }
+    .flex { display: flex; align-items: center; gap: 0.625rem; }
     .flex.sb { justify-content: space-between; }
-    .step { display: flex; gap: 12px; align-items: flex-start; }
-    .step .num { width: 26px; height: 26px; border-radius: 50%; background: var(--fg); color: var(--panel); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
-    .step .num.done { background: #1a7a1a; }
+    .step { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .step .num {
+      width: 1.625rem;
+      height: 1.625rem;
+      border-radius: 9999px;
+      background: var(--foreground);
+      color: var(--background);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step .num.done { background: var(--success); }
     .step .body { flex: 1; min-width: 0; }
-    input[type=text] { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; font-family: inherit; margin-top: 6px; }
-    input[type=text]:focus { outline: 2px solid var(--fg); outline-offset: -1px; border-color: transparent; }
-    footer.site-footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; font-size: 13px; }
-    footer.site-footer a { color: var(--fg); text-decoration: none; }
-    footer.site-footer a:hover { border-bottom: 1px dotted var(--fg); }
-    .info-grid { display: grid; grid-template-columns: 80px 1fr; gap: 4px 12px; font-size: 13px; margin-top: 8px; }
-    .info-grid .lbl { color: var(--muted); }
+    .info-grid { display: grid; grid-template-columns: 5rem 1fr; gap: 0.25rem 0.75rem; font-size: 0.8125rem; margin-top: 0.5rem; }
+    .info-grid .lbl { color: var(--muted-foreground); }
 
     /* ---- 剩余时长计时器 ---- */
-    .timer-wrap { text-align: center; padding: 12px 0 4px; }
+    .timer-wrap { text-align: center; padding: 0.75rem 0 0.25rem; }
     .timer-row { display: flex; align-items: baseline; justify-content: center; gap: 2px; font-variant-numeric: tabular-nums; }
-    .timer-num { font-size: 36px; font-weight: 700; letter-spacing: 1px; line-height: 1.2; font-family: 'SF Mono', 'Courier New', monospace; min-width: 2ch; text-align: center; }
-    .timer-label { font-size: 13px; color: var(--muted); margin-right: 12px; }
+    .timer-num { font-size: 2.25rem; font-weight: 700; letter-spacing: 1px; line-height: 1.2; font-family: var(--font-mono); min-width: 2ch; text-align: center; }
+    .timer-label { font-size: 0.8125rem; color: var(--muted-foreground); margin-right: 0.75rem; }
     .timer-label:last-child { margin-right: 0; }
-    .timer-sep { font-size: 28px; font-weight: 300; color: #bbb; margin: 0 2px; }
+    .timer-sep { font-size: 1.75rem; font-weight: 300; color: var(--gray-5); margin: 0 2px; }
     .timer-unit { display: flex; flex-direction: column; align-items: center; }
   </style>
 </head>
 <body>
-  <main class="container">
-    <header class="site-header">
-      <h1>🎧 免费听 · 看广告获取时长</h1>
-      <p class="sub">模拟 App 内看激励视频广告 → 领取免费听权益的完整流程</p>
-    </header>
+  <header class="shell-topbar">
+    <a class="brand" href="/"><img src="docs/netease.png" alt="logo">免费听</a>
+    <nav>
+      <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+    </nav>
+  </header>
 
-    <!-- 步骤 1: 注册 Token -->
-    <div class="block">
-      <div class="step">
-        <div class="num" id="s1num">1</div>
-        <div class="body">
-          <div class="flex sb">
-            <h3>注册反作弊 Token</h3>
-            <span id="s1tag" class="tag no">未开始</span>
-          </div>
-          <p class="desc">调用易盾接口获取实时 token，广告接口需要此 token 才能正常响应</p>
-          <pre id="s1pre">（尚未执行）</pre>
-          <div class="row">
-            <button id="step1" class="primary">① 注册 Token</button>
+  <main class="shell-main">
+    <div class="shell-container shell-narrow" style="max-width:48rem">
+      <header class="shell-header">
+        <h1>🎧 免费听 · 看广告获取时长</h1>
+        <p class="sub">模拟 App 内看激励视频广告 → 领取免费听权益的完整流程</p>
+      </header>
+
+      <!-- 步骤 1: 注册 Token -->
+      <section class="shell-card block">
+        <div class="step">
+          <div class="num" id="s1num">1</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>注册反作弊 Token</h3>
+              <span id="s1tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">调用易盾接口获取实时 token，广告接口需要此 token 才能正常响应</p>
+            <pre id="s1pre">（尚未执行）</pre>
+            <div class="shell-flex shell-mt-3">
+              <button id="step1" class="shell-btn shell-btn--default">① 注册 Token</button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- 步骤 2: 获取广告 -->
-    <div class="block">
-      <div class="step">
-        <div class="num" id="s2num">2</div>
-        <div class="body">
-          <div class="flex sb">
-            <h3>获取广告 &amp; 提取 reqId</h3>
-            <span id="s2tag" class="tag no">未开始</span>
-          </div>
-          <p class="desc">请求广告位，从返回的 extJson.contextInfo.req_id 提取用于领取权益的标识</p>
-          <pre id="s2pre" class="data">（尚未执行）</pre>
-          <div class="row">
-            <button id="step2" class="primary" disabled>② 获取广告</button>
-            <button id="step2b" disabled>换一个广告位</button>
-          </div>
-          <div class="info-grid" id="s2info" style="display:none">
-            <div class="lbl">广告 ID</div><div id="s2adId">-</div>
-            <div class="lbl">reqId</div><div id="s2reqId">-</div>
-            <div class="lbl">文案</div><div id="s2text">-</div>
+      <!-- 步骤 2: 获取广告 -->
+      <section class="shell-card block">
+        <div class="step">
+          <div class="num" id="s2num">2</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>获取广告 &amp; 提取 reqId</h3>
+              <span id="s2tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">请求广告位，从返回的 extJson.contextInfo.req_id 提取用于领取权益的标识</p>
+            <pre id="s2pre" class="data">（尚未执行）</pre>
+            <div class="shell-flex shell-mt-3">
+              <button id="step2" class="shell-btn shell-btn--default" disabled>② 获取广告</button>
+              <button id="step2b" class="shell-btn shell-btn--outline" disabled>换一个广告位</button>
+            </div>
+            <div class="info-grid" id="s2info" style="display:none">
+              <div class="lbl">广告 ID</div><div id="s2adId">-</div>
+              <div class="lbl">reqId</div><div id="s2reqId">-</div>
+              <div class="lbl">文案</div><div id="s2text">-</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- 步骤 3: 领取权益 -->
-    <div class="block">
-      <div class="step">
-        <div class="num" id="s3num">3</div>
-        <div class="body">
-          <div class="flex sb">
-            <h3>领取免费听权益</h3>
-            <span id="s3tag" class="tag no">未开始</span>
-          </div>
-          <p class="desc">传入 reqId 及相关参数，领取免费听权益（模拟点击广告后的领取请求）</p>
-          <pre id="s3pre" class="data">（尚未执行）</pre>
-          <div class="row">
-            <button id="step3" class="primary" disabled>③ 领取权益</button>
-          </div>
-          <div class="info-grid" id="s3info" style="display:none">
-            <div class="lbl">结果</div><div id="s3result">-</div>
+      <!-- 步骤 3: 领取权益 -->
+      <section class="shell-card block">
+        <div class="step">
+          <div class="num" id="s3num">3</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>领取免费听权益</h3>
+              <span id="s3tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">传入 reqId 及相关参数，领取免费听权益（模拟点击广告后的领取请求）</p>
+            <pre id="s3pre" class="data">（尚未执行）</pre>
+            <div class="shell-flex shell-mt-3">
+              <button id="step3" class="shell-btn shell-btn--default" disabled>③ 领取权益</button>
+            </div>
+            <div class="info-grid" id="s3info" style="display:none">
+              <div class="lbl">结果</div><div id="s3result">-</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- 一键全流程 -->
-    <div class="block">
-      <div class="flex sb">
-        <h3>一键运行</h3>
-        <span id="allTag" class="tag no">就绪</span>
-      </div>
-      <p class="desc" style="margin-top:4px">按顺序自动执行以上三个步骤</p>
-      <div class="row">
-        <button id="runAll" class="primary">▶ 一键获取免费听时长</button>
-        <button id="clearAll" class="danger">✕ 清空</button>
-      </div>
-    </div>
+      <!-- 一键全流程 -->
+      <section class="shell-card block">
+        <div class="flex sb">
+          <h3>一键运行</h3>
+          <span id="allTag" class="tag no">就绪</span>
+        </div>
+        <p class="desc" style="margin-top:4px">按顺序自动执行以上三个步骤</p>
+        <div class="shell-flex shell-mt-3">
+          <button id="runAll" class="shell-btn shell-btn--default">▶ 一键获取免费听时长</button>
+          <button id="clearAll" class="shell-btn shell-btn--danger">✕ 清空</button>
+        </div>
+      </section>
 
-    <!-- 剩余时长计时器 -->
-    <div class="block" id="rightsBlock">
-      <div class="flex sb">
-        <h3 id="rightsTitleDisplay">🕐 免费听时长剩余</h3>
-        <span id="rightsTag" class="tag no">未查询</span>
-      </div>
-      <p class="desc" id="rightsSubDesc">查询你的免费听权益剩余时长</p>
-      <div class="timer-wrap">
-        <div class="timer-row" id="timerRow">
-          <div class="timer-unit">
-            <span class="timer-num" id="timerDays">--</span>
-            <span class="timer-label">天</span>
-          </div>
-          <span class="timer-sep">:</span>
-          <div class="timer-unit">
-            <span class="timer-num" id="timerHours">--</span>
-            <span class="timer-label">时</span>
-          </div>
-          <span class="timer-sep">:</span>
-          <div class="timer-unit">
-            <span class="timer-num" id="timerMinutes">--</span>
-            <span class="timer-label">分</span>
-          </div>
-          <span class="timer-sep">:</span>
-          <div class="timer-unit">
-            <span class="timer-num" id="timerSeconds">--</span>
-            <span class="timer-label">秒</span>
+      <!-- 剩余时长计时器 -->
+      <section class="shell-card block">
+        <div class="flex sb">
+          <h3 id="rightsTitleDisplay">🕐 免费听时长剩余</h3>
+          <span id="rightsTag" class="tag no">未查询</span>
+        </div>
+        <p class="desc" id="rightsSubDesc">查询你的免费听权益剩余时长</p>
+        <div class="timer-wrap">
+          <div class="timer-row" id="timerRow">
+            <div class="timer-unit">
+              <span class="timer-num" id="timerDays">--</span>
+              <span class="timer-label">天</span>
+            </div>
+            <span class="timer-sep">:</span>
+            <div class="timer-unit">
+              <span class="timer-num" id="timerHours">--</span>
+              <span class="timer-label">时</span>
+            </div>
+            <span class="timer-sep">:</span>
+            <div class="timer-unit">
+              <span class="timer-num" id="timerMinutes">--</span>
+              <span class="timer-label">分</span>
+            </div>
+            <span class="timer-sep">:</span>
+            <div class="timer-unit">
+              <span class="timer-num" id="timerSeconds">--</span>
+              <span class="timer-label">秒</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="row" style="justify-content:center">
-        <button id="queryRightsBtn" class="primary">⟳ 查询剩余时长</button>
-        <button id="claim30Btn">领取30分钟</button>
-      </div>
-      <div class="info-grid" id="rightsInfo" style="display:none">
-        <div class="lbl">状态</div><div id="rightsStatus">-</div>
-        <div class="lbl">结束时间</div><div id="rightsEndTimeDisplay">-</div>
-        <div class="lbl">今日已覆盖</div><div id="rightsCoverToday">-</div>
-      </div>
-    </div>
+        <div class="shell-flex shell-flex--center shell-mt-3">
+          <button id="queryRightsBtn" class="shell-btn shell-btn--default">⟳ 查询剩余时长</button>
+          <button id="claim30Btn" class="shell-btn shell-btn--outline">领取30分钟</button>
+        </div>
+        <div class="info-grid" id="rightsInfo" style="display:none">
+          <div class="lbl">状态</div><div id="rightsStatus">-</div>
+          <div class="lbl">结束时间</div><div id="rightsEndTimeDisplay">-</div>
+          <div class="lbl">今日已覆盖</div><div id="rightsCoverToday">-</div>
+        </div>
+      </section>
 
-    <footer class="site-footer">
-      <a href="/">← 返回首页</a>
-    </footer>
+      <footer class="shell-footer">
+        <a href="/">← 返回首页</a>
+      </footer>
+    </div>
   </main>
 
   <script>

@@ -3,317 +3,246 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="docs/netease.png" />
+    <link rel="stylesheet" href="/static/shell.css" />
     <title>一起听 - 主机模式</title>
     <script src="https://unpkg.com/petite-vue"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        min-height: 100vh;
-        background: #f5f5f5;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 12px;
-        padding: 32px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      h1 {
-        font-size: 24px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 16px;
-      }
-
-      .login-link {
-        display: block;
-        margin-bottom: 24px;
-        color: #666;
-        font-size: 14px;
-        text-decoration: none;
-      }
-
-      .login-link:hover {
-        color: #333;
-        text-decoration: underline;
-      }
-
+      body { padding: 1.25rem; }
       .message {
-        padding: 12px 16px;
-        background: #f9f9f9;
-        border-radius: 6px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: #555;
+        padding: 0.75rem 1rem;
+        background: var(--gray-2);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--info);
+        margin-bottom: 1.25rem;
+        font-size: 0.875rem;
+        color: var(--foreground);
+        font-family: var(--font-mono);
       }
-
-      .audio-player {
-        width: 100%;
-        margin-bottom: 20px;
-      }
-
-      .btn {
-        background: #333;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s ease;
-        margin-right: 8px;
-        margin-bottom: 8px;
-      }
-
-      .btn:hover {
-        background: #555;
-      }
-
+      .audio-player { width: 100%; margin-bottom: 1.25rem; }
       .section {
-        margin-bottom: 24px;
-        padding: 20px;
-        background: #f9f9f9;
-        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        background: var(--gray-2);
+        border: 1px solid var(--border);
       }
-
       .section h3 {
-        font-size: 16px;
+        font-family: var(--font-mono);
+        font-size: 1rem;
         font-weight: 600;
-        color: #333;
-        margin-bottom: 12px;
+        margin-bottom: 0.75rem;
       }
-
-      input[type="text"], input[type="number"] {
-        padding: 10px 14px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        width: 200px;
+      .section h4 {
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 1rem 0 0.5rem;
       }
-
-      input:focus {
-        border-color: #333;
-      }
-
       .input-group {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
       }
-
       .input-group label {
-        font-size: 14px;
-        color: #555;
-        min-width: 80px;
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        min-width: 5rem;
+        margin: 0;
       }
-
       .share-link {
-        padding: 12px;
-        background: #f0f0f0;
-        border-radius: 6px;
-        font-size: 13px;
-        color: #666;
+        padding: 0.75rem;
+        background: var(--gray-1);
+        border: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        color: var(--muted-foreground);
         word-break: break-all;
-        margin-bottom: 12px;
+        margin-bottom: 0.75rem;
       }
-
       .user-list {
         list-style: none;
-        max-height: 200px;
+        max-height: 12.5rem;
         overflow-y: auto;
       }
-
       .user-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px;
-        border-bottom: 1px solid #eee;
+        gap: 0.75rem;
+        padding: 0.625rem;
+        border-bottom: 1px solid var(--border);
       }
-
-      .user-item:last-child {
-        border-bottom: none;
-      }
-
+      .user-item:last-child { border-bottom: none; }
       .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
         object-fit: cover;
+        background: var(--gray-4);
       }
-
       .user-name {
-        font-size: 14px;
-        color: #333;
+        font-size: 0.875rem;
+        color: var(--foreground);
       }
-
       .track-list {
         list-style: none;
-        max-height: 300px;
+        max-height: 18.75rem;
         overflow-y: auto;
       }
-
       .track-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px;
-        border-bottom: 1px solid #eee;
+        gap: 0.75rem;
+        padding: 0.625rem;
+        border-bottom: 1px solid var(--border);
         cursor: pointer;
-        transition: background 0.2s ease;
+        transition: background var(--transition);
       }
-
-      .track-item:hover {
-        background: #f5f5f5;
-      }
-
-      .track-item:last-child {
-        border-bottom: none;
-      }
-
+      .track-item:hover { background: var(--gray-4); }
+      .track-item:last-child { border-bottom: none; }
       .track-cover {
-        width: 40px;
-        height: 40px;
-        border-radius: 4px;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 2px;
         object-fit: cover;
+        background: var(--gray-4);
       }
-
       .track-name {
-        font-size: 14px;
-        color: #333;
+        font-size: 0.875rem;
+        color: var(--foreground);
       }
-
-      details {
-        cursor: pointer;
-      }
-
+      details { cursor: pointer; }
       details summary {
-        font-size: 14px;
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
         font-weight: 500;
-        color: #555;
-        padding: 8px 0;
+        color: var(--muted-foreground);
+        padding: 0.5rem 0;
+        list-style: none;
       }
-
-      details summary:hover {
-        color: #333;
-      }
-
-      details[open] summary {
-        margin-bottom: 12px;
-      }
-
+      details summary::before { content: '▸ '; }
+      details[open] summary::before { content: '▾ '; }
+      details summary:hover { color: var(--foreground); }
+      details[open] summary { margin-bottom: 0.75rem; }
       .control-buttons {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 0.5rem;
+      }
+      .account-info {
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        color: var(--foreground);
       }
     </style>
   </head>
 
-  <body class="container">
-    <a href="/qrlogin.html" class="login-link">还没登录？点击登录</a>
+  <body>
+    <header class="shell-topbar">
+      <a class="brand" href="/"><img src="docs/netease.png" alt="logo">一起听 · 主机模式</a>
+      <nav>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/qrlogin.html">登录</a>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+      </nav>
+    </header>
 
-    <h1>一起听 - 主机模式</h1>
+    <main class="shell-main">
+      <div class="shell-container shell-narrow" style="max-width:56rem">
+        <header class="shell-header">
+          <h1>一起听 - 主机模式</h1>
+          <p class="sub">创建房间并同步播放，与好友一起听歌</p>
+        </header>
 
-    <div class="message">消息: {{message}}</div>
+        <div class="message">消息: {{message}}</div>
 
-    <audio id="player" class="audio-player" autoplay controls></audio>
+        <audio id="player" class="audio-player" autoplay controls></audio>
 
-    <div v-if="!account.login">
-      <button class="btn" @click="login">获取登录状态</button>
-    </div>
+        <div v-if="!account.login">
+          <button class="shell-btn shell-btn--default" @click="login">获取登录状态</button>
+        </div>
 
-    <div class="section">
-      <h3>账号信息</h3>
-      <div>当前登录账号: {{account.nickname}}</div>
-    </div>
+        <section class="section">
+          <h3>账号信息</h3>
+          <div class="account-info">当前登录账号: {{account.nickname}}</div>
+        </section>
 
-    <div v-if="account.login" class="section">
-      <h3>房间管理</h3>
-      <div class="control-buttons">
-        <button v-if="!roomInfo.roomId" class="btn" @click="createRoom">创建房间</button>
+        <section class="section" v-if="account.login">
+          <h3>房间管理</h3>
+          <div class="control-buttons">
+            <button v-if="!roomInfo.roomId" class="shell-btn shell-btn--default" @click="createRoom">创建房间</button>
+          </div>
+
+          <details>
+            <summary>加入房间</summary>
+            <div class="input-group">
+              <label>房间ID:</label>
+              <input v-model="roomInfo.roomId" type="text" />
+            </div>
+            <div class="input-group">
+              <label>邀请者ID:</label>
+              <input v-model="roomInfo.inviterId" type="text" />
+            </div>
+            <button class="shell-btn shell-btn--outline" @click="joinRoom">加入房间</button>
+          </details>
+
+          <div v-if="roomInfo.roomId" style="margin-top:1rem">
+            <h4>分享链接</h4>
+            <div class="share-link">
+              https://st.music.163.com/listen-together/share/?songId=1372188635&roomId={{roomInfo.roomId}}&inviterId={{roomInfo.inviterId}}
+            </div>
+            <div class="control-buttons">
+              <button class="shell-btn shell-btn--outline" @click="refreshRoom">刷新房间状态</button>
+              <button class="shell-btn shell-btn--danger" @click="closeRoom">关闭房间</button>
+            </div>
+
+            <h4>在线用户</h4>
+            <ul class="user-list">
+              <li v-for="user in roomInfo.roomUsers" :key="user.userId" class="user-item">
+                <img :src="user.avatarUrl" class="user-avatar" alt="avatar" />
+                <span class="user-name">{{user.nickname}}</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="section">
+          <h3>播放控制</h3>
+          <div class="control-buttons">
+            <button class="shell-btn shell-btn--outline" @click="playTrack">播放</button>
+            <button class="shell-btn shell-btn--outline" @click="pauseTrack">暂停</button>
+            <button class="shell-btn shell-btn--outline" @click="seekTrack">同步进度</button>
+          </div>
+        </section>
+
+        <details>
+          <summary>播放列表</summary>
+          <section class="section">
+            <div class="input-group">
+              <label>歌单ID:</label>
+              <input v-model="playlistInfo.playlistId" type="text" />
+            </div>
+            <button class="shell-btn shell-btn--outline" @click="loadPlaylist">加载歌单</button>
+            <div style="margin-top:0.75rem; font-size:0.875rem; color:var(--muted-foreground)">
+              歌单名称: {{playlistInfo.playlistName}}
+            </div>
+
+            <h4>歌单内容</h4>
+            <ul class="track-list">
+              <li
+                @click="gotoTrack(track.id)"
+                v-for="track in playlistInfo.playlistTracks"
+                :key="track.id"
+                class="track-item"
+              >
+                <img :src="track.al.picUrl" class="track-cover" alt="cover" />
+                <span class="track-name">{{track.name}}</span>
+              </li>
+            </ul>
+          </section>
+        </details>
       </div>
-
-      <details>
-        <summary>加入房间</summary>
-        <div class="input-group">
-          <label>房间ID:</label>
-          <input v-model="roomInfo.roomId" type="text" />
-        </div>
-        <div class="input-group">
-          <label>邀请者ID:</label>
-          <input v-model="roomInfo.inviterId" type="text" />
-        </div>
-        <button class="btn" @click="joinRoom">加入房间</button>
-      </details>
-
-      <div v-if="roomInfo.roomId" style="margin-top: 16px;">
-        <h4>分享链接</h4>
-        <div class="share-link">
-          https://st.music.163.com/listen-together/share/?songId=1372188635&roomId={{roomInfo.roomId}}&inviterId={{roomInfo.inviterId}}
-        </div>
-        <button class="btn" @click="refreshRoom">刷新房间状态</button>
-        <button class="btn" @click="closeRoom">关闭房间</button>
-
-        <h4 style="margin-top: 16px;">在线用户</h4>
-        <ul class="user-list">
-          <li v-for="user in roomInfo.roomUsers" :key="user.userId" class="user-item">
-            <img :src="user.avatarUrl" class="user-avatar" alt="avatar" />
-            <span class="user-name">{{user.nickname}}</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>播放控制</h3>
-      <div class="control-buttons">
-        <button class="btn" @click="playTrack">播放</button>
-        <button class="btn" @click="pauseTrack">暂停</button>
-        <button class="btn" @click="seekTrack">同步进度</button>
-      </div>
-    </div>
-
-    <details>
-      <summary>播放列表</summary>
-      <div class="section">
-        <div class="input-group">
-          <label>歌单ID:</label>
-          <input v-model="playlistInfo.playlistId" type="text" />
-        </div>
-        <button class="btn" @click="loadPlaylist">加载歌单</button>
-        <div style="margin-top: 12px; font-size: 14px; color: #555;">
-          歌单名称: {{playlistInfo.playlistName}}
-        </div>
-
-        <h4 style="margin-top: 16px;">歌单内容</h4>
-        <ul class="track-list">
-          <li
-            @click="gotoTrack(track.id)"
-            v-for="track in playlistInfo.playlistTracks"
-            :key="track.id"
-            class="track-item"
-          >
-            <img :src="track.al.picUrl" class="track-cover" alt="cover" />
-            <span class="track-name">{{track.name}}</span>
-          </li>
-        </ul>
-      </div>
-    </details>
+    </main>
   </body>
 
   <script>

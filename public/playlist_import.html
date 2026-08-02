@@ -3,266 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="docs/netease.png">
+    <link rel="stylesheet" href="/static/shell.css">
     <title>歌单导入工具</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            padding: 32px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
         .subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 24px;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin-bottom: 1.5rem;
         }
-
-        .tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .tab-btn {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover {
-            color: #333;
-        }
-
-        .tab-btn.active {
-            color: #333;
-            border-bottom-color: #333;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #555;
-            margin-bottom: 8px;
-        }
-
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus, textarea:focus {
-            border-color: #333;
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-
-        table th, table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        table th {
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-            background: #f9f9f9;
-        }
-
-        table td input {
-            width: 100%;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            background: #333;
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .btn:hover {
-            background: #555;
-        }
-
-        .btn-secondary {
-            background: #666;
-        }
-
-        .btn-secondary:hover {
-            background: #888;
-        }
-
         .input-group {
             display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
         }
-
-        .input-group input {
-            flex: 1;
-        }
-
+        .input-group input { flex: 1; }
         .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
-
-        .checkbox-group input[type="checkbox"] {
-            cursor: pointer;
-        }
-
         .checkbox-group label {
             margin: 0;
             cursor: pointer;
+            color: var(--foreground);
         }
-
-        input:disabled {
-            background: #f5f5f5;
-            cursor: not-allowed;
-        }
+        .removeLinkButton { flex-shrink: 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>歌单导入工具</h1>
-        <p class="subtitle">请选择一种导入方式并填写相关信息</p>
+    <header class="shell-topbar">
+      <a class="brand" href="/"><img src="docs/netease.png" alt="logo">歌单导入</a>
+      <nav>
+        <a class="shell-btn shell-btn--ghost shell-btn--sm" href="/">返回首页</a>
+      </nav>
+    </header>
 
-        <ul class="tabs" id="importTabs" role="tablist">
-            <li role="presentation">
-                <button class="tab-btn active" id="metadata-tab" data-bs-toggle="tab" data-bs-target="#metadata" type="button" role="tab" aria-controls="metadata" aria-selected="true">元数据导入</button>
-            </li>
-            <li role="presentation">
-                <button class="tab-btn" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab" aria-controls="text" aria-selected="false">文字导入</button>
-            </li>
-            <li role="presentation">
-                <button class="tab-btn" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button" role="tab" aria-controls="link" aria-selected="false">链接导入</button>
-            </li>
-        </ul>
+    <main class="shell-main">
+      <div class="shell-container shell-narrow" style="max-width:56rem">
+        <header class="shell-header">
+          <h1>歌单导入工具</h1>
+          <p class="subtitle">请选择一种导入方式并填写相关信息</p>
+        </header>
 
-        <div class="tab-content active" id="importTabContent">
-            <!-- 元数据导入 -->
-            <div class="tab-content active" id="metadata" role="tabpanel" aria-labelledby="metadata-tab">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 33%">歌曲名称</th>
-                            <th style="width: 33%">艺术家</th>
-                            <th style="width: 33%">专辑</th>
-                        </tr>
-                    </thead>
-                    <tbody id="metadataTableBody">
-                        <tr>
-                            <td><input type="text" name="name[]" placeholder="歌曲名称"></td>
-                            <td><input type="text" name="artist[]" placeholder="艺术家"></td>
-                            <td><input type="text" name="album[]" placeholder="专辑"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-secondary" id="addMetadataRow">增加歌曲</button>
-            </div>
-            <!-- 文字导入 -->
-            <div class="tab-content" id="text" role="tabpanel" aria-labelledby="text-tab">
-                <div class="form-group">
-                    <label for="textInput">文字内容</label>
-                    <textarea id="textInput" name="text" rows="5" placeholder="请输入歌曲信息，每行一首歌曲"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="playlistNameInput">歌单名称</label>
-                    <input type="text" id="playlistNameInput" name="playlistName" placeholder="请输入歌单名">
-                </div>
-            </div>
-            <!-- 链接导入 -->
-            <div class="tab-content" id="link" role="tabpanel" aria-labelledby="link-tab">
-                <div class="form-group">
-                    <label>链接列表</label>
-                    <div id="linkInputsContainer">
-                        <div class="input-group">
-                            <input type="text" id="linkInput0" name="linkInput0" placeholder="请输入链接">
-                            <button type="button" class="btn btn-secondary removeLinkButton" data-index="0">×</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-secondary" id="addLinkButton" style="margin-top: 8px;">增加链接</button>
-                </div>
-                <div class="form-group" style="margin-top: 20px;">
-                    <label for="playlistNameLinkInput">歌单名称</label>
-                    <input type="text" id="playlistNameLinkInput" name="playlistName" placeholder="请输入歌单名">
-                </div>
-            </div>
-        </div>
+        <section class="shell-card">
+          <ul class="tabs" id="importTabs" role="tablist">
+              <li role="presentation" style="list-style:none">
+                  <button class="tab-btn active" id="metadata-tab" data-bs-toggle="tab" data-bs-target="#metadata" type="button" role="tab" aria-controls="metadata" aria-selected="true">元数据导入</button>
+              </li>
+              <li role="presentation" style="list-style:none">
+                  <button class="tab-btn" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab" aria-controls="text" aria-selected="false">文字导入</button>
+              </li>
+              <li role="presentation" style="list-style:none">
+                  <button class="tab-btn" id="link-tab" data-bs-toggle="tab" data-bs-target="#link" type="button" role="tab" aria-controls="link" aria-selected="false">链接导入</button>
+              </li>
+          </ul>
 
-        <div class="checkbox-group">
-            <input type="checkbox" value="" id="importStarCheckbox">
-            <label for="importStarCheckbox">
-                导入"我喜欢的音乐"
-            </label>
-        </div>
+          <div class="tab-content active" id="importTabContent">
+              <!-- 元数据导入 -->
+              <div class="tab-content active" id="metadata" role="tabpanel" aria-labelledby="metadata-tab">
+                  <table>
+                      <thead>
+                          <tr>
+                              <th style="width: 33%">歌曲名称</th>
+                              <th style="width: 33%">艺术家</th>
+                              <th style="width: 33%">专辑</th>
+                          </tr>
+                      </thead>
+                      <tbody id="metadataTableBody">
+                          <tr>
+                              <td><input type="text" name="name[]" placeholder="歌曲名称"></td>
+                              <td><input type="text" name="artist[]" placeholder="艺术家"></td>
+                              <td><input type="text" name="album[]" placeholder="专辑"></td>
+                          </tr>
+                      </tbody>
+                  </table>
+                  <button type="button" class="shell-btn shell-btn--outline" id="addMetadataRow">增加歌曲</button>
+              </div>
+              <!-- 文字导入 -->
+              <div class="tab-content" id="text" role="tabpanel" aria-labelledby="text-tab">
+                  <div class="form-group">
+                      <label for="textInput">文字内容</label>
+                      <textarea id="textInput" name="text" rows="5" placeholder="请输入歌曲信息，每行一首歌曲"></textarea>
+                  </div>
+                  <div class="form-group">
+                      <label for="playlistNameInput">歌单名称</label>
+                      <input type="text" id="playlistNameInput" name="playlistName" placeholder="请输入歌单名">
+                  </div>
+              </div>
+              <!-- 链接导入 -->
+              <div class="tab-content" id="link" role="tabpanel" aria-labelledby="link-tab">
+                  <div class="form-group">
+                      <label>链接列表</label>
+                      <div id="linkInputsContainer">
+                          <div class="input-group">
+                              <input type="text" id="linkInput0" name="linkInput0" placeholder="请输入链接">
+                              <button type="button" class="shell-btn shell-btn--outline shell-btn--sm removeLinkButton" data-index="0">×</button>
+                          </div>
+                      </div>
+                      <button type="button" class="shell-btn shell-btn--outline" id="addLinkButton">增加链接</button>
+                  </div>
+                  <div class="form-group" style="margin-top:1.25rem">
+                      <label for="playlistNameLinkInput">歌单名称</label>
+                      <input type="text" id="playlistNameLinkInput" name="playlistName" placeholder="请输入歌单名">
+                  </div>
+              </div>
+          </div>
 
-        <button type="submit" class="btn" id="submitBtn">导入歌曲</button>
-    </div>
+          <div class="checkbox-group">
+              <input type="checkbox" value="" id="importStarCheckbox">
+              <label for="importStarCheckbox">
+                  导入"我喜欢的音乐"
+              </label>
+          </div>
+
+          <button type="submit" class="shell-btn shell-btn--default" id="submitBtn">导入歌曲</button>
+        </section>
+      </div>
+    </main>
 
     <script src="https://fastly.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -291,11 +150,11 @@
             newInput.id = `linkInput${newIndex}`;
             newInput.name = `linkInput${newIndex}`;
             newInput.placeholder = '请输入链接';
-            newInput.style.cssText = 'flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;';
+            newInput.style.cssText = 'flex: 1; padding: 10px 14px; border: 1px solid #4d4d4d; border-radius: 0; font-size: 14px; outline: none; background:#171717; color:#e4e4e4;';
 
             var removeButton = document.createElement('button');
             removeButton.type = 'button';
-            removeButton.className = 'btn btn-secondary';
+            removeButton.className = 'shell-btn shell-btn--outline shell-btn--sm';
             removeButton.textContent = '×';
             removeButton.dataset.index = newIndex.toString();
             removeButton.addEventListener('click', function() {
@@ -317,9 +176,9 @@
             var newRow = document.createElement('tr');
 
             newRow.innerHTML = `
-                <td><input type="text" name="name[]" placeholder="歌曲名称" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;"></td>
-                <td><input type="text" name="artist[]" placeholder="艺术家" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;"></td>
-                <td><input type="text" name="album[]" placeholder="专辑" style="width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none;"></td>
+                <td><input type="text" name="name[]" placeholder="歌曲名称"></td>
+                <td><input type="text" name="artist[]" placeholder="艺术家"></td>
+                <td><input type="text" name="album[]" placeholder="专辑"></td>
             `;
 
             container.appendChild(newRow);
