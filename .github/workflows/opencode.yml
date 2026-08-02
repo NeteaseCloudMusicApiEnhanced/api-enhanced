@@ -5,9 +5,16 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  opencode:
+  bot:
     if: |
       contains(github.event.comment.body, ' /oc') ||
       startsWith(github.event.comment.body, '/oc') ||
@@ -15,19 +22,28 @@ jobs:
       startsWith(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
-      pull-requests: read
-      issues: read
     steps:
-      - name: Checkout repository
+      - name: Generate bot token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
         uses: actions/checkout@v6
         with:
           persist-credentials: false
+          token: ${{ steps.token.outputs.token }}
 
       - name: Run opencode
         uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ steps.token.outputs.token }}
         with:
           model: opencode/deepseek-v4-flash-free
+          use_github_token: true
+          prompt: ${{ secrets.OPENCODE_PROMPT }}
