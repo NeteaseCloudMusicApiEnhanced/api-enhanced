@@ -1,15 +1,16 @@
 // 易盾反作弊 Token 注册端点
 // 调用后获取实时 token 并存入共享存储，供后续带 checkToken 的请求使用
 //
-// GET  /register/checktoken        → 返回当前 token（尚无则自动获取）
-// POST /register/checktoken        → 强制刷新 token
-// GET  /register/checktoken?refresh=1 → 强制刷新
+// GET  /register/checktoken        → 实时获取新 token（不缓存）
+// POST /register/checktoken        → 实时获取新 token
+//
+// 注意：每次获取都不缓存，模拟真实客户端每次请求使用新鲜 token，
+// 避免反作弊 token 复用触发风控。
 //
 const { default: axios } = require('axios')
 const { APP_CONF } = require('../util/config.json')
 
 const URL = APP_CONF.dunDomainV2 + '/v2/config/js?pn=YD00000558929251'
-let _token = ''
 
 async function fetch() {
   const res = await axios.get(URL, { timeout: 10000 })
@@ -20,13 +21,13 @@ async function fetch() {
   throw new Error('易盾返回异常: ' + JSON.stringify(data).substring(0, 200))
 }
 
-// 端点处理
-module.exports = async (query) => {
-  const refresh = query.refresh === '1' || query.refresh === 'true'
-  let token = refresh ? null : _token
-  if (!token) {
+// 端点处理：每次实时获取新 token
+module.exports = async () => {
+  let token = ''
+  try {
     token = await fetch()
-    _token = token
+  } catch (e) {
+    // token 获取失败时返回空，由调用方决定是否重试
   }
   return {
     status: 200,
@@ -34,24 +35,11 @@ module.exports = async (query) => {
   }
 }
 
-// 模块加载时自动获取一次 Token，确保 request.js 使用时不为空
-fetch()
-  .then((token) => {
-    _token = token
-  })
-  .catch(() => {
-    // 静默失败，后续请求时会重试
-  })
-
-// 给 request.js 读取用
-module.exports.getToken = () => {
-  if (!_token) {
-    // 如果 Token 为空，异步触发获取
-    fetch()
-      .then((token) => {
-        _token = token
-      })
-      .catch(() => {})
+// 给 request.js 读取用：每次调用实时获取新 token，不缓存
+module.exports.getToken = async () => {
+  try {
+    return await fetch()
+  } catch (e) {
+    return ''
   }
-  return _token
 }

@@ -48,18 +48,26 @@ export function ad_listening_rights(
 export function ad_listening_rights_gain(
   params: {
     reqUid?: string
-    creativeType?: string | number
+    uid?: string | number
     exposureTime?: string | number
     clickTime?: string | number
+    extraRightsType?: string | number
+    playContinuously?: boolean | string
+    source?: string | number
+    creativeType?: string | number
     rightsGainMethod?: string | number
-    rightsGainDuration?: string | number
     extraRightsGainMethod?: string | number
     extraRightsGainDuration?: string | number
     nextRightsGainDuration?: string | number
-    source?: string
+    rightsGainType?: string | number
+    rightsGainDuration?: string | number
+    gainMethodStep?: string | number
+    generalRightsInfo?: string
     rightsExtJson?: string
     appInfo?: string
+    contextInfo?: string
     installed?: string | number
+    sniffTime?: string | number
     type_ids?: string
   } & RequestBaseConfig,
 ): Promise<Response>
@@ -1659,6 +1667,23 @@ export function yunbei_task_finish(
   params: {
     userTaskId: number | string
     depositCode?: number | string
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function yunbei_ad_task_list(
+  params: RequestBaseConfig,
+): Promise<Response>
+
+export function yunbei_ad_task_recommend_song(
+  params: {
+    offset?: number | string
+    limit?: number | string
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function yunbei_ad_task_finish(
+  params: {
+    yunbeiAmount?: number | string
   } & RequestBaseConfig,
 ): Promise<Response>
 

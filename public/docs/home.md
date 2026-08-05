@@ -88,7 +88,6 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 直接点`Continue`
 6. `PROJECT NAME`自己填,`FRAMEWORK PRESET` 选 `Other` 然后直接点 `Deploy` 接着等部署完成即可
 
-
 ## 腾讯云 serverless 部署
 
 因 `Vercel` 在国内访问太慢(不绑定自己的域名的情况下),在此提供腾讯云 serverless 部署方法
@@ -102,7 +101,6 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 输入`应用名`,上传方式选择`代码仓库`,进行 GitHub 授权(如已授权可跳过这一步),代码仓库选择刚刚 fork 的项目
 6. 启动文件填入:
 
-
 ```
 #!/bin/bash
 export PORT=9000
@@ -114,7 +112,6 @@ export PORT=9000
 - 注意
   - 腾讯云 serverless 并不是免费的,前三个月有免费额度,之后收费
   - 当前(2024-08-24), 用此法创建的话, 会`默认`关联一个"日志服务-日志主题"(创建过程中没有提醒), 此服务是计量收费的
-
 
 ## 可以使用代理
 
@@ -183,7 +180,6 @@ request 相关的环境变量
 5. no_proxy
 6. NO_PROXY
 
-
 ```shell
 docker pull moefurina/ncm-api
 
@@ -217,7 +213,6 @@ $ sudo docker run -d -p 3000:3000 netease-music-api
 - 请求参数模式下, 解密结果可直接带到 `/api.html` 继续调试
 - 需要返回值加密时, 可传 `e_r=1`, `weapi` 和 `eapi` 都支持
 - 目前支持算法 有 `weapi`, `eapi`, `linuxapi` 和 `xeapi` (xeapi 是一种不加密的特殊算法, 主要用于调试加密前的原始请求参数)
-
 
 ## 接口文档
 
@@ -1264,7 +1259,6 @@ tags: 歌单标签
 
 > 如果你设置 limit=50&offset=100，你就会得到第 101-150 首歌曲
 
-
 ### 歌单详情动态
 
 说明 : 调用后可获取歌单详情动态部分,如评论数,是否收藏,播放数
@@ -1551,7 +1545,6 @@ tags: 歌单标签
 
 - （可能存在）JSON 歌曲元数据
 
-
 ```
 {"t":0,"c":[{"tx":"作曲: "},{"tx":"柳重言","li":"http://p1.music.126.net/Icj0IcaOjH2ZZpyAM-QGoQ==/6665239487822533.jpg","or":"orpheus://nm/artist/home?id=228547&type=artist"}]}
 {"t":5403,"c":[{"tx":"编曲: "},{"tx":"Alex San","li":"http://p1.music.126.net/pSbvYkrzZ1RFKqoh-fA9AQ==/109951166352922615.jpg","or":"orpheus://nm/artist/home?id=28984845&type=artist"}]}
@@ -1567,7 +1560,6 @@ tags: 歌单标签
 - `or`：云音乐 app 内路径；例中作用即打开艺术家主页
 
 * 逐字歌词
-
 
 ```
 [16210,3460](16210,670,0)还(16880,410,0)没...
@@ -2954,7 +2946,6 @@ type : 地区
 - 适合 Vercel、Netlify 等有请求体限制的平台
 - 需要前端配合实现
 
-
 #### 客户端直传相关接口
 
 **获取上传凭证**
@@ -3001,14 +2992,12 @@ type : 地区
 - `artist`: 艺术家
 - `album`: 专辑名
 
-
 #### 客户端直传流程
 
 1. 客户端计算文件 MD5
 2. 调用 `/cloud/upload/token` 获取上传凭证
 3. 如果 `needUpload` 为 true,直接 PUT 文件到 `uploadUrl`
 4. 调用 `/cloud/upload/complete` 完成导入
-
 
 ### 云盘歌曲信息匹配纠正
 
@@ -3584,6 +3573,12 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 说明 : 登录后调用此接口可进行云贝签到
 
+> ⚠️ 逆向 v9.5.61 实测：该接口已被网易云下线。v9.5.61 客户端 dex 中已无
+> `/api/pointmall/user/sign` 的任何调用（云贝中心已迁移为 RN 页面 `rn-cloudshell-center`），
+> 服务端对该接口恒返回 `{"code":200,"data":{"sign":false,"yunbeiNum":0,"yunbeiAdInfo":null}}`，
+> 即只返回「未签到」查询状态，不再执行签到、不会发放云贝。
+> v9.5.61 的云贝获取已迁移到广告任务体系，见下方 `/yunbei/ad/task/*` 接口（每天 10 次 × 150 = 1500 云贝）。
+
 **接口地址 :** `/yunbei/sign`
 
 **调用例子 :** `/yunbei/sign`
@@ -3625,6 +3620,36 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 **接口地址 :** `/yunbei/task/finish`
 
 **调用例子 :** `/yunbei/task/finish?userTaskId=5146243240&depositCode=0`
+
+### 云贝广告任务 - 今日任务状态
+
+说明 :登录后调用此接口可查询云贝广告任务（"听歌/看视频得云贝"）今日状态。逆向自云贝任务中心 H5 页面（st.music.163.com/yunbei-listen）。返回 `times`（今日已完成次数）、`amount`（今日累计云贝）、`singleAmount`（单次可得云贝）。单日上限 10 次。
+
+**接口地址 :** `/yunbei/task/list/v1`
+
+**调用例子 :** `/yunbei/task/list/v1`
+
+### 云贝广告任务 - 获取推荐歌曲
+
+说明 :登录后调用此接口可获取云贝广告任务的推荐歌曲列表。返回数组项含 `songId`、`songName`、`artistName`、`albumUrl`、`songChorusStartTime`、`likeFlag`、`alg`（均为 `alg_payrec_yunBei_*`）。
+
+**可选参数 :** `offset`: 偏移数量，默认为 0
+
+`limit`: 取出数量，默认为 10（客户端每次固定取 10 首）
+
+**接口地址 :** `/yunbei/task/recommend/song`
+
+**调用例子 :** `/yunbei/task/recommend/song` `/yunbei/task/recommend/song?offset=0&limit=10`
+
+### 云贝广告任务 - 完成任务领取云贝
+
+说明 :登录后调用此接口可完成任务并领取云贝。实测仅需传 `yunbeiAmount`（单次云贝数，客户端从 `list` 接口的 `singleAmount` 取值，当前为 150）即可成功领取，无需真实听歌/看视频。单日上限 10 次 × 150 = 1500 云贝/天，超限返回 `code:400 "单日完成任务数已达上限"`。建议领取前先调用 `/yunbei/task/list/v1` 查询今日剩余次数。
+
+**可选参数 :** `yunbeiAmount`: 单次云贝数，默认为 150
+
+**接口地址 :** `/yunbei/task/finish/v1`
+
+**调用例子 :** `/yunbei/task/finish/v1?yunbeiAmount=150`
 
 ### 云贝收入
 
@@ -4315,7 +4340,6 @@ ONLINE 已发布
   - `voiceFeeType: -1`：返回所有类型的声音
   - `voiceFeeType: 0`：返回免费的声音
   - `voiceFeeType: 1`：返回收费的声音
-
 
 ### 播客声音详情
 
@@ -5194,7 +5218,6 @@ let data = encodeURIComponent(
 
 **调用例子:** `/broadcast/sub?id=5&t=1`
 
-
 ### 用户的创建歌单列表
 
 说明 : 调用此接口, 传入用户id, 获取用户的创建歌单列表
@@ -5268,7 +5291,6 @@ let data = encodeURIComponent(
 **接口地址 :** `/voicelist/my/created`
 
 **调用例子 :** `/voicelist/my/created`
-
 
 ### DIFM电台 - 分类
 
@@ -5448,7 +5470,7 @@ let data = encodeURIComponent(
 
 **接口地址 :** `/comment/report`
 
-**调用例子 :* `/comment/report?id=2058263032&cid=123456789&reason=人身攻击`
+*_调用例子 :_ `/comment/report?id=2058263032&cid=123456789&reason=人身攻击`
 
 ### 多级行政区划数据
 
@@ -5538,13 +5560,23 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/ad/get`
 
-### 获取30分钟免费听歌时长
+### 看广告领取权益（免费听歌时长 / 云贝等）
 
-说明 : 登录后调用此接口, 获取30分钟免费听歌时长
+说明 : 登录后调用此接口, 领取广告权益。权益类型由广告平台下发的配置决定, 不仅限于 30 分钟免费听歌时长, 还包括"看视频获得最高 2000 云贝"等拉新分段权益(`rightsGainMethod=6`)。除下方常用参数外, 权益类型/时长/扩展权益等其余字段会自动从广告下发配置补齐, 无需手动传入。
 
 !> 警告: 通过调取接口出现的任何问题由调用者自行承担
 
-**可选参数 :** `reqUid` 通过`/ad/get` 获取的广告ID
+**可选参数 :**
+
+`reqUid` : 广告请求 ID, 通过 `/ad/get` 获取, 未传时自动获取
+
+`uid` : 当前登录用户 ID, 不传时服务端从 Cookie 识别
+
+`rightsGainMethod` : 权益领取方式, `1`: 曝光, `2`: 曝光+点击(默认), `3`: 曝光+下载, `4`: 点击+停留, `5`: 曝光或点击停留, `6`: 拉新曝光/下载分段权益(看视频得云贝)
+
+`type_ids` : 广告位类型, 默认 `["400002_0"]`
+
+`creativeType` : 广告创意类型, 激励视频场景为 `36`, 默认 `36`
 
 **接口地址 :** `/ad/listening/rights/gain`
 
