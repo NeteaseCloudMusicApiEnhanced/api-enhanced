@@ -3573,12 +3573,6 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 说明 : 登录后调用此接口可进行云贝签到
 
-> ⚠️ 逆向 v9.5.61 实测：该接口已被网易云下线。v9.5.61 客户端 dex 中已无
-> `/api/pointmall/user/sign` 的任何调用（云贝中心已迁移为 RN 页面 `rn-cloudshell-center`），
-> 服务端对该接口恒返回 `{"code":200,"data":{"sign":false,"yunbeiNum":0,"yunbeiAdInfo":null}}`，
-> 即只返回「未签到」查询状态，不再执行签到、不会发放云贝。
-> v9.5.61 的云贝获取已迁移到广告任务体系，见下方 `/yunbei/ad/task/*` 接口（每天 10 次 × 150 = 1500 云贝）。
-
 **接口地址 :** `/yunbei/sign`
 
 **调用例子 :** `/yunbei/sign`
