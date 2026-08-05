@@ -88,6 +88,7 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 直接点`Continue`
 6. `PROJECT NAME`自己填,`FRAMEWORK PRESET` 选 `Other` 然后直接点 `Deploy` 接着等部署完成即可
 
+
 ## 腾讯云 serverless 部署
 
 因 `Vercel` 在国内访问太慢(不绑定自己的域名的情况下),在此提供腾讯云 serverless 部署方法
@@ -101,6 +102,7 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 输入`应用名`,上传方式选择`代码仓库`,进行 GitHub 授权(如已授权可跳过这一步),代码仓库选择刚刚 fork 的项目
 6. 启动文件填入:
 
+
 ```
 #!/bin/bash
 export PORT=9000
@@ -112,6 +114,7 @@ export PORT=9000
 - 注意
   - 腾讯云 serverless 并不是免费的,前三个月有免费额度,之后收费
   - 当前(2024-08-24), 用此法创建的话, 会`默认`关联一个"日志服务-日志主题"(创建过程中没有提醒), 此服务是计量收费的
+
 
 ## 可以使用代理
 
@@ -180,6 +183,7 @@ request 相关的环境变量
 5. no_proxy
 6. NO_PROXY
 
+
 ```shell
 docker pull moefurina/ncm-api
 
@@ -213,6 +217,7 @@ $ sudo docker run -d -p 3000:3000 netease-music-api
 - 请求参数模式下, 解密结果可直接带到 `/api.html` 继续调试
 - 需要返回值加密时, 可传 `e_r=1`, `weapi` 和 `eapi` 都支持
 - 目前支持算法 有 `weapi`, `eapi`, `linuxapi` 和 `xeapi` (xeapi 是一种不加密的特殊算法, 主要用于调试加密前的原始请求参数)
+
 
 ## 接口文档
 
@@ -1545,6 +1550,7 @@ tags: 歌单标签
 
 - （可能存在）JSON 歌曲元数据
 
+
 ```
 {"t":0,"c":[{"tx":"作曲: "},{"tx":"柳重言","li":"http://p1.music.126.net/Icj0IcaOjH2ZZpyAM-QGoQ==/6665239487822533.jpg","or":"orpheus://nm/artist/home?id=228547&type=artist"}]}
 {"t":5403,"c":[{"tx":"编曲: "},{"tx":"Alex San","li":"http://p1.music.126.net/pSbvYkrzZ1RFKqoh-fA9AQ==/109951166352922615.jpg","or":"orpheus://nm/artist/home?id=28984845&type=artist"}]}
@@ -1560,6 +1566,7 @@ tags: 歌单标签
 - `or`：云音乐 app 内路径；例中作用即打开艺术家主页
 
 * 逐字歌词
+
 
 ```
 [16210,3460](16210,670,0)还(16880,410,0)没...
@@ -2946,6 +2953,7 @@ type : 地区
 - 适合 Vercel、Netlify 等有请求体限制的平台
 - 需要前端配合实现
 
+
 #### 客户端直传相关接口
 
 **获取上传凭证**
@@ -2992,12 +3000,14 @@ type : 地区
 - `artist`: 艺术家
 - `album`: 专辑名
 
+
 #### 客户端直传流程
 
 1. 客户端计算文件 MD5
 2. 调用 `/cloud/upload/token` 获取上传凭证
 3. 如果 `needUpload` 为 true,直接 PUT 文件到 `uploadUrl`
 4. 调用 `/cloud/upload/complete` 完成导入
+
 
 ### 云盘歌曲信息匹配纠正
 
@@ -4334,6 +4344,7 @@ ONLINE 已发布
   - `voiceFeeType: -1`：返回所有类型的声音
   - `voiceFeeType: 0`：返回免费的声音
   - `voiceFeeType: 1`：返回收费的声音
+
 
 ### 播客声音详情
 
