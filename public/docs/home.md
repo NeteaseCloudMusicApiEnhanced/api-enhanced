@@ -1264,7 +1264,6 @@ tags: 歌单标签
 
 > 如果你设置 limit=50&offset=100，你就会得到第 101-150 首歌曲
 
-
 ### 歌单详情动态
 
 说明 : 调用后可获取歌单详情动态部分,如评论数,是否收藏,播放数
@@ -3626,6 +3625,36 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 **调用例子 :** `/yunbei/task/finish?userTaskId=5146243240&depositCode=0`
 
+### 云贝广告任务 - 今日任务状态
+
+说明 :登录后调用此接口可查询云贝广告任务（"听歌/看视频得云贝"）今日状态。逆向自云贝任务中心 H5 页面（st.music.163.com/yunbei-listen）。返回 `times`（今日已完成次数）、`amount`（今日累计云贝）、`singleAmount`（单次可得云贝）。单日上限 10 次。
+
+**接口地址 :** `/yunbei/task/list/v1`
+
+**调用例子 :** `/yunbei/task/list/v1`
+
+### 云贝广告任务 - 获取推荐歌曲
+
+说明 :登录后调用此接口可获取云贝广告任务的推荐歌曲列表。返回数组项含 `songId`、`songName`、`artistName`、`albumUrl`、`songChorusStartTime`、`likeFlag`、`alg`（均为 `alg_payrec_yunBei_*`）。
+
+**可选参数 :** `offset`: 偏移数量，默认为 0
+
+`limit`: 取出数量，默认为 10（客户端每次固定取 10 首）
+
+**接口地址 :** `/yunbei/task/recommend/song`
+
+**调用例子 :** `/yunbei/task/recommend/song` `/yunbei/task/recommend/song?offset=0&limit=10`
+
+### 云贝广告任务 - 完成任务领取云贝
+
+说明 :登录后调用此接口可完成任务并领取云贝。实测仅需传 `yunbeiAmount`（单次云贝数，客户端从 `list` 接口的 `singleAmount` 取值，当前为 150）即可成功领取，无需真实听歌/看视频。单日上限 10 次 × 150 = 1500 云贝/天，超限返回 `code:400 "单日完成任务数已达上限"`。建议领取前先调用 `/yunbei/task/list/v1` 查询今日剩余次数。
+
+**可选参数 :** `yunbeiAmount`: 单次云贝数，默认为 150
+
+**接口地址 :** `/yunbei/task/finish/v1`
+
+**调用例子 :** `/yunbei/task/finish/v1?yunbeiAmount=150`
+
 ### 云贝收入
 
 说明 :登录后调用此接口可获取云贝收入
@@ -5194,7 +5223,6 @@ let data = encodeURIComponent(
 
 **调用例子:** `/broadcast/sub?id=5&t=1`
 
-
 ### 用户的创建歌单列表
 
 说明 : 调用此接口, 传入用户id, 获取用户的创建歌单列表
@@ -5268,7 +5296,6 @@ let data = encodeURIComponent(
 **接口地址 :** `/voicelist/my/created`
 
 **调用例子 :** `/voicelist/my/created`
-
 
 ### DIFM电台 - 分类
 
@@ -5448,7 +5475,7 @@ let data = encodeURIComponent(
 
 **接口地址 :** `/comment/report`
 
-**调用例子 :* `/comment/report?id=2058263032&cid=123456789&reason=人身攻击`
+*_调用例子 :_ `/comment/report?id=2058263032&cid=123456789&reason=人身攻击`
 
 ### 多级行政区划数据
 
@@ -5538,13 +5565,23 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/ad/get`
 
-### 获取30分钟免费听歌时长
+### 看广告领取权益（免费听歌时长 / 云贝等）
 
-说明 : 登录后调用此接口, 获取30分钟免费听歌时长
+说明 : 登录后调用此接口, 领取广告权益。权益类型由广告平台下发的配置决定, 不仅限于 30 分钟免费听歌时长, 还包括"看视频获得最高 2000 云贝"等拉新分段权益(`rightsGainMethod=6`)。除下方常用参数外, 权益类型/时长/扩展权益等其余字段会自动从广告下发配置补齐, 无需手动传入。
 
 !> 警告: 通过调取接口出现的任何问题由调用者自行承担
 
-**可选参数 :** `reqUid` 通过`/ad/get` 获取的广告ID
+**可选参数 :**
+
+`reqUid` : 广告请求 ID, 通过 `/ad/get` 获取, 未传时自动获取
+
+`uid` : 当前登录用户 ID, 不传时服务端从 Cookie 识别
+
+`rightsGainMethod` : 权益领取方式, `1`: 曝光, `2`: 曝光+点击(默认), `3`: 曝光+下载, `4`: 点击+停留, `5`: 曝光或点击停留, `6`: 拉新曝光/下载分段权益(看视频得云贝)
+
+`type_ids` : 广告位类型, 默认 `["400002_0"]`
+
+`creativeType` : 广告创意类型, 激励视频场景为 `36`, 默认 `36`
 
 **接口地址 :** `/ad/listening/rights/gain`
 

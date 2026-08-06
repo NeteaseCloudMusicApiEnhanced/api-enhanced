@@ -17,9 +17,24 @@ module.exports = async (query, request) => {
   try {
     if (raw?.ads) {
       const ad = Object.values(raw.ads)[0]
-      if (ad?.extJson) {
-        const ext = JSON.parse(ad.extJson)
-        reqId = ext?.contextInfo?.req_id || ''
+      // 逆向 v9.5.61：客户端从 ad.adExtMap["req_id"] 取 reqUid
+      if (ad?.adExtMap) {
+        if (typeof ad.adExtMap === 'string') {
+          try {
+            reqId = JSON.parse(ad.adExtMap).req_id || ''
+          } catch (_) {}
+        } else {
+          reqId = ad.adExtMap.req_id || ''
+        }
+      }
+      // 兜底：adLogId.requestId / ad.reqId / extJson.contextInfo.req_id
+      if (!reqId && ad?.adLogId?.requestId) reqId = ad.adLogId.requestId
+      if (!reqId && ad?.reqId) reqId = ad.reqId
+      if (!reqId && ad?.extJson) {
+        try {
+          const ext = JSON.parse(ad.extJson)
+          reqId = ext?.contextInfo?.req_id || ''
+        } catch (_) {}
       }
     }
   } catch (_) {}

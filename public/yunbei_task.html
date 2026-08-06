@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>云贝广告任务 — 网易云音乐 API Enhanced</title>
+    <style>
+      :root {
+        --fg: #333;
+        --muted: #666;
+        --border: #ddd;
+        --bg: #f5f5f5;
+        --panel: #ffffff;
+        --accent: #333;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      @media (max-width: 480px) {
+        .container {
+          margin: 20px auto;
+          padding: 0 16px;
+        }
+        header.site-header h1 {
+          font-size: 22px;
+        }
+        .block {
+          padding: 16px;
+        }
+      }
+      header.site-header {
+        margin-bottom: 24px;
+      }
+      header.site-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .block {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      .block h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .block .desc {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      pre {
+        margin: 0;
+        background: #f9f9f9;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        max-height: 200px;
+        overflow: auto;
+      }
+      pre.data {
+        max-height: 360px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      button {
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        background: var(--panel);
+        color: var(--fg);
+        transition: all 0.15s;
+      }
+      button:hover {
+        background: #eee;
+      }
+      button.primary {
+        background: var(--fg);
+        color: var(--panel);
+        border-color: var(--fg);
+      }
+      button.primary:hover {
+        opacity: 0.85;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      button.danger {
+        background: #a11;
+        color: #fff;
+        border-color: #a11;
+      }
+      button.danger:hover {
+        opacity: 0.85;
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+      }
+      .tag.ok {
+        background: #e6f7e6;
+        color: #1a7a1a;
+        border-color: #b7e6b7;
+      }
+      .tag.no {
+        background: #ffe6e6;
+        color: #a11;
+        border-color: #f5c6c6;
+      }
+      .tag.busy {
+        background: #fff3cd;
+        color: #856404;
+        border-color: #ffeeba;
+      }
+      .flex {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .flex.sb {
+        justify-content: space-between;
+      }
+      .step {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .step .num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--fg);
+        color: var(--panel);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 600;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .step .num.done {
+        background: #1a7a1a;
+      }
+      .step .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 4px 12px;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      .info-grid .lbl {
+        color: var(--muted);
+      }
+      footer.site-footer {
+        margin-top: 32px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        text-align: center;
+        font-size: 13px;
+      }
+      footer.site-footer a {
+        color: var(--fg);
+        text-decoration: none;
+      }
+      footer.site-footer a:hover {
+        border-bottom: 1px dotted var(--fg);
+      }
+
+      /* ---- 今日进度条 ---- */
+      .progress-wrap {
+        margin-top: 10px;
+      }
+      .progress-bar {
+        height: 10px;
+        border-radius: 5px;
+        background: #eee;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 5px;
+        background: #1a7a1a;
+        transition: width 0.4s ease;
+      }
+      .progress-text {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* ---- 歌曲列表 ---- */
+      .song-list {
+        margin-top: 10px;
+      }
+      .song-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 6px;
+        background: #fafafa;
+      }
+      .song-item img {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #eee;
+      }
+      .song-item .song-name {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .song-item .song-artist {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .song-item .song-like {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="site-header">
+        <h1>🪙 云贝广告任务 · 看视频得云贝</h1>
+        <p class="sub">
+          云贝任务中心「看广告视频得云贝」— 查询今日状态、领取云贝、获取推荐歌曲
+        </p>
+      </header>
+
+      <!-- 步骤 1: 查询今日任务状态 -->
+      <div class="block">
+        <div class="step">
+          <div class="num" id="s1num">1</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>查询今日任务状态</h3>
+              <span id="s1tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">
+              调用
+              /yunbei/task/list/v1，查看今日已完成次数、累计云贝与单次可得云贝
+            </p>
+            <div class="row">
+              <button id="step1" class="primary">① 查询状态</button>
+            </div>
+            <div class="info-grid" id="s1info" style="display: none">
+              <div class="lbl">已完成</div>
+              <div id="s1times">-</div>
+              <div class="lbl">累计云贝</div>
+              <div id="s1amount">-</div>
+              <div class="lbl">单次可得</div>
+              <div id="s1single">-</div>
+            </div>
+            <div class="progress-wrap" id="s1progress" style="display: none">
+              <div class="progress-bar">
+                <div class="progress-fill" id="s1fill"></div>
+              </div>
+              <div class="progress-text" id="s1ptext"></div>
+            </div>
+            <pre id="s1pre">（尚未执行）</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 步骤 2: 领取云贝 -->
+      <div class="block">
+        <div class="step">
+          <div class="num" id="s2num">2</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>领取云贝</h3>
+              <span id="s2tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">
+              调用 /yunbei/task/finish/v1 完成任务并领取云贝。实测仅需传
+              yunbeiAmount（单次 150），无需真实听歌/看视频。单日上限 10 次 ×
+              150 = 1500 云贝/天。
+            </p>
+            <div class="row">
+              <button id="step2" class="primary" disabled>
+                ② 领取一次 (+150)
+              </button>
+              <button id="step2x" disabled>连续领取至上限</button>
+            </div>
+            <div class="info-grid" id="s2info" style="display: none">
+              <div class="lbl">本次结果</div>
+              <div id="s2result">-</div>
+              <div class="lbl">今日累计</div>
+              <div id="s2amount">-</div>
+            </div>
+            <pre id="s2pre">（尚未执行）</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 步骤 3: 获取推荐歌曲 -->
+      <div class="block">
+        <div class="step">
+          <div class="num" id="s3num">3</div>
+          <div class="body">
+            <div class="flex sb">
+              <h3>获取推荐歌曲</h3>
+              <span id="s3tag" class="tag no">未开始</span>
+            </div>
+            <p class="desc">
+              调用
+              /yunbei/task/recommend/song，获取「听歌得云贝」任务专属推荐（alg
+              均为 alg_payrec_yunBei_*）
+            </p>
+            <div class="row">
+              <button id="step3" class="primary" disabled>③ 获取推荐</button>
+            </div>
+            <div class="song-list" id="s3list" style="display: none"></div>
+            <pre id="s3pre">（尚未执行）</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- 一键全流程 -->
+      <div class="block">
+        <div class="flex sb">
+          <h3>一键运行</h3>
+          <span id="allTag" class="tag no">就绪</span>
+        </div>
+        <p class="desc" style="margin-top: 4px">
+          查询今日状态 → 领取一次云贝 → 获取推荐歌曲
+        </p>
+        <div class="row">
+          <button id="runAll" class="primary">▶ 一键运行</button>
+          <button id="clearAll" class="danger">✕ 清空</button>
+        </div>
+      </div>
+
+      <footer class="site-footer">
+        <a href="/">← 返回首页</a>
+      </footer>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id)
+      const base = location.origin
+
+      function setTag(id, type, text) {
+        const el = $(id)
+        el.className = 'tag ' + type
+        el.textContent = text
+      }
+
+      function setNum(id, done) {
+        $(id).className = 'num' + (done ? ' done' : '')
+      }
+
+      function nocache(url) {
+        const sep = url.indexOf('?') > -1 ? '&' : '?'
+        return url + sep + '_t=' + Date.now()
+      }
+
+      /** 今日进度展示: times/10 */
+      function renderProgress(times, singleAmount) {
+        const pct = Math.min(100, Math.round((times / 10) * 100))
+        $('s1fill').style.width = pct + '%'
+        $('s1ptext').textContent =
+          '今日进度: ' +
+          times +
+          ' / 10 次' +
+          (times >= 10
+            ? '（已达上限，明天再来吧）'
+            : '（剩余 ' + (10 - times) + ' 次 × ' + singleAmount + ' 云贝）')
+      }
+
+      // ===== 步骤 1: 查询状态 =====
+      async function step1() {
+        const btn = $('step1')
+        btn.disabled = true
+        setTag('s1tag', 'busy', '查询中…')
+        setNum('s1num', false)
+        try {
+          const res = await fetch(nocache(base + '/yunbei/task/list/v1'))
+          const data = await res.json()
+          $('s1pre').textContent = JSON.stringify(data, null, 2)
+          const body = data.data || {}
+          if (data.code === 200 && typeof body.times === 'number') {
+            setTag('s1tag', 'ok', '已查询')
+            setNum('s1num', true)
+            $('s1info').style.display = 'grid'
+            $('s1times').textContent = body.times
+            $('s1amount').textContent = body.amount + ' 云贝'
+            $('s1single').textContent = body.singleAmount + ' 云贝'
+            $('s1progress').style.display = 'block'
+            renderProgress(body.times, body.singleAmount)
+
+            $('step2').disabled = body.times >= 10
+            $('step2x').disabled = body.times >= 10
+            $('step3').disabled = false
+            window.__singleAmount = body.singleAmount || 150
+            return body
+          }
+          setTag('s1tag', 'no', '查询失败')
+          return null
+        } catch (e) {
+          $('s1pre').textContent = JSON.stringify({ error: e.message }, null, 2)
+          setTag('s1tag', 'no', e.message)
+          return null
+        } finally {
+          btn.disabled = false
+        }
+      }
+      $('step1').onclick = step1
+
+      // ===== 步骤 2: 领取云贝 =====
+      async function claimOnce() {
+        const btn = $('step2')
+        btn.disabled = true
+        $('step2x').disabled = true
+        setTag('s2tag', 'busy', '领取中…')
+        setNum('s2num', false)
+        try {
+          const amount = window.__singleAmount || 150
+          const res = await fetch(
+            nocache(base + '/yunbei/task/finish/v1?yunbeiAmount=' + amount),
+          )
+          const data = await res.json()
+          $('s2pre').textContent = JSON.stringify(data, null, 2)
+          if (data.code === 200) {
+            setTag('s2tag', 'ok', '已领取 +' + amount)
+            setNum('s2num', true)
+            $('s2info').style.display = 'grid'
+            $('s2result').textContent = String(data.data)
+            await step1()
+            return true
+          }
+          setTag('s2tag', 'no', '领取失败: ' + (data.message || data.code))
+          $('s2info').style.display = 'none'
+          return false
+        } catch (e) {
+          $('s2pre').textContent = JSON.stringify({ error: e.message }, null, 2)
+          setTag('s2tag', 'no', e.message)
+          return false
+        } finally {
+          btn.disabled = false
+          $('step2x').disabled = false
+        }
+      }
+      $('step2').onclick = claimOnce
+
+      // 连续领取至上限
+      $('step2x').onclick = async function () {
+        const btn = this
+        btn.disabled = true
+        $('step2').disabled = true
+        setTag('s2tag', 'busy', '连续领取中…')
+        let okCount = 0
+        let failed = false
+        for (let i = 0; i < 10; i++) {
+          const state = await step1()
+          if (!state) {
+            failed = true
+            break
+          }
+          if (state.times >= 10) break
+          const ok = await claimOnce()
+          if (!ok) {
+            failed = true
+            break
+          }
+          okCount++
+        }
+        setTag(
+          's2tag',
+          failed ? 'no' : 'ok',
+          failed ? '中断' : '已领满 ' + okCount + ' 次',
+        )
+        btn.disabled = false
+        $('step2').disabled = false
+      }
+
+      // ===== 步骤 3: 获取推荐歌曲 =====
+      $('step3').onclick = async function () {
+        const btn = this
+        btn.disabled = true
+        setTag('s3tag', 'busy', '获取中…')
+        setNum('s3num', false)
+        $('s3list').style.display = 'none'
+        try {
+          const res = await fetch(
+            nocache(base + '/yunbei/task/recommend/song?offset=0&limit=10'),
+          )
+          const data = await res.json()
+          $('s3pre').textContent = JSON.stringify(data, null, 2)
+          const list = data.data || []
+          if (data.code === 200 && Array.isArray(list) && list.length) {
+            setTag('s3tag', 'ok', '共 ' + list.length + ' 首')
+            setNum('s3num', true)
+            const box = $('s3list')
+            box.style.display = 'block'
+            box.innerHTML = ''
+            list.forEach((s) => {
+              const item = document.createElement('div')
+              item.className = 'song-item'
+              item.innerHTML =
+                '<img src="' +
+                (s.albumUrl || '') +
+                '" alt="" onerror="this.style.visibility=\'hidden\'">' +
+                '<div><div class="song-name">' +
+                (s.songName || '-') +
+                '</div>' +
+                '<div class="song-artist">' +
+                (s.artistName || '-') +
+                '</div></div>' +
+                '<div class="song-like">' +
+                (s.likeFlag ? '♥ 已喜欢' : '♡ 未喜欢') +
+                '</div>'
+              box.appendChild(item)
+            })
+            return list
+          }
+          setTag('s3tag', 'no', '获取失败')
+          return null
+        } catch (e) {
+          $('s3pre').textContent = JSON.stringify({ error: e.message }, null, 2)
+          setTag('s3tag', 'no', e.message)
+          return null
+        } finally {
+          btn.disabled = false
+        }
+      }
+
+      // ===== 一键运行 =====
+      $('runAll').onclick = async function () {
+        const btn = this
+        btn.disabled = true
+        setTag('allTag', 'busy', '运行中…')
+        await step1()
+        const state = window.__singleAmount ? true : false
+        if (state) await claimOnce()
+        await $('step3').onclick()
+        setTag('allTag', 'ok', '完成')
+        btn.disabled = false
+      }
+
+      // ===== 清空 =====
+      $('clearAll').onclick = function () {
+        const steps = ['s1', 's2', 's3']
+        const tags = { s1: '未开始', s2: '未开始', s3: '未开始' }
+        steps.forEach((s) => {
+          setTag(s + 'tag', 'no', tags[s])
+          setNum(s + 'num', false)
+          $(s + 'pre').textContent = '（尚未执行）'
+          const info = $(s + 'info')
+          if (info) info.style.display = 'none'
+        })
+        $('s1progress').style.display = 'none'
+        $('s3list').style.display = 'none'
+        $('step1').disabled = false
+        $('step2').disabled = true
+        $('step2x').disabled = true
+        $('step3').disabled = true
+        setTag('allTag', 'no', '就绪')
+        $('runAll').disabled = false
+      }
+    </script>
+  </body>
+</html>

@@ -17,7 +17,7 @@ const {
   generateRandomChineseIP,
 } = require('./index')
 const { URLSearchParams, URL } = require('url')
-const { APP_CONF } = require('../util/config.json')
+const { APP_CONF } = require('./config.json')
 const {
   getToken: antiCheatTokenV2,
 } = require('../module/register_checktoken_v2')
@@ -114,7 +114,7 @@ const userAgentMap = {
   api: {
     pc: 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36 Chrome/91.0.4472.164 NeteaseMusicDesktop/3.1.29.205117',
     android:
-      'NeteaseMusic/9.1.65.240927161425(9001065);Dalvik/2.1.0 (Linux; U; Android 14; 23013RK75C Build/UKQ1.230804.001)',
+      'NeteaseMusic/9.5.61.260802021928(9005061);Dalvik/2.1.0 (Linux; U; Android 12; HBN-AL00 Build/cd737a2.0)',
     iphone: 'NeteaseMusic 9.0.90/5038 (iPhone; iOS 16.2; zh_CN)',
   },
 }
@@ -187,14 +187,16 @@ const generateRequestId = () => {
     .padStart(4, '0')}`
 }
 
-const createRequest = (uri, data, options) => {
+const createRequest = async (uri, data, options) => {
   let token = ''
   switch (options.checkToken) {
     case 'v2':
-      token = antiCheatTokenV2()
+      // 每次实时获取反作弊 token，不缓存
+      token = await antiCheatTokenV2()
       break
     case 'v3':
-      token = antiCheatTokenV3()
+      // 每次实时获取反作弊 token，不缓存
+      token = await antiCheatTokenV3()
       break
   }
 

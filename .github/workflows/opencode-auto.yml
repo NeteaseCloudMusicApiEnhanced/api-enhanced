@@ -1,0 +1,59 @@
+name: OpenCode Automation
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: auto-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  automate:
+    # 排除机器人自己的触发，防止自我循环
+    if: |
+      github.actor != 'takanashi-hoshino-agent[bot]' &&
+      github.actor != 'github-actions[bot]' &&
+      github.actor != 'opencode-agent[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate bot token
+        id: token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install opencode
+        run: npm i -g opencode-ai@latest
+
+      - name: Run automation
+        env:
+          GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+          MODEL: opencode/deepseek-v4-flash-free
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          ISSUE_PROMPT: ${{ secrets.OPENCODE_PROMPT }}
+          PR_PROMPT: |
+            ${{ secrets.OPENCODE_PROMPT }}
+            ${{ secrets.PR_REVIEW_PROMPT }}
+        run: node scripts/opencode-automation.mjs
