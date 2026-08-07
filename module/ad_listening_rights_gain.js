@@ -239,7 +239,7 @@ module.exports = async (query, request) => {
   const res = await request(
     `/api/ad/listening/rights/gain`,
     data,
-    createOption(query, 'xeapi', 'v2'),
+    createOption(query, 'eapi', 'v2'),
   )
 
   return {
