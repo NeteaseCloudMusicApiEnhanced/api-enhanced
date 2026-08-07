@@ -5,15 +5,9 @@
 // GET  /register/checktoken/v2        → 实时获取新 token（不缓存）
 // POST /register/checktoken/v2        → 实时获取新 token
 //
-// 原理：加载 tool.min.js 初始化 Watchman，
-// 再调用 wm.getToken(businessId) 拿 token。watchman 内部会 POST /v3/d + /v3/b
-// 并携带加密的设备指纹与签名，无法用普通 HTTP 复刻，故走完整 SDK。
-//
 // 注意：每次获取都不缓存，模拟真实客户端每次请求使用新鲜 token，
 // 避免反作弊 token 复用触发风控。
 //
-
-const { JSDOM, VirtualConsole } = require('jsdom')
 const { default: axios } = require('axios')
 const { APP_CONF } = require('../util/config.json')
 const logger = require('../util/logger')
@@ -30,6 +24,15 @@ const HTML =
 let toolJs = ''
 let wm = null // Watchman 实例（进程内复用，可反复 getToken）
 let initPromise = null
+let jsdomModulePromise = null
+
+// jsdom 的依赖链包含纯 ESM 包（@exodus/bytes），旧版 Node 无法 require() ESM，
+function getJSDOM() {
+  if (!jsdomModulePromise) {
+    jsdomModulePromise = import('jsdom')
+  }
+  return jsdomModulePromise
+}
 
 // 获取 tool.min.js（内存缓存，避免每次初始化重复下载）
 async function getToolJs() {
@@ -46,6 +49,7 @@ async function ensureWatchman() {
 
   initPromise = (async () => {
     const js = await getToolJs()
+    const { JSDOM, VirtualConsole } = await getJSDOM()
     const virtualConsole = new VirtualConsole()
     virtualConsole.on('jsdomError', () => {})
     const dom = new JSDOM(HTML, {
@@ -94,7 +98,6 @@ async function ensureWatchman() {
   try {
     return await initPromise
   } catch (e) {
-    // 初始化失败后允许下次重试
     initPromise = null
     wm = null
     throw e
@@ -119,7 +122,6 @@ module.exports = async () => {
   try {
     token = await fetchToken()
   } catch (e) {
-    // token 获取失败时返回空，由调用方决定是否重试
     logger.warn('[checkToken v2]', e.message)
   }
   return {
