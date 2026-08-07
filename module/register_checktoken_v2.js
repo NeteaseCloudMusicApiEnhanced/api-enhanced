@@ -114,6 +114,16 @@ async function ensureWatchman() {
 // 获取新 token
 async function fetchToken() {
   const instance = await ensureWatchman()
+  const raw = instance.getInstance()
+
+  await new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(), 15000)
+    raw.I(() => {
+      clearTimeout(timer)
+      resolve()
+    })
+  })
+
   return new Promise((resolve) => {
     const timer = setTimeout(() => resolve(''), 15000)
     instance.getToken(BUSINESS_ID, (tk) => {
