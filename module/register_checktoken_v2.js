@@ -8,6 +8,11 @@
 // 注意：每次获取都不缓存，模拟真实客户端每次请求使用新鲜 token，
 // 避免反作弊 token 复用触发风控。
 //
+// 注：jsdom 固定用 v24（engines >=18），其依赖链为纯 CJS，可被 pkg 静态
+// 分析自动打包；v30+ 引入纯 ESM 依赖且要求 Node >=22，无法在 CI(18-24) 与
+// pkg(node18) 目标下运行。
+//
+const { JSDOM, VirtualConsole } = require('jsdom')
 const { default: axios } = require('axios')
 const { APP_CONF } = require('../util/config.json')
 const logger = require('../util/logger')
@@ -23,16 +28,8 @@ const HTML =
 
 let toolJs = ''
 let wm = null // Watchman 实例（进程内复用，可反复 getToken）
+let dom = null // jsdom 实例（失败时 close 释放活动句柄，避免泄漏）
 let initPromise = null
-let jsdomModulePromise = null
-
-// jsdom 的依赖链包含纯 ESM 包（@exodus/bytes），旧版 Node 无法 require() ESM，
-function getJSDOM() {
-  if (!jsdomModulePromise) {
-    jsdomModulePromise = import('jsdom')
-  }
-  return jsdomModulePromise
-}
 
 // 获取 tool.min.js（内存缓存，避免每次初始化重复下载）
 async function getToolJs() {
@@ -49,10 +46,9 @@ async function ensureWatchman() {
 
   initPromise = (async () => {
     const js = await getToolJs()
-    const { JSDOM, VirtualConsole } = await getJSDOM()
     const virtualConsole = new VirtualConsole()
     virtualConsole.on('jsdomError', () => {})
-    const dom = new JSDOM(HTML, {
+    dom = new JSDOM(HTML, {
       url: 'https://music.163.com/',
       referrer: 'https://music.163.com/',
       contentType: 'text/html',
@@ -75,19 +71,25 @@ async function ensureWatchman() {
     dom.window.document.body.appendChild(script)
 
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error('watchman 初始化超时')),
-        15000,
-      )
+      let settled = false
+      const timer = setTimeout(() => {
+        if (settled) return
+        settled = true
+        reject(new Error('watchman 初始化超时'))
+      }, 15000)
       dom.window.initWatchman({
         auto: true,
         productNumber: PRODUCT_NUMBER,
         onload(instance) {
+          if (settled) return
+          settled = true
           clearTimeout(timer)
           wm = instance
           resolve(instance)
         },
         onerror(...args) {
+          if (settled) return
+          settled = true
           clearTimeout(timer)
           reject(new Error('watchman 初始化失败'))
         },
@@ -98,6 +100,11 @@ async function ensureWatchman() {
   try {
     return await initPromise
   } catch (e) {
+    // 失败路径：关闭 jsdom 释放 rAF/子资源/定时器等活动句柄，防止每次失败泄漏约 30MB
+    if (dom) {
+      dom.window.close()
+      dom = null
+    }
     initPromise = null
     wm = null
     throw e
