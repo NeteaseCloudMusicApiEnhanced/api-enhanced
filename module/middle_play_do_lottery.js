@@ -19,6 +19,6 @@ module.exports = (query, request) => {
   return request(
     `/api/middle/play/do/lottery`,
     data,
-    createOption(query, 'eapi', 'v3'),
+    createOption(query, 'eapi', 'v2'),
   )
 }

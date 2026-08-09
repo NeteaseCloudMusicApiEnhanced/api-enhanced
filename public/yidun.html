@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Token 注册器 — 网易云音乐 API Enhanced</title>
+  <title>易盾 Watchman 调试器 — 网易云音乐 API Enhanced</title>
   <style>
     :root {
       --fg: #333;
@@ -17,7 +17,7 @@
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.6; }
-    .container { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+    .container { max-width: 760px; margin: 40px auto; padding: 0 20px; }
     @media (max-width: 480px) {
       .container { margin: 20px auto; padding: 0 16px; }
       header.site-header h1 { font-size: 22px; }
@@ -28,8 +28,12 @@
     .sub { margin-top: 4px; color: var(--muted); font-size: 14px; }
     .block { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
     .block h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
-    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', monospace; font-size: 13px; max-height: 160px; overflow: auto; }
-    .row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .field { margin-bottom: 10px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    input[type="text"] { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace; color: var(--fg); background: #fafafa; }
+    input[type="text"]:focus { outline: none; border-color: #888; background: #fff; }
+    pre { margin: 0; background: #f9f9f9; border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-family: 'Courier New', monospace; font-size: 13px; max-height: 220px; overflow: auto; }
+    .row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
     button { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; font-weight: 500; cursor: pointer; background: var(--panel); color: var(--fg); transition: all .15s; }
     button:hover { background: #eee; }
     button.primary { background: var(--fg); color: var(--panel); border-color: var(--fg); }
@@ -41,32 +45,65 @@
     .tag.busy { background: #fff3cd; color: #856404; border-color: #ffeeba; }
     .flex { display: flex; align-items: center; gap: 10px; }
     .flex.sb { justify-content: space-between; }
-    .mt-2 { margin-top: 14px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
     footer.site-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--muted); text-align: center; font-size: 13px; }
   </style>
 </head>
 <body>
   <main class="container">
     <header class="site-header">
-      <h1>🔑 Token 注册器</h1>
-      <p class="sub">从易盾获取反作弊 token 并注册到服务器，供广告等需要 checkToken 的接口使用</p>
+      <h1>🛡️ 易盾 Watchman 调试器</h1>
+      <p class="sub">
+        直接调用易盾官方 Web SDK（tool.min.js）获取反作弊 token。
+        与 <code>module/register_checktoken_v2.js</code> 内部（jsdom 模拟同一套 SDK）逻辑一致，可用于对照验证。
+      </p>
     </header>
 
+    <!-- Watchman 初始化 -->
     <div class="block">
       <div class="flex sb">
-        <h3>当前 Token</h3>
-        <span id="statusTag" class="tag no">未注册</span>
+        <h3>① 初始化 Watchman</h3>
+        <span id="initTag" class="tag no">未初始化</span>
       </div>
-      <pre id="tokenDisplay">（空）</pre>
+      <div class="field">
+        <label for="pnInput">productNumber（易盾产品号）</label>
+        <input type="text" id="pnInput" value="YD00000558929251" spellcheck="false">
+      </div>
       <div class="row">
-        <button id="btnGet" class="primary">获取 Token</button>
-        <button id="btnRefresh">强制刷新</button>
+        <button id="btnInit" class="primary">初始化</button>
+        <button id="btnReset">重置</button>
       </div>
     </div>
 
+    <!-- 获取 Token -->
     <div class="block">
-      <h3>服务器响应</h3>
-      <pre id="respDisplay">{}</pre>
+      <div class="flex sb">
+        <h3>② 获取 Token</h3>
+        <span id="getTag" class="tag no">—</span>
+      </div>
+      <div class="field">
+        <label for="bidInput">businessId（业务 ID，来自网易 clientcfg 下发）</label>
+        <input type="text" id="bidInput" value="bd5d2f973ef74cd2a61325a412ae54d9" spellcheck="false">
+      </div>
+      <div class="row">
+        <button id="btnGet" class="primary" disabled>获取 Token</button>
+        <button id="btnCopy" disabled>复制</button>
+        <span class="hint">覆盖 /api/playlist/subscribe、/api/song/like、/api/user/follow 等接口</span>
+      </div>
+      <pre id="tokenDisplay">（尚未获取）</pre>
+    </div>
+
+    <!-- 服务器端对照 -->
+    <div class="block">
+      <div class="flex sb">
+        <h3>③ 服务器端对照（/register/checktoken/v2）</h3>
+        <span id="srvTag" class="tag no">—</span>
+      </div>
+      <div class="row">
+        <button id="btnSrv">获取服务器端 Token</button>
+        <span class="hint">node + jsdom 模拟同一套 SDK 的实时结果</span>
+      </div>
+      <pre id="srvDisplay">（尚未获取）</pre>
     </div>
 
     <footer class="site-footer">
@@ -74,46 +111,121 @@
     </footer>
   </main>
 
+  <script src="https://acstatic-dun.126.net/tool.min.js"></script>
   <script>
     const $ = (id) => document.getElementById(id)
-    const base = location.origin
 
-    async function call(refresh) {
-      const btn = $('btnGet')
-      const btnR = $('btnRefresh')
-      btn.disabled = btnR.disabled = true
-
-      const tag = $('statusTag')
-      tag.className = 'tag busy'
-      tag.textContent = '获取中…'
-
-      try {
-        const url = base + '/register/checktoken/v2' + (refresh ? '?refresh=1' : '')
-        const res = await fetch(url)
-        const data = await res.json()
-        $('respDisplay').textContent = JSON.stringify(data, null, 2)
-
-        if (data.token) {
-          $('tokenDisplay').textContent = data.token
-          tag.className = 'tag ok'
-          tag.textContent = '已注册'
-        } else {
-          $('tokenDisplay').textContent = '（获取失败）'
-          tag.className = 'tag no'
-          tag.textContent = '失败'
-        }
-      } catch (e) {
-        $('respDisplay').textContent = JSON.stringify({ error: e.message }, null, 2)
-        tag.className = 'tag no'
-        tag.textContent = e.message
-      }
-
-      btn.disabled = btnR.disabled = false
+    const DEFAULTS = {
+      pn: 'YD00000558929251',
+      bid: 'bd5d2f973ef74cd2a61325a412ae54d9',
     }
 
-    $('btnGet').onclick = () => call(false)
-    $('btnRefresh').onclick = () => call(true)
-    call(false)
+    let wm = null // Watchman 实例
+
+    const setTag = (id, text, state) => {
+      const tag = $(id)
+      tag.textContent = text
+      tag.className = 'tag ' + state // ok / no / busy
+    }
+
+    // ① 初始化
+    function initShield() {
+      if (typeof window.initWatchman !== 'function') {
+        alert('未找到 initWatchman：请确认 tool.min.js 已加载（CDN 是否可访问）')
+        return
+      }
+      const pn = $('pnInput').value.trim() || DEFAULTS.pn
+      setTag('initTag', '初始化中…', 'busy')
+      $('btnInit').disabled = true
+      window.initWatchman({
+        auto: true,
+        productNumber: pn,
+        onload(instance) {
+          wm = instance
+          setTag('initTag', '已就绪', 'ok')
+          $('btnInit').disabled = false
+          $('btnGet').disabled = false
+        },
+        onerror() {
+          wm = null
+          setTag('initTag', '初始化失败', 'no')
+          $('btnInit').disabled = false
+          $('btnGet').disabled = true
+        },
+      })
+    }
+
+    function resetShield() {
+      wm = null
+      setTag('initTag', '未初始化', 'no')
+      setTag('getTag', '—', 'no')
+      $('btnGet').disabled = true
+      $('btnCopy').disabled = true
+      $('tokenDisplay').textContent = '（尚未获取）'
+    }
+
+    // ② 获取 token
+    function getToken() {
+      if (!wm) {
+        alert('请先完成初始化')
+        return
+      }
+      const bid = $('bidInput').value.trim() || DEFAULTS.bid
+      setTag('getTag', '获取中…', 'busy')
+      $('btnGet').disabled = true
+      wm.getToken(bid, (tk) => {
+        if (typeof tk === 'string' && tk) {
+          $('tokenDisplay').textContent = tk
+          setTag('getTag', 'OK', 'ok')
+          $('btnCopy').disabled = false
+        } else {
+          $('tokenDisplay').textContent = '（获取失败）'
+          setTag('getTag', '失败', 'no')
+          $('btnCopy').disabled = true
+        }
+        $('btnGet').disabled = false
+      })
+    }
+
+    // ③ 服务器端对照
+    async function fetchServerToken() {
+      setTag('srvTag', '获取中…', 'busy')
+      $('btnSrv').disabled = true
+      try {
+        const res = await fetch(
+          location.origin + '/register/checktoken/v2?t=' + Date.now(),
+        )
+        const data = await res.json()
+        $('srvDisplay').textContent = data.token
+          ? data.token
+          : JSON.stringify(data, null, 2)
+        setTag('srvTag', data.token ? 'OK' : '失败', data.token ? 'ok' : 'no')
+      } catch (e) {
+        $('srvDisplay').textContent = JSON.stringify({ error: e.message }, null, 2)
+        setTag('srvTag', e.message, 'no')
+      }
+      $('btnSrv').disabled = false
+    }
+
+    // 复制
+    async function copyToken() {
+      const txt = $('tokenDisplay').textContent
+      try {
+        await navigator.clipboard.writeText(txt)
+        setTag('getTag', '已复制', 'ok')
+      } catch (e) {
+        setTag('getTag', '复制失败', 'no')
+      }
+    }
+
+    $('btnInit').onclick = initShield
+    $('btnReset').onclick = resetShield
+    $('btnGet').onclick = getToken
+    $('btnCopy').onclick = copyToken
+    $('btnSrv').onclick = fetchServerToken
+
+    // 自动初始化
+    initShield()
   </script>
 </body>
 </html>
