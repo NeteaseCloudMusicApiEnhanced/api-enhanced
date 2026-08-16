@@ -1378,6 +1378,7 @@ export const enum SoundQualityType {
   jyeffect = 'jyeffect',
   jymaster = 'jymaster',
   sky = 'sky',
+  vivid = 'vivid',
 }
 
 export function song_url_v1(

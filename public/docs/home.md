@@ -1304,14 +1304,14 @@ tags: 歌单标签
 
 **必选参数 :** `id` : 音乐 id
 `level`: 播放音质等级, 分为 `standard` => `标准`,`higher` => `较高`, `exhigh`=>`极高`,
-`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清环绕声`, `sky` => `沉浸环绕声`, `dolby` => `杜比全景声`, `jymaster` => `超清母带`
+`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清环绕声`, `sky` => `沉浸环绕声`, `vivid` => `臻音全景声`, `dolby` => `杜比全景声`, `jymaster` => `超清母带`
 `unblock`: 是否使用使用歌曲解锁, 分为`true`和`false`
 
 **可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为 `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
 
 **接口地址 :** `/song/url/v1`
 
-**调用例子 :** `/song/url/v1?id=1969519579&level=exhigh` `/song/url/v1?id=1969519579,33894312&level=lossless` `/song/url/v1?id=1969519579&level=sky&immerseType=ste`
+**调用例子 :** `/song/url/v1?id=1969519579&level=exhigh` `/song/url/v1?id=1969519579,33894312&level=lossless` `/song/url/v1?id=1969519579&level=sky&immerseType=ste` `/song/url/v1?id=1969519579&level=vivid`
 
 说明：`杜比全景声`音质需要设备支持，不同的设备可能会返回不同码率的 url。cookie 需要传入`os=pc`保证返回正常码率的 url。
 
