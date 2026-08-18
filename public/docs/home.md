@@ -2473,6 +2473,18 @@ privilege:权限相关信息
 
 喜欢成功则返回数据的 code 为 200, 其余为失败
 
+### 喜欢音乐 - 新版
+
+说明: 调用此接口 , 传入音乐 id, 可喜欢该音乐
+
+**必选参数 :** `id`: 歌曲 id
+
+**可选参数 :** `like`: 布尔值 , 默认为 true 即喜欢 , 若传 false, 则取消喜欢
+
+**接口地址 :** `/like/v1`
+
+**调用例子 :** `/like/v1?id=347230`
+
 ### 喜欢音乐列表
 
 说明 : 调用此接口 , 传入用户 id, 可获取已喜欢音乐 id 列表(id 数组)
@@ -4137,6 +4149,16 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 **必选参数:** `id`: 歌曲 ID
 
 **调用例子:** `/song/wiki/summary?id=1958384591`
+
+### 音乐百科
+
+说明: 调用此接口可以获取歌曲的音乐百科信息
+
+**接口地址:** `/song/wiki/info`
+
+**必选参数:** `id`: 歌曲 ID
+
+**调用例子:** `/song/wiki/info?id=1958384591`
 
 ### 乐谱列表
 
@@ -5833,6 +5855,16 @@ let data = encodeURIComponent(
 **接口地址 :** `/device/kickoff`
 
 **调用例子 :** `/device/kickoff?key=00ALDFGEXXXXXXXXXXXXXXXXX&captcha=1234`
+
+### 插播相似歌曲
+
+说明: 调用此接口, 传入歌曲 id, 可获取插播相似歌曲
+
+**必选参数 :** `id`: 歌曲 id
+
+**接口地址 :** `/song/simi/get`
+
+**调用例子 :** `/song/simi/get?id=39227633`
 
 ## 离线访问此文档
 
