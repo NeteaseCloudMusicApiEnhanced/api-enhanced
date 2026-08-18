@@ -1,8 +1,6 @@
 name: OpenCode Automation
 
 on:
-  issues:
-    types: [opened]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
@@ -17,19 +15,25 @@ concurrency:
 
 jobs:
   automate:
-    # 排除机器人自己的触发，防止自我循环
+    # 排除其他机器人触发，防止自我循环；
+    # 但允许 takanashi-hoshino-agent 创建的 PR，这样 /oc 生成的测试 PR 也能被自动评审
     if: |
-      github.actor != 'takanashi-hoshino-agent[bot]' &&
       github.actor != 'github-actions[bot]' &&
       github.actor != 'opencode-agent[bot]'
     runs-on: ubuntu-latest
     steps:
+      - name: Fetch config from CF Worker
+        id: cfg
+        uses: MoeFurina/pull-oc-config@v1
+        with:
+          url: https://bot-storage.interface.focalors.ltd/config
+
       - name: Generate bot token
         id: token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ steps.cfg.outputs.app_id }}
+          private-key: ${{ steps.cfg.outputs.app_private_key }}
           owner: ${{ github.repository_owner }}
 
       - name: Checkout
@@ -37,7 +41,7 @@ jobs:
         with:
           token: ${{ steps.token.outputs.token }}
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -51,9 +55,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
           MODEL: opencode/deepseek-v4-flash-free
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          ISSUE_PROMPT: ${{ secrets.OPENCODE_PROMPT }}
+          OPENCODE_API_KEY: ${{ steps.cfg.outputs.opencode_api_key }}
+          ISSUE_PROMPT: ${{ steps.cfg.outputs.opencode_prompt }}
           PR_PROMPT: |
-            ${{ secrets.OPENCODE_PROMPT }}
-            ${{ secrets.PR_REVIEW_PROMPT }}
-        run: node scripts/opencode-automation.mjs
+            ${{ steps.cfg.outputs.opencode_prompt }}
+            ${{ steps.cfg.outputs.pr_review_prompt }}
+        run: |
+          mkdir -p scripts
+          curl -fsSL "https://raw.githubusercontent.com/MoeFurina/pull-oc-config/v1/scripts/opencode-automation.mjs" \
+            -o scripts/opencode-automation.mjs
+          node scripts/opencode-automation.mjs

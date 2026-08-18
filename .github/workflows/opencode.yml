@@ -25,18 +25,25 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Fetch config from CF Worker
+        id: cfg
+        uses: MoeFurina/pull-oc-config@v1
+        with:
+          url: https://bot-storage.interface.focalors.ltd/config
+
       - name: Generate bot token
         id: token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ steps.cfg.outputs.app_id }}
+          private-key: ${{ steps.cfg.outputs.app_private_key }}
           owner: ${{ github.repository_owner }}
 
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          # 需要持久化凭证: opencode action 内部会 git fetch origin <分支> 拉取 PR 代码
+          persist-credentials: true
           token: ${{ steps.token.outputs.token }}
 
       - name: Configure git identity
@@ -47,10 +54,13 @@ jobs:
       - name: Run opencode
         uses: anomalyco/opencode/github@latest
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          OPENCODE_API_KEY: ${{ steps.cfg.outputs.opencode_api_key }}
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
         with:
           model: opencode/deepseek-v4-flash-free
           use_github_token: true
           prompt: |
-            ${{ secrets.OPENCODE_PROMPT }}
+            ${{ steps.cfg.outputs.opencode_prompt }}
+
+            ## 用户指令（来自触发评论，请严格按此执行）
+            ${{ github.event.comment.body }}

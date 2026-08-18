@@ -4690,11 +4690,11 @@ qrCodeStatus:20,detailReason:0 验证成功 qrCodeStatus:21,detailReason:0 二�
 
 **必选参数：**
 
-`mode`: 模式 (aidj, DEFAULT, FAMILIAR, EXPLORE, SCENE_RCMD)
+`mode`: 模式 (`DEFAULT`: 默认模式,`FAMILIAR`: 熟悉模式,`EXPLORE`: 探索模式,`SCENE_RCMD`: 场景模式, 需要传入`submode`参数,`PUZZLE_MODE_RCMD`: 拼图模式)
 
 **可选参数：**
 
-`submode`: 当 mode 为 SCENE_RCMD 是可为 ( EXERCISE, FOCUS, NIGHT_EMO )
+`submode`: 当 mode 为 SCENE_RCMD 时传入 ( `EXERCISE`: 运动, `FOCUS`: 专注, `NIGHT_EMO`: 伤感, `SLEEP_HELP`: 助眠, `RELAX`: 放松, `CHEERFUL`: 欢快, `LYRICAL`: 抒情, `CURE`: 治愈, `SWEET`: 情歌, `RHYTHM_BLUES`: R&B, `RAINY`: 雨天, `GAMES`: 游戏, `RAP`: 说唱, `K_POP`: K-Pop, `ORIGINAL_MUSICIAL`: 宝藏原创, `ELECTRONIC`: 电音, `COMMUTE`: 出行, `TAKE_SHOWER`: 洗澡, `COFFEE_SHOP`: 咖啡馆, `ROCK`: 摇滚, `INSPIRATIONAL`: 励志, `CHINESE`: 华语, `ENGLISH`: 欧美, `YUEYU`: 粤语, `MANYAO`: 慢摇DJ, `JINGDIAN`: 经典, `LIGHT`: 轻音乐, `GUOFENG`: 国风, `FOLK`: 民谣, `ACG`: 二次元, `GUDIAN`: 古典, `JAZZ`: 爵士, `JAPANESE`: 日语, `GLOBAL`: 全球, `FRANCH`: 法语, `BLUE`: 蓝调, `DANCE`: 舞蹈, `LATIN`: 拉丁, `PUNK`: 放克, `COUNTRY`: 乡村乐, `MUSICAL`: 音乐剧, `YINGSHI`: 影视)
 
 **接口地址:** `/personal/fm/mode`
 
