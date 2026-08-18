@@ -1,2 +1,5 @@
+packages:
+  - '.'
+
 minimumReleaseAgeExclude:
   - '@neteasecloudmusicapienhanced/unblockmusic-utils@0.4.2'
