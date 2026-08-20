@@ -1304,10 +1304,10 @@ tags: 歌单标签
 
 **必选参数 :** `id` : 音乐 id
 `level`: 播放音质等级, 分为 `standard` => `标准`,`higher` => `较高`, `exhigh`=>`极高`,
-`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清环绕声`, `sky` => `沉浸环绕声`, `vivid` => `臻音全景声`, `dolby` => `杜比全景声`, `jymaster` => `超清母带`
+`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清臻音`, `dolby` => `杜比全景声`, `vivid` => `臻音全景声`, `jymaster` => `超清母带`, `sky` => `沉浸环绕声`
 `unblock`: 是否使用使用歌曲解锁, 分为`true`和`false`
 
-**可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为 `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
+**可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为`c512` => `新版c51类型`, `ste2` => `新版环绕立体声类型`, `aac2` => `新版aac类型`,  `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
 
 **接口地址 :** `/song/url/v1`
 
@@ -1321,7 +1321,7 @@ tags: 歌单标签
 
 **必选参数 :** `id` : 音乐 id
 `level`: 播放音质等级, 分为 `standard` => `标准`,`higher` => `较高`, `exhigh`=>`极高`,
-`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清环绕声`, `sky` => `沉浸环绕声`, `vivid` => `臻音全景声`, `dolby` => `杜比全景声`, `jymaster` => `超清母带`
+`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清臻音`, `dolby` => `杜比全景声`, `vivid` => `臻音全景声`, `jymaster` => `超清母带`, `sky` => `沉浸环绕声`
 `unblock`: 是否使用使用歌曲解锁, 分为`true`和`false`
 
 **接口地址 :** `/song/url/v1/302`
@@ -4675,7 +4675,7 @@ qrCodeStatus:20,detailReason:0 验证成功 qrCodeStatus:21,detailReason:0 二�
 
 ### 歌曲音质详情
 
-说明: 调用此接口获取歌曲各个音质的文件信息，与 `获取歌曲详情` 接口相比，多出 `高清环绕声`、`沉浸环绕声`、`超清母带`等音质的信息
+说明: 调用此接口获取歌曲各个音质的文件信息，与 `获取歌曲详情` 接口相比，多出`高清臻音`、`杜比全景声`、`臻音全景声`、`超清母带`、`沉浸环绕声`等音质的信息
 
 **必选参数：**
 
@@ -4796,7 +4796,7 @@ bitrate = Math.floor(br / 1000)
 
 **必选参数 :** `id` : 音乐 id
 `level`: 播放音质等级, 分为 `standard` => `标准`,`higher` => `较高`, `exhigh`=>`极高`,
-`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清环绕声`, `sky` => `沉浸环绕声`, `vivid` => `臻音全景声`, `dolby` => `杜比全景声`, `jymaster` => `超清母带`
+`lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清臻音`, `dolby` => `杜比全景声`, `vivid` => `臻音全景声`, `jymaster` => `超清母带`, `sky` => `沉浸环绕声`
 
 **接口地址 :** `/song/download/url/v1`
 
