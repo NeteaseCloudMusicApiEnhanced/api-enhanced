@@ -57,7 +57,7 @@ jobs:
           OPENCODE_API_KEY: ${{ steps.cfg.outputs.opencode_api_key }}
           GITHUB_TOKEN: ${{ steps.token.outputs.token }}
         with:
-          model: opencode/deepseek-v4-flash-free
+          model: opencode/x-preview-f-free
           use_github_token: true
           prompt: |
             ${{ steps.cfg.outputs.opencode_prompt }}
