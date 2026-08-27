@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@neteasecloudmusicapienhanced/unblockmusic-utils':
         specifier: ^0.4.2
-        version: 0.4.2(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
+        version: 0.4.4(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
       axios:
         specifier: ^1.19.0
         version: 1.19.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
@@ -260,8 +260,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.4.2':
-    resolution: {integrity: sha512-voVIb3Yn2gy093L8FEFo3B//iYKEUd5NB8ItzQrZUCDYs1YWIrf1y+WPlQg8LL78TojkLH8aBKuGn9wUWntnCQ==}
+  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.4.4':
+    resolution: {integrity: sha512-ErQMlbG9LK2TuHr1ZVVsaHAyOkmY3MEDQ5/thtnEtX68YADkmcYt7ddgfnEVXGfGNCdvCV4k8viG2IdX9Qhoeg==}
     hasBin: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -1042,6 +1042,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -2962,7 +2963,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.4.2(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)':
+  '@neteasecloudmusicapienhanced/unblockmusic-utils@0.4.4(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)':
     dependencies:
       '@unblockneteasemusic/server': 0.28.0
       axios: 1.19.0(debug@4.4.3(supports-color@5.5.0))(supports-color@5.5.0)
