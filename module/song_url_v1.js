@@ -23,7 +23,41 @@ module.exports = async (query, request) => {
       const result = await matchID(query.id, query.source)
       logger.info('Starting unblock(uses modules unblock):', query.id, result)
       if (!result.data || !result.data.url) {
-        logger.warn('Unblock failed:', result.message || 'No source found')
+        logger.warn('matchID failed, trying UNM direct:', result.message || 'No source found')
+        const unmMatch = require('@unblockneteasemusic/server')
+        const unmSources = ['kugou', 'bodian', 'migu', 'qq', 'kuwo', 'joox', 'pyncmd', 'bilivideo']
+        const response = await unmMatch(query.id, unmSources)
+        if (!response || !response.url) {
+          logger.warn('UNM direct also failed, no source found')
+        } else {
+          const useProxy = process.env.ENABLE_PROXY || 'false'
+          let proxyUrl = ''
+          if (response.url.includes('kuwo')) {
+            proxyUrl =
+              useProxy === 'true' && process.env.PROXY_URL
+                ? process.env.PROXY_URL + response.url
+                : response.url
+          }
+          return {
+            status: 200,
+            body: {
+              code: 200,
+              msg: 'Warning: Customizing unblock sources is not supported on this endpoint. Please use `/song/url/match` instead.',
+              data: [
+                {
+                  id: Number(query.id),
+                  url: response.url,
+                  type: 'flac',
+                  level: query.level,
+                  freeTrialInfo: null,
+                  fee: 0,
+                  proxyUrl: proxyUrl || '',
+                },
+              ],
+            },
+            cookie: [],
+          }
+        }
       } else {
         const useProxy = process.env.ENABLE_PROXY || 'false'
         let proxyUrl = ''
