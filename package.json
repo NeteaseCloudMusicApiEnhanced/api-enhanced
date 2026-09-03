@@ -11,9 +11,9 @@
     "prepare": "husky install",
     "docs:format": "node scripts/format-docs.js",
     "docs:check": "node scripts/format-docs.js --check",
-    "pkgwin": "node scripts/build-pkg.js . -t node18-win-x64 -C GZip -o precompiled/app",
-    "pkglinux": "node scripts/build-pkg.js . -t node18-linux-x64 -C GZip -o precompiled/app",
-    "pkgmacos": "node scripts/build-pkg.js . -t node18-macos-x64 -C GZip -o precompiled/app"
+    "pkgwin": "pkg . -t node18-win-x64 -C GZip -o precompiled/app",
+    "pkglinux": "pkg . -t node18-linux-x64 -C GZip -o precompiled/app",
+    "pkgmacos": "pkg . -t node18-macos-x64 -C GZip -o precompiled/app"
   },
   "bin": "./app.js",
   "pkg": {
@@ -75,15 +75,16 @@
     "data"
   ],
   "dependencies": {
-    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.4.4",
-    "axios": "^1.20.0",
+    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.4.2",
+    "@unblockneteasemusic/server": "^0.28.0",
+    "axios": "^1.19.0",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-fileupload": "^1.5.2",
     "gzip": "^0.1.0",
     "jsdom": "^24.1.3",
-    "music-metadata": "^11.15.0",
+    "music-metadata": "^11.14.0",
     "node-forge": "^1.4.0",
     "pac-proxy-agent": "^7.2.0",
     "qrcode": "^1.5.4",
@@ -99,8 +100,8 @@
     "@types/express-fileupload": "^1.5.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.9.2",
-    "@typescript-eslint/eslint-plugin": "^8.68.0",
-    "@typescript-eslint/parser": "^8.68.0",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
+    "@typescript-eslint/parser": "^8.67.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-html": "^8.1.4",
