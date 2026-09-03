@@ -15,8 +15,8 @@ module.exports = async (query, request) => {
     const useProxy = process.env.ENABLE_PROXY || 'false'
     if (result.data.url && result.data.url.includes('kuwo')) {
       result.proxyUrl =
-        useProxy === 'true' ? proxy + result.data.url : result.data.url
-    }
+         useProxy === 'true' && proxy ? proxy + result.data.url : result.data.url
+            }
     return {
       status: 200,
       body: {
