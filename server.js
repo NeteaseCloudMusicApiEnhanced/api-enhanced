@@ -337,8 +337,9 @@ async function constructServer(moduleDefs) {
           req.path === '/song/url/v1' &&
           process.env.ENABLE_GENERAL_UNBLOCK === 'true'
         ) {
-          const song = moduleResponse.body.data[0]
+          const song = moduleResponse.body.data && moduleResponse.body.data[0]
           if (
+            song &&
             song.freeTrialInfo !== null ||
             !song.url ||
             [1, 4].includes(song.fee)
@@ -352,7 +353,7 @@ async function constructServer(moduleDefs) {
             song.freeTrialInfo = null
             logger.info('Unblock success! url:', song.url)
           }
-          if (song.url && song.url.includes('kuwo')) {
+          if (song && song.url && song.url.includes('kuwo')) {
             const proxy = process.env.PROXY_URL
             const useProxy = process.env.ENABLE_PROXY || 'false'
             if (useProxy === 'true' && proxy) {
