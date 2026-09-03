@@ -3,6 +3,10 @@ FROM node:lts-alpine
 RUN apk add --no-cache tini
 
 ENV NODE_ENV=production
+ENV ENABLE_GENERAL_UNBLOCK=true
+ENV ENABLE_FLAC=true
+ENV FOLLOW_SOURCE_ORDER=true
+ENV SELECT_MAX_BR=false
 
 RUN npm install -g pnpm@9
 
