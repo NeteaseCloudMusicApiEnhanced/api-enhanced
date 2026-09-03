@@ -355,7 +355,17 @@ async function constructServer(moduleDefs) {
                 song.freeTrialInfo = null
                 logger.info('Unblock success! url:', song.url)
               } else {
-                logger.warn('Unblock failed:', result.message || 'No source found')
+                logger.warn('matchID failed, trying UNM direct:', result.message || 'No source found')
+                const unmMatch = require('@unblockneteasemusic/server')
+                const unmSources = ['kugou', 'bodian', 'migu', 'qq', 'kuwo', 'joox', 'pyncmd', 'bilivideo']
+                const response = await unmMatch(req.query.id, unmSources)
+                if (response && response.url) {
+                  song.url = response.url
+                  song.freeTrialInfo = null
+                  logger.info('UNM direct success! url:', song.url)
+                } else {
+                  logger.warn('UNM direct also failed, no source found')
+                }
               }
             } catch (e) {
               logger.warn('Unblock error:', e.message)
