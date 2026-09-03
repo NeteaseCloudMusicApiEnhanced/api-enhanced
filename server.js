@@ -340,18 +340,26 @@ async function constructServer(moduleDefs) {
           const song = moduleResponse.body.data && moduleResponse.body.data[0]
           if (
             song &&
-            song.freeTrialInfo !== null ||
+            (song.freeTrialInfo !== null ||
             !song.url ||
-            [1, 4].includes(song.fee)
+            [1, 4].includes(song.fee))
           ) {
             const {
               matchID,
             } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
             logger.info('Starting unblock(uses general unblock):', req.query.id)
-            const result = await matchID(req.query.id)
-            song.url = result.data.url
-            song.freeTrialInfo = null
-            logger.info('Unblock success! url:', song.url)
+            try {
+              const result = await matchID(req.query.id, req.query.source)
+              if (result.data && result.data.url) {
+                song.url = result.data.url
+                song.freeTrialInfo = null
+                logger.info('Unblock success! url:', song.url)
+              } else {
+                logger.warn('Unblock failed:', result.message || 'No source found')
+              }
+            } catch (e) {
+              logger.warn('Unblock error:', e.message)
+            }
           }
           if (song && song.url && song.url.includes('kuwo')) {
             const proxy = process.env.PROXY_URL
