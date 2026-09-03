@@ -20,5 +20,8 @@
   "env": {
     "NODE_ENV": "production",
     "ENABLE_FLAC": "true"
+    "ENABLE_GENERAL_UNBLOCK": "true",
+    "FOLLOW_SOURCE_ORDER": "true",
+    "SELECT_MAX_BR": "false"
   }
 }
