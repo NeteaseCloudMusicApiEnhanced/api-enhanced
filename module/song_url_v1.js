@@ -41,7 +41,7 @@ module.exports = async (query, request) => {
               url: result.data.url,
               type: 'flac',
               level: query.level,
-              freeTrialInfo: 'null',
+              freeTrialInfo: null,
               fee: 0,
               proxyUrl: proxyUrl || '',
             },
