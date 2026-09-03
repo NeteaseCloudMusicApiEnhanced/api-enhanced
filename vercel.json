@@ -16,12 +16,5 @@
         "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
       }
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "ENABLE_FLAC": "true"
-    "ENABLE_GENERAL_UNBLOCK": "true",
-    "FOLLOW_SOURCE_ORDER": "true",
-    "SELECT_MAX_BR": "false"
-  }
+  ]
 }
