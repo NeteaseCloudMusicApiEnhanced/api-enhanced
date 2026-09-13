@@ -7,9 +7,7 @@ const { PacProxyAgent } = require('pac-proxy-agent')
 const http = require('http')
 const https = require('https')
 const tunnel = require('tunnel')
-const fs = require('fs')
-const path = require('path')
-const tmpPath = require('os').tmpdir()
+const runtimeState = require('./runtimeState')
 const {
   cookieToJson,
   cookieObjToString,
@@ -24,26 +22,6 @@ const {
 const {
   getToken: antiCheatTokenV3,
 } = require('../module/register_checktoken_v3')
-
-// 预先读取匿名token并缓存
-const anonymous_token = fs.readFileSync(
-  path.resolve(tmpPath, './anonymous_token'),
-  'utf-8',
-)
-const xeapiPublicKeyPath = path.resolve(tmpPath, './xeapi_public_key')
-let xeapi_public_key = null
-const loadXeapiPublicKey = () => {
-  if (!xeapi_public_key && fs.existsSync(xeapiPublicKeyPath)) {
-    try {
-      xeapi_public_key = JSON.parse(
-        fs.readFileSync(xeapiPublicKeyPath, 'utf-8'),
-      )
-    } catch (error) {
-      console.log('[ERR]', error)
-    }
-  }
-  return xeapi_public_key
-}
 
 // 预先绑定常用函数和常量
 const floor = Math.floor
@@ -169,7 +147,8 @@ const processCookieObject = (cookie, crypto) => {
   }
 
   if (!processedCookie.MUSIC_U) {
-    processedCookie.MUSIC_A = processedCookie.MUSIC_A || anonymous_token
+    processedCookie.MUSIC_A =
+      processedCookie.MUSIC_A || runtimeState.anonymousToken
   }
 
   return processedCookie
@@ -196,6 +175,33 @@ const generateRequestId = () => {
     .padStart(4, '0')}`
 }
 
+// ---- 运行时凭证的强制刷新 ----
+// 匿名令牌与 xeapi 公钥存于 util/runtimeState（纯内存、零文件 I/O），
+// 由对应的 register_* 模块在成功获取后写入，此处只负责编排调用。
+
+// 刷新自身的请求带 skipTokenEnsure 标记：跳过下方匿名令牌的按需引导，
+// 避免“刷新任务等待自己”的死锁（注册匿名账号本就不依赖旧令牌）
+const refreshTokenRequest = (uri, data, options = {}) =>
+  createRequest(uri, data, { ...options, skipTokenEnsure: true })
+
+// 强制刷新匿名令牌（成功后由 register_anonimous 写入 runtimeState）
+const refreshAnonymousToken = async () => {
+  const registerAnonimous = require('../module/register_anonimous')
+  await registerAnonimous({}, refreshTokenRequest)
+}
+
+// 强制刷新 xeapi 公钥（register_xeapikey 直接走 axios，无重入问题；
+// 成功后由其写入 runtimeState）
+const refreshXeapiPublicKey = async () => {
+  const registerXeapikey = require('../module/register_xeapikey')
+  await registerXeapikey(
+    {
+      currentKeyVersion: (runtimeState.xeapiPublicKey || {}).version || '',
+    },
+    null,
+  )
+}
+
 const createRequest = async (uri, data, options) => {
   let token = ''
   switch (options.checkToken) {
@@ -207,6 +213,32 @@ const createRequest = async (uri, data, options) => {
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV3()
       break
+  }
+
+  // 匿名令牌缺失时按需引导：并发请求共享同一次刷新任务；
+  // 刷新自身的请求（skipTokenEnsure）跳过，避免任务等待自己造成死锁
+  if (!runtimeState.anonymousToken && !options.skipTokenEnsure) {
+    try {
+      await runtimeState.ensure('anonymousToken', refreshAnonymousToken)
+    } catch (error) {
+      console.log('[ERR]', error)
+    }
+  }
+
+  // 本请求走 xeapi 加密且公钥缺失时按需获取
+  // （须在进入下方同步 executor 前完成，加密过程需要同步拿到公钥）
+  const pendingCrypto =
+    options.crypto === undefined || options.crypto === ''
+      ? APP_CONF.encrypt
+        ? 'eapi'
+        : 'api'
+      : options.crypto
+  if (pendingCrypto === 'xeapi' && !runtimeState.xeapiPublicKey) {
+    try {
+      await runtimeState.ensure('xeapiPublicKey', refreshXeapiPublicKey)
+    } catch (error) {
+      console.log('[ERR]', error)
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -273,7 +305,7 @@ const createRequest = async (uri, data, options) => {
         break
 
       case 'xeapi':
-        const xeapiPublicKey = loadXeapiPublicKey()
+        const xeapiPublicKey = runtimeState.xeapiPublicKey
         if (!xeapiPublicKey) {
           throw new Error('xeapi public key is missing')
         }
@@ -516,3 +548,6 @@ const createRequest = async (uri, data, options) => {
 }
 
 module.exports = createRequest
+// 供 generateConfig 等复用的强制刷新入口（成功后写入 runtimeState）
+module.exports.refreshAnonymousToken = refreshAnonymousToken
+module.exports.refreshXeapiPublicKey = refreshXeapiPublicKey

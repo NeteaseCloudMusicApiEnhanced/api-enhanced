@@ -14,11 +14,12 @@
 - 打包独立二进制：`pnpm pkgwin` / `pkglinux` / `pkgmacos`
 
 ## 架构
-- `app.js`（也是 `bin`）——服务入口。先确保 `os.tmpdir()` 里存在 `anonymous_token`，执行 `generateConfig()` 刷新匿名 cookie 与 xeapi 公钥，再调用 `server.serveNcmApi()`。
+- `app.js`（也是 `bin`）——服务入口。执行 `generateConfig()` 预热运行时凭证（匿名令牌与 xeapi 公钥，存于内存），再调用 `server.serveNcmApi()`。不依赖 `/tmp` 等可写文件系统。
 - `server.js`——Express 工厂。`constructServer()` 自动扫描 `module/*.js`，每个文件注册一条路由（文件名 `_` 转 `/`，如 `album_new.js` → `/album/new`；特例 `daily_signin`/`fm_trash`/`personal_fm` 硬编码在 `server.js` 的 `special` 对象里）。`serveNcmApi()` 监听 `PORT`（默认 3000）/`HOST`。
-- `main.js`——作为依赖被引入时的入口（`main` 字段）。把每个 `module/*` 导出为同名函数 `name(data)`，另导出 `server`、`serveNcmApi`、`getModulesDefinitions`。
+- `main.js`——作为依赖被引入时的入口（`main` 字段）。把每个 `module/*` 导出为同名函数 `name(data)`，另导出 `server`、`serveNcmApi`、`getModulesDefinitions`、`generateConfig`（库用户可 `await main.generateConfig()` 预热/续期凭证；不调用也行，首个请求会在凭证缺失时自动引导）。
 - `module/*.js`——每个接口一个文件，标准写法：`module.exports = (query, request) => request(path, data, createOption(query))`。`createOption` 在 `util/option.js`，负责 crypto、cookie（回退到 `NETEASE_COOKIE`）、proxy、realIP/randomCNIP、headers、timeout。
-- `util/request.js`——唯一的对外 HTTP 层（axios）。按 `crypto`（`api`/`eapi`/`weapi`/`linuxapi`/`xeapi`）加密并设置 IP 头；在 require 时同步读取 `os.tmpdir()` 里的 `anonymous_token` 与 `xeapi_public_key`。
+- `util/request.js`——唯一的对外 HTTP 层（axios）。按 `crypto`（`api`/`eapi`/`weapi`/`linuxapi`/`xeapi`）加密并设置 IP 头；匿名令牌与 xeapi 公钥每次请求实时读取 `util/runtimeState.js`，缺失时按需引导（并发共享同一刷新任务，刷新自身的请求带 `skipTokenEnsure` 防自等待死锁）。另导出 `refreshAnonymousToken` / `refreshXeapiPublicKey` 供 `generateConfig` 复用。
+- `util/runtimeState.js`——统一的进程内运行时动态状态（`anonymousToken` / `xeapiPublicKey`）。纯内存、零文件 I/O；`register_anonimous` / `register_xeapikey` 成功后写入，`util/request.js` 读取，`ensure()` 提供缺失时按需刷新。以后新增动态配置放这里，不要再往 `os.tmpdir()` 写文件。
 - `util/config.json`——运行时配置：网易域名 + `APP_CONF.encrypt: true`（默认走 eapi 加密）。已被 git 跟踪，改动会改变全局默认行为。
 - `index.js` / `index.mjs`——`require('./app.js')` 的薄包装，供 Vercel（`vercel.json`）和 ESM 导入使用。
 - `server.js` 里有一段非显而易见的逻辑：环境变量 `ENABLE_GENERAL_UNBLOCK=true` 时，`/song/url/v1` 的响应会被自动解灰（走 `@neteasecloudmusicapienhanced/unblockmusic-utils`）；另外 `query.noCookie` 为真时不向响应写 `Set-Cookie`。
@@ -39,5 +40,5 @@
 - **改 `package.json` 的 `version` 会触发自动发布**：`release-on-version-change.yml` 按 paths 过滤——只要 push 到 `main` 时 `package.json` 有改动且 version 变了，就自动打 tag + GitHub Release（`pkg` 三平台二进制）、推送 Docker 镜像（Docker Hub + GHCR 多架构）、`pnpm publish` 到 npm；tag 已存在则跳过。别顺手改版本号，也别往 `package.json` 里写无关改动凑提交。
 - **没有实际 git hooks**：`package.json` 里配了 `lint-staged` 和 husky，但 `.husky/` 下只有 `_` 脚手架目录、没有真正的 hook 文件，commit 时不会自动跑任何检查，自己记得 `pnpm lint-fix`。
 - **代理环境变量已失效**：README 里关于 `http_proxy`/`https_proxy` 的警告来自旧 `request` 库时代；现在 `util/request.js` 用 axios + 自定义 keep-alive agent，且显式 `proxy: false`，环境变量代理不会生效。按请求走 `query.proxy` 参数（支持 PAC 和 http 隧道）。
-- **启动令牌在系统临时目录**：`anonymous_token`、`xeapi_public_key` 存放在 `os.tmpdir()`，`util/request.js` 在 require 时同步读取。文件过期或被清空就重启服务（或调用 `generateConfig()`）；首次启动先写空文件再刷新。
+- **运行时凭证在内存（runtimeState）**：`anonymous_token` 与 `xeapi_public_key` 存于 `util/runtimeState.js`，不做任何文件 I/O（历史上曾以文件形式放 `os.tmpdir()`，为可移植性已移除——只读 FS / Android / iOS / serverless 均可运行）。启动时 `generateConfig()` 先取 xeapi 公钥、再注册匿名令牌（顺序不能反，后者依赖前者）；运行中过期可再调 `generateConfig()` 或对应 `register_*` 接口，立即生效、无需重启。
 - **ESLint 9 flat config**：`eslint.config.js`，风格由 `eslint-plugin-prettier` 强制（2 空格缩进、单引号、分号、`endOfLine: auto`）。
