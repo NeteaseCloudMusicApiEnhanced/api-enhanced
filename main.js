@@ -1,12 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const tmpPath = require('os').tmpdir()
 const { cookieToJson } = require('./util')
-
-const anonymousTokenPath = path.resolve(tmpPath, 'anonymous_token')
-if (!fs.existsSync(anonymousTokenPath)) {
-  fs.writeFileSync(anonymousTokenPath, '', 'utf-8')
-}
 
 /** @type {Record<string, any>} */
 let obj = {}

@@ -7,9 +7,7 @@ const { PacProxyAgent } = require('pac-proxy-agent')
 const http = require('http')
 const https = require('https')
 const tunnel = require('tunnel')
-const fs = require('fs')
-const path = require('path')
-const tmpPath = require('os').tmpdir()
+const runtimeState = require('./runtimeState')
 const {
   cookieToJson,
   cookieObjToString,
@@ -24,26 +22,6 @@ const {
 const {
   getToken: antiCheatTokenV3,
 } = require('../module/register_checktoken_v3')
-
-// 预先读取匿名token并缓存
-const anonymous_token = fs.readFileSync(
-  path.resolve(tmpPath, './anonymous_token'),
-  'utf-8',
-)
-const xeapiPublicKeyPath = path.resolve(tmpPath, './xeapi_public_key')
-let xeapi_public_key = null
-const loadXeapiPublicKey = () => {
-  if (!xeapi_public_key && fs.existsSync(xeapiPublicKeyPath)) {
-    try {
-      xeapi_public_key = JSON.parse(
-        fs.readFileSync(xeapiPublicKeyPath, 'utf-8'),
-      )
-    } catch (error) {
-      console.log('[ERR]', error)
-    }
-  }
-  return xeapi_public_key
-}
 
 // 预先绑定常用函数和常量
 const floor = Math.floor
@@ -169,7 +147,8 @@ const processCookieObject = (cookie, crypto) => {
   }
 
   if (!processedCookie.MUSIC_U) {
-    processedCookie.MUSIC_A = processedCookie.MUSIC_A || anonymous_token
+    processedCookie.MUSIC_A =
+      processedCookie.MUSIC_A || runtimeState.getAnonymousToken()
   }
 
   return processedCookie
@@ -207,6 +186,42 @@ const createRequest = async (uri, data, options) => {
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV3()
       break
+  }
+
+  // 懒加载匿名 token：仅当内存中缺失时刷新一次，失败不阻塞本次请求。
+  // 兼容 serverless 冷启动——不假设启动阶段已刷新过。
+  // 刷新类请求自身跳过（否则会等待自己造成死锁）。
+  if (
+    !runtimeState.getAnonymousToken() &&
+    !runtimeState.isAnonymousTokenRefreshing()
+  ) {
+    try {
+      const { ensureAnonymousToken } = require('./credentials')
+      await ensureAnonymousToken()
+    } catch (error) {
+      console.log('[ERR]', error)
+    }
+  }
+
+  // 懒加载 xeapi public key：仅在本次请求确实使用 xeapi 加密、且内存缺失时刷新。
+  // 必须在进入同步 executor 前完成，因为加密过程需要同步拿到本状态。
+  const resolvedCrypto =
+    options.crypto === '' || options.crypto === undefined
+      ? APP_CONF.encrypt
+        ? 'eapi'
+        : 'api'
+      : options.crypto
+  if (
+    resolvedCrypto === 'xeapi' &&
+    !runtimeState.getXeapiPublicKey() &&
+    !runtimeState.isXeapiPublicKeyRefreshing()
+  ) {
+    try {
+      const { ensureXeapiPublicKey } = require('./credentials')
+      await ensureXeapiPublicKey()
+    } catch (error) {
+      console.log('[ERR]', error)
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -273,7 +288,7 @@ const createRequest = async (uri, data, options) => {
         break
 
       case 'xeapi':
-        const xeapiPublicKey = loadXeapiPublicKey()
+        const xeapiPublicKey = runtimeState.getXeapiPublicKey()
         if (!xeapiPublicKey) {
           throw new Error('xeapi public key is missing')
         }

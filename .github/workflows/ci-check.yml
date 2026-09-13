@@ -37,7 +37,7 @@ jobs:
 
       # 纯单测，不需要网络，稳定必过
       - name: Unit tests
-        run: pnpm exec mocha -r intelli-espower-loader -t 60000 main.test.js --exit
+        run: pnpm exec mocha -r intelli-espower-loader -t 60000 main.test.js util/runtimeState.test.js --exit
 
       - name: Docs format check
         run: pnpm docs:check
