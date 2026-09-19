@@ -152,7 +152,11 @@ const decrypt = (cipher) => {
 
 const aesEcbEncrypt = (key, plaintext) => {
   // 某些运行时不允许使用 null 作为 IV，因此使用 Buffer.alloc(0) ,同时与上下文deriveX25519AesKey等函数保持一致
-  const cipher = crypto.createCipheriv(`aes-${key.length * 8}-ecb`, key, Buffer.alloc(0))
+  const cipher = crypto.createCipheriv(
+    `aes-${key.length * 8}-ecb`,
+    key,
+    Buffer.alloc(0),
+  )
   return Buffer.concat([cipher.update(Buffer.from(plaintext)), cipher.final()])
 }
 

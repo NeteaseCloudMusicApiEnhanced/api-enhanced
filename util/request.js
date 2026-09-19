@@ -441,7 +441,7 @@ const createRequest = async (uri, data, options) => {
         ) {
           NMTID_RETRIES_LEFT--
           answer.cookie = (
-            typeof res.headers['set-cookie'] === 'string'  // node 20 版本以前，可能解析为String
+            typeof res.headers['set-cookie'] === 'string'
               ? [res.headers['set-cookie']]
               : res.headers['set-cookie'] || []
           ).map((x) => {
