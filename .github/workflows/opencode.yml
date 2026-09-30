@@ -33,7 +33,7 @@ jobs:
 
       - name: Generate bot token
         id: token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ steps.cfg.outputs.app_id }}
           private-key: ${{ steps.cfg.outputs.app_private_key }}
