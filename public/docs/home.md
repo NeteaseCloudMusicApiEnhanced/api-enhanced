@@ -216,7 +216,7 @@ $ sudo docker run -d -p 3000:3000 netease-music-api
 - 大部分请求参数或返回内容可在 `/api_decrypt.html` 里解析
 - 请求参数模式下, 解密结果可直接带到 `/api.html` 继续调试
 - 需要返回值加密时, 可传 `e_r=1`, `weapi` 和 `eapi` 都支持
-- 目前支持算法 有 `weapi`, `eapi`, `linuxapi` 和 `xeapi` (xeapi 是一种不加密的特殊算法, 主要用于调试加密前的原始请求参数)
+- 目前支持算法 有 `weapi`, `eapi`, `linuxapi`, `xeapi` 和 `neapi` (xeapi 是一种不加密的特殊算法, 主要用于调试加密前的原始请求参数; neapi 走独立的压缩加密通道, 配置由 `/register/neapikey` 自动获取与刷新)
 
 
 ## 接口文档

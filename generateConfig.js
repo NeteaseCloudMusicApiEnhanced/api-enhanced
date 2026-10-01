@@ -3,6 +3,8 @@ const path = require('path')
 const { register_anonimous } = require('./main')
 const { cookieToJson, generateRandomChineseIP } = require('./util/index')
 const { getXeapiPublicKey } = require('./util/xeapiKey')
+const { loadNeapiKey } = require('./util/neapiKey')
+const registerNeapikey = require('./module/register_neapikey')
 const tmpPath = require('os').tmpdir()
 
 async function generateConfig() {
@@ -33,6 +35,18 @@ async function generateConfig() {
       path.resolve(tmpPath, 'xeapi_public_key'),
       JSON.stringify(publicKey),
       'utf-8',
+    )
+  } catch (error) {
+    console.log(error)
+  }
+  try {
+    const current = loadNeapiKey()
+    await registerNeapikey(
+      {
+        version: current ? current.version : 0,
+        behavior: current ? 'update' : 'open',
+      },
+      null,
     )
   } catch (error) {
     console.log(error)

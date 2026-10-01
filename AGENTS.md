@@ -13,6 +13,12 @@
 - 文档格式化检查/修复：`pnpm docs:check` / `pnpm docs:format`
 - 打包独立二进制：`pnpm pkgwin` / `pkglinux` / `pkgmacos`
 
+## 目录内非路由文件
+- `plugins/`——内部上传辅助（`upload.js`、`songUpload.js`），被 `module/*` require，本身不是路由。
+- `module_example/`——接口模板与 `main.js` 库调用示例（含 `test.js` 演示 `login_cellphone`→`song_url` 链路），不是运行时代码。
+- `examples/get_static_moddef.js`——用 `getModulesDefinitions(..., false)`（`doRequire=false`）把全部路由导出为 `moddef.json`。改路由注册逻辑时可跑它核对。
+- `module_types/` 为空目录；类型声明在根目录 `interface.d.ts`（`types` 字段）。
+
 ## 架构
 - `app.js`（也是 `bin`）——服务入口。先确保 `os.tmpdir()` 里存在 `anonymous_token`，执行 `generateConfig()` 刷新匿名 cookie 与 xeapi 公钥，再调用 `server.serveNcmApi()`。
 - `server.js`——Express 工厂。`constructServer()` 自动扫描 `module/*.js`，每个文件注册一条路由（文件名 `_` 转 `/`，如 `album_new.js` → `/album/new`；特例 `daily_signin`/`fm_trash`/`personal_fm` 硬编码在 `server.js` 的 `special` 对象里）。`serveNcmApi()` 监听 `PORT`（默认 3000）/`HOST`。
@@ -40,4 +46,6 @@
 - **没有实际 git hooks**：`package.json` 里配了 `lint-staged` 和 husky，但 `.husky/` 下只有 `_` 脚手架目录、没有真正的 hook 文件，commit 时不会自动跑任何检查，自己记得 `pnpm lint-fix`。
 - **代理环境变量已失效**：README 里关于 `http_proxy`/`https_proxy` 的警告来自旧 `request` 库时代；现在 `util/request.js` 用 axios + 自定义 keep-alive agent，且显式 `proxy: false`，环境变量代理不会生效。按请求走 `query.proxy` 参数（支持 PAC 和 http 隧道）。
 - **启动令牌在系统临时目录**：`anonymous_token`、`xeapi_public_key` 存放在 `os.tmpdir()`，`util/request.js` 在 require 时同步读取。文件过期或被清空就重启服务（或调用 `generateConfig()`）；首次启动先写空文件再刷新。
-- **ESLint 9 flat config**：`eslint.config.js`，风格由 `eslint-plugin-prettier` 强制（2 空格缩进、单引号、分号、`endOfLine: auto`）。
+- **`docs:check` 校验的是 `public/docs/home.md`（docsify 站点）**，不是 README；脚本默认只处理该文件，换行会被统一为 `\n`、连续空行压缩到 2 行，PR 改动它后记得跑 `pnpm docs:format`。
+- **ESLint 9 flat config**：`eslint.config.js`，风格由 `eslint-plugin-prettier` 强制（2 空格缩进、单引号、分号、`endOfLine: auto`），并 `globalIgnores(['**/public/'])`——`public/` 下的前端页面不参与 lint。
+- **`pnpm-workspace.yaml` 是单包工作区**（`packages: ['.']`），并带 `allowBuilds`（core-js/es5-ext）与 `minimumReleaseAgeExclude` 白名单；改依赖安装行为时先看它。

@@ -19,7 +19,7 @@ jobs:
        contains(github.event.comment.body, ' /opencode') ||
        startsWith(github.event.comment.body, '/opencode')) &&
       github.actor != 'opencode-agent[bot]' &&
-      github.actor != 'takanashi-hoshino-agent[bot]' &&
+      github.actor != 'yukka-agent[bot]' &&
       github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
@@ -33,9 +33,9 @@ jobs:
 
       - name: Generate bot token
         id: token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ steps.cfg.outputs.app_id }}
+          client-id: ${{ steps.cfg.outputs.app_id }}
           private-key: ${{ steps.cfg.outputs.app_private_key }}
           owner: ${{ github.repository_owner }}
 
@@ -64,3 +64,6 @@ jobs:
 
             ## 用户指令（来自触发评论，请严格按此执行）
             ${{ github.event.comment.body }}
+
+            ## 用户要求Review时, 严格执行下面指令
+            ${{ steps.cfg.outputs.pr_review_prompt }}

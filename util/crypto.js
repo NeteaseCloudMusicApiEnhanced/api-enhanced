@@ -2,6 +2,7 @@ const CryptoJS = require('crypto-js')
 const crypto = require('crypto')
 const forge = require('node-forge')
 const zlib = require('zlib')
+const zstd = require('./zstd')
 const iv = '0102030405060708'
 const presetKey = '0CoJUm6Qyw8W8jud'
 const linuxapiKey = 'rFgB&h#%2?^eDg:Q'
@@ -310,11 +311,86 @@ const xeapiDecryptPublicKey = (encryptedData) => {
   )
 }
 
+const NEAPI_MAGIC = Buffer.from('CSJM')
+const NEAPI_NONCE_LEN = 12
+const NEAPI_AD_LEN = 16
+const NEAPI_TAG_LEN = 16
+const NEAPI_HEADER_LEN = 4 + 1 + 1 + 2 + NEAPI_NONCE_LEN + 1 + NEAPI_AD_LEN + 4
+
+// Header: magic, the config version as two big-endian bytes, then the
+// nonce / associated data / sealed length.
+const neapi = (data, config) => {
+  const nonce = crypto.randomBytes(NEAPI_NONCE_LEN)
+  const ad = crypto.randomBytes(NEAPI_AD_LEN)
+  const cipher = crypto.createCipheriv(
+    'chacha20-poly1305',
+    config.encryptKey,
+    nonce,
+    { authTagLength: NEAPI_TAG_LEN },
+  )
+  cipher.setAAD(ad)
+
+  const sealed = Buffer.concat([
+    cipher.update(zstd.compress(data)),
+    cipher.final(),
+    cipher.getAuthTag(),
+  ])
+
+  const header = Buffer.alloc(NEAPI_HEADER_LEN)
+  NEAPI_MAGIC.copy(header, 0)
+  header[4] = config.version >> 8
+  header[5] = config.version & 0xff
+  header.writeUInt16LE(nonce.length, 6)
+  nonce.copy(header, 8)
+  header[8 + nonce.length] = ad.length
+  ad.copy(header, 9 + nonce.length)
+  header.writeUInt32LE(sealed.length, 9 + nonce.length + ad.length)
+
+  return Buffer.concat([header, sealed]).toString('base64')
+}
+
+// Some error responses repeat the same document back to back.
+const parseBody = (text) => {
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    const boundary = text.indexOf('}{')
+    if (boundary < 0) throw error
+    return JSON.parse(text.slice(0, boundary + 1))
+  }
+}
+
+const neapiResDecrypt = (body, config) => {
+  const raw = Buffer.from(String(body).trim(), 'base64')
+  const nonceLen = raw.readUInt16LE(6)
+  const nonce = raw.subarray(8, 8 + nonceLen)
+  const adLen = raw[8 + nonceLen]
+  const ad = raw.subarray(9 + nonceLen, 9 + nonceLen + adLen)
+  const offset = 9 + nonceLen + adLen
+  const sealed = raw.subarray(offset + 4, offset + 4 + raw.readUInt32LE(offset))
+
+  const decipher = crypto.createDecipheriv(
+    'chacha20-poly1305',
+    config.decryptKey,
+    nonce,
+    { authTagLength: NEAPI_TAG_LEN },
+  )
+  decipher.setAAD(ad)
+  decipher.setAuthTag(sealed.subarray(sealed.length - NEAPI_TAG_LEN))
+
+  const compressed = Buffer.concat([
+    decipher.update(sealed.subarray(0, sealed.length - NEAPI_TAG_LEN)),
+    decipher.final(),
+  ])
+  return parseBody(zstd.decompress(compressed).toString())
+}
+
 module.exports = {
   weapi,
   linuxapi,
   eapi,
   xeapi,
+  neapi,
   decrypt,
   aesEncrypt,
   aesDecrypt,
@@ -323,4 +399,5 @@ module.exports = {
   xeapiSign,
   xeapiResDecrypt,
   xeapiDecryptPublicKey,
+  neapiResDecrypt,
 }

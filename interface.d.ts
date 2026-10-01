@@ -1087,6 +1087,10 @@ export function register_checktoken_v3(
   params: { refresh?: boolean | string } & RequestBaseConfig,
 ): Promise<Response>
 
+export function register_neapikey(
+  params: { version?: string | number; behavior?: string } & RequestBaseConfig,
+): Promise<Response>
+
 export function register_xeapikey(
   params: { deviceId?: string; currentKeyVersion?: string } & RequestBaseConfig,
 ): Promise<Response>
