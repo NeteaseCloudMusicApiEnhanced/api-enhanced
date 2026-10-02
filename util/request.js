@@ -503,7 +503,11 @@ const createRequest = async (uri, data, options) => {
           !cookie.NMTID
         ) {
           NMTID_RETRIES_LEFT--
-          answer.cookie = setCookies.map((x) => {
+          answer.cookie = (
+            typeof res.headers['set-cookie'] === 'string'
+              ? [res.headers['set-cookie']]
+              : res.headers['set-cookie'] || []
+          ).map((x) => {
             const cleaned = cleanCookie(x)
             const match = x.match(/(?:^|;\s*)NMTID=([^;]+)/)
             if (match) {
