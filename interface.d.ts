@@ -2890,3 +2890,28 @@ export function voicelist_trans(
   } & MultiPageConfig &
     RequestBaseConfig,
 ): Promise<Response>
+
+export function fans_group_detail(
+  params: {
+    groupId: string
+    scene?: string
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_feed_recommend(
+  params: {
+    fansGroupId: string
+    cursor?: string
+    size?: string | number
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_user_groups(
+  params?: RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_user_group_detail(
+  params: {
+    groupId: string | number
+  } & RequestBaseConfig,
+): Promise<Response>
