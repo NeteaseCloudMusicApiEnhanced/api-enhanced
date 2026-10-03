@@ -1307,7 +1307,7 @@ tags: 歌单标签
 `lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清臻音`, `dolby` => `杜比全景声`, `vivid` => `臻音全景声`, `jymaster` => `超清母带`, `sky` => `沉浸环绕声`
 `unblock`: 是否使用使用歌曲解锁, 分为`true`和`false`
 
-**可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为`c512` => `新版c51类型`, `ste2` => `新版环绕立体声类型`, `aac2` => `新版aac类型`,  `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
+**可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为`c512` => `新版c51类型`, `ste2` => `新版环绕立体声类型`, `aac2` => `新版aac类型`, `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
 
 **接口地址 :** `/song/url/v1`
 
@@ -5877,6 +5877,50 @@ let data = encodeURIComponent(
 **接口地址 :** `/song/simi/get`
 
 **调用例子 :** `/song/simi/get?id=39227633`
+
+### 获取用户乐迷团列表
+
+说明 : 登录后调用此接口 , 可获取当前登录用户已加入的全部歌手乐迷团列表
+
+**接口地址 :** `/fans/group/user/groups`
+
+**调用例子 :** `/fans/group/user/groups`
+
+### 获取乐迷团详情
+
+说明 : 调用此接口 , 可获取乐迷团详情
+
+**必选参数 :** `groupId` : 乐迷团 ID
+
+**可选参数 :** `scene` : 场景标识
+
+**接口地址 :** `/fans/group/detail`
+
+**调用例子 :** `/fans/group/detail?groupId=1872529203038486609`
+
+### 获取用户在乐迷团的详情
+
+说明 : 登录后调用此接口 , 可获取当前用户在指定乐迷团的详细成员信息及铭牌等级
+
+**必选参数 :** `groupId` : 乐迷团 ID
+
+**接口地址 :** `/fans/group/user/group/detail`
+
+**调用例子 :** `/fans/group/user/group/detail?groupId=1755777360858267711`
+
+### 获取乐迷团推荐笔记
+
+说明 : 调用此接口 , 可获取指定乐迷团的推荐笔记
+
+**必选参数 :** `fansGroupId` : 乐迷团 ID
+
+**可选参数 :** `cursor` : 游标 , 默认为 0
+
+`size` : 返回数量 , 默认为 10
+
+**接口地址 :** `/fans/group/feed/recommend`
+
+**调用例子 :** `/fans/group/feed/recommend?fansGroupId=1872529203038486609&size=10&cursor=0`
 
 ## 离线访问此文档
 
