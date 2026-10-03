@@ -32,7 +32,7 @@ module.exports = async (query, request) => {
 
   const res = await axios({
     method: 'POST',
-    url: APP_CONF.apiDomain + '/api/gorilla/anti/crawler/security/key/get',
+    url: APP_CONF.apiDomain + '/api/bsr/sk/get',
     headers: {
       'User-Agent':
         'NeteaseMusic/9.5.61.260802021928(9005061);Dalvik/2.1.0 (Linux; U; Android 12; HBN-AL00 Build/cd737a2.0)',
