@@ -4,11 +4,10 @@ module.exports = (query, request) => {
   const data = {
     roomId: query.roomId,
     exitType: query.exitType || 'NORMAL_END',
-    checkToken: query.checkToken || '',
   }
   return request(
     `/api/listen/together/multi/match/exit`,
     data,
-    createOption(query, 'eapi'),
+    createOption(query, 'eapi', 'v2_body'),
   )
 }
