@@ -2391,6 +2391,16 @@ privilege:权限相关信息
 
 **调用例子 :** `/recommend/songs`
 
+### 获取每日推荐歌曲 - v1
+
+说明 : 调用此接口 , 可获得每日推荐歌曲 ( 需要登录 )
+
+**可选参数 :** `ispush`: 是否刷新日推 , 默认为 false
+
+**接口地址 :** `/recommend/songs/v1`
+
+**调用例子 :** `/recommend/songs/v1`
+
 ### 每日推荐歌曲-不感兴趣
 
 说明 : 日推歌曲标记为不感兴趣( 同时会返回一个新推荐歌曲, 需要登录 )
@@ -5921,6 +5931,38 @@ let data = encodeURIComponent(
 **接口地址 :** `/fans/group/feed/recommend`
 
 **调用例子 :** `/fans/group/feed/recommend?fansGroupId=1872529203038486609&size=10&cursor=0`
+
+## 每日指定风格歌曲推荐
+
+说明 : 调用此接口 , 可获取每日指定风格歌曲推荐
+
+**接口地址 :** `/recommend/category/songs`
+
+**调用例子 :** `/recommend/category/songs`
+
+## 获取每日指定风格歌曲推荐的风格列表
+
+说明 : 调用此接口 , 可获取每日指定风格歌曲推荐的风格列表
+
+**接口地址 :** `/recommend/category/configs`
+
+**调用例子 :** `/recommend/category/configs`
+
+## 设置每日指定风格歌曲推荐的风格
+
+说明 : 调用此接口 , 可设置每日指定风格歌曲推荐的风格
+
+**必选参数 :** 
+
+`tags`: 风格标签, 可通过 `/recommend/category/configs` 获取
+
+`category`: 风格标签的父ID, 可通过 `/recommend/category/configs` 获取
+
+!> 只能设置当前CategoryId下的tags, 不能设置其他CategoryId下的tags, 否则会报错
+
+**接口地址 :** `/recommend/category/config`
+
+**调用例子 :** `/recommend/category/config?tags=10004,10015&categoryId=1000`
 
 ## 离线访问此文档
 
