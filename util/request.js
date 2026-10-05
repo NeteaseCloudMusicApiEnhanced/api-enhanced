@@ -215,6 +215,8 @@ const generateRequestId = () => {
 
 const createRequest = async (uri, data, options) => {
   let token = ''
+  // checkToken 默认写 header；'v2_body' / 'v3_body' 时写进 body
+  let checkTokenInBody = options.checkTokenInBody === true
   switch (options.checkToken) {
     case 'v2':
       // 每次实时获取反作弊 token，不缓存
@@ -223,6 +225,15 @@ const createRequest = async (uri, data, options) => {
     case 'v3':
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV3()
+      break
+    case 'v2_body':
+      // 一起听等接口要求：token 写进 body 的 checkToken 字段
+      token = await antiCheatTokenV2()
+      checkTokenInBody = true
+      break
+    case 'v3_body':
+      token = await antiCheatTokenV3()
+      checkTokenInBody = true
       break
   }
 
@@ -313,7 +324,11 @@ const createRequest = async (uri, data, options) => {
         headers['x-buildver'] = xeapiBuildver
         if (cookie.MUSIC_U) headers['x-music-u'] = cookie.MUSIC_U
         if (options.checkToken) {
-          headers['X-antiCheatToken'] = token
+          if (checkTokenInBody) {
+            data.checkToken = token
+          } else {
+            headers['X-antiCheatToken'] = token
+          }
         }
         const xeapiCookie = {
           ...cookie,
@@ -399,6 +414,14 @@ const createRequest = async (uri, data, options) => {
 
         if (cookie.MUSIC_U) header['MUSIC_U'] = cookie.MUSIC_U
         if (cookie.MUSIC_A) header['MUSIC_A'] = cookie.MUSIC_A
+        if (options.checkToken) {
+          if (checkTokenInBody) {
+            // 一起听等接口：checkToken 走 body，不进 header
+            data.checkToken = token
+          } else {
+            header['X-antiCheatToken'] = token
+          }
+        }
         if (options.checkToken) header['X-antiCheatToken'] = token
         if (crypto === 'eapi' && cookie.NMTID) header['NMTID'] = cookie.NMTID
 
