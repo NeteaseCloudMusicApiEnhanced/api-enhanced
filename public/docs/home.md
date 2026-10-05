@@ -5952,7 +5952,7 @@ let data = encodeURIComponent(
 
 说明 : 调用此接口 , 可设置每日指定风格歌曲推荐的风格
 
-**必选参数 :** 
+**必选参数 :**
 
 `tags`: 风格标签, 可通过 `/recommend/category/configs` 获取
 
