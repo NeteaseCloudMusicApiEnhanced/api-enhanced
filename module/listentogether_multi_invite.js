@@ -1,9 +1,7 @@
 // 一起听 多人-邀请
 const createOption = require('../util/option.js')
+const { toIdArray } = require('../util/index.js')
 module.exports = (query, request) => {
-  const toIdArray = (v) =>
-    Array.isArray(v) ? '[' + v.join(',') + ']' : v || '[]'
-
   const data = {
     roomId: query.roomId,
     groupIds: toIdArray(query.groupIds),
