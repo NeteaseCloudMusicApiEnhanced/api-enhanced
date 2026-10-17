@@ -5932,7 +5932,7 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/fans/group/feed/recommend?fansGroupId=1872529203038486609&size=10&cursor=0`
 
-## 每日指定风格歌曲推荐
+### 每日指定风格歌曲推荐
 
 说明 : 调用此接口 , 可获取每日指定风格歌曲推荐
 
@@ -5940,7 +5940,7 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/recommend/category/songs`
 
-## 获取每日指定风格歌曲推荐的风格列表
+### 获取每日指定风格歌曲推荐的风格列表
 
 说明 : 调用此接口 , 可获取每日指定风格歌曲推荐的风格列表
 
@@ -5948,7 +5948,7 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/recommend/category/configs`
 
-## 设置每日指定风格歌曲推荐的风格
+### 设置每日指定风格歌曲推荐的风格
 
 说明 : 调用此接口 , 可设置每日指定风格歌曲推荐的风格
 
