@@ -103,6 +103,15 @@ module.exports = {
     return obj
   },
 
+  hasCookie(cookie) {
+    if (typeof cookie === 'string') return cookie.length > 0
+    return (
+      cookie !== null &&
+      typeof cookie === 'object' &&
+      Object.keys(cookie).length > 0
+    )
+  },
+
   cookieObjToString(cookie) {
     // 优化：使用预绑定的keys函数和for循环
     const cookieKeys = keys(cookie)
@@ -225,6 +234,8 @@ const cookieToJsonOptimized = (function() {
 // 用于从cookie字符串中获取指定值的辅助函数
 function getCookieValue(cookieStr, name) {
   if (!cookieStr) return ''
+
+  if (typeof cookieStr === 'object') return cookieStr[name] || ''
 
   const cookies = '; ' + cookieStr
   const parts = cookies.split('; ' + name + '=')
