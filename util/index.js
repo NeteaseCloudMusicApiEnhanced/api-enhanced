@@ -94,10 +94,12 @@ module.exports = {
     // 优化：使用for循环替代forEach，性能更好
     for (let i = 0, len = cookieArr.length; i < len; i++) {
       let item = cookieArr[i]
-      let arr = item.split('=')
-      // 优化：使用严格等于
-      if (arr.length === 2) {
-        obj[arr[0].trim()] = arr[1].trim()
+      let separator = item.indexOf('=')
+      // 只按第一个等号拆分，保留 Cookie 值中的等号
+      if (separator > 0) {
+        obj[item.slice(0, separator).trim()] = item
+          .slice(separator + 1)
+          .trim()
       }
     }
     return obj
@@ -110,6 +112,24 @@ module.exports = {
       typeof cookie === 'object' &&
       Object.keys(cookie).length > 0
     )
+  },
+
+  getCookieHeader(headers) {
+    if (!headers || typeof headers !== 'object') return ''
+
+    if (typeof headers.get === 'function') {
+      const cookie = headers.get('cookie')
+      if (typeof cookie === 'string') return cookie
+    }
+
+    const headerName = Object.keys(headers).find(
+      (name) => name.toLowerCase() === 'cookie',
+    )
+    if (!headerName) return ''
+
+    const cookie = headers[headerName]
+    if (Array.isArray(cookie)) return cookie.join('; ')
+    return typeof cookie === 'string' ? cookie : ''
   },
 
   cookieObjToString(cookie) {

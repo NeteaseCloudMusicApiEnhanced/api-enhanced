@@ -1,11 +1,15 @@
-const { hasCookie } = require('./index')
+const { getCookieHeader, hasCookie } = require('./index')
 
 const createOption = (query, crypto = '', checkToken = false) => {
+  const headerCookie = getCookieHeader(query.headers)
+
   return {
     crypto: query.crypto || crypto || '',
     cookie: hasCookie(query.cookie)
       ? query.cookie
-      : process.env.NETEASE_COOKIE,
+      : hasCookie(headerCookie)
+        ? headerCookie
+        : process.env.NETEASE_COOKIE,
     ua: query.ua || '',
     proxy: query.proxy,
     realIP: query.realIP,

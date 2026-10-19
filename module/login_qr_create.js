@@ -1,10 +1,19 @@
 const QRCode = require('qrcode')
-const { generateChainId, hasCookie } = require('../util/index')
+const {
+  generateChainId,
+  getCookieHeader,
+  hasCookie,
+} = require('../util/index')
 
 module.exports = (query) => {
   return new Promise(async (resolve) => {
     const platform = query.platform || 'pc'
-    const cookie = hasCookie(query.cookie) ? query.cookie : ''
+    const headerCookie = getCookieHeader(query.headers)
+    const cookie = hasCookie(query.cookie)
+      ? query.cookie
+      : hasCookie(headerCookie)
+        ? headerCookie
+        : ''
 
     // 构建基础URL
     let url = `https://music.163.com/login?codekey=${query.key}`
