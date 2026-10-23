@@ -97,9 +97,7 @@ module.exports = {
       let separator = item.indexOf('=')
       // 只按第一个等号拆分，保留 Cookie 值中的等号
       if (separator > 0) {
-        obj[item.slice(0, separator).trim()] = item
-          .slice(separator + 1)
-          .trim()
+        obj[item.slice(0, separator).trim()] = item.slice(separator + 1).trim()
       }
     }
     return obj

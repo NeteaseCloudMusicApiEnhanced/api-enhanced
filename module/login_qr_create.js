@@ -1,9 +1,5 @@
 const QRCode = require('qrcode')
-const {
-  generateChainId,
-  getCookieHeader,
-  hasCookie,
-} = require('../util/index')
+const { generateChainId, getCookieHeader, hasCookie } = require('../util/index')
 
 module.exports = (query) => {
   return new Promise(async (resolve) => {
