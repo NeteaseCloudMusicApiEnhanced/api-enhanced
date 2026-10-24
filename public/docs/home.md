@@ -5291,6 +5291,102 @@ let data = encodeURIComponent(
 
 **调用例子 :** `/user/playlist/collect?uid=32953014`
 
+### 搜索联想词（App 移动端版）
+
+说明 : 调用此接口 , 传入搜索关键词可获得 App 搜索框下拉的联想结果：第 0 条为直hit歌曲卡（含完整歌曲数据 simpleSongData）, 其后为联想词列表（首条带"热搜"标签, 另有"原唱"标签卡）, 每条带 highLightInfo 高亮分段。与 v9.6.13 客户端截图逐字段对齐。
+
+**必选参数 :**
+
+`keyword` : 搜索关键词（注意: 参数名必须是 keyword, 传 keywords/s 会返回 HTTP 400 空体）
+
+**接口地址 :** `/search/suggest/mobile`
+
+**调用例子 :** `/search/suggest/mobile?keyword=如果呢`
+
+### 新版单曲搜索（分页）
+
+说明 : 调用此接口 , 使用 v9.6.13 客户端新版单曲搜索接口 , 返回 resources 数组（含歌曲信息、 royaltyInfo、 高亮词 hlWords）与 hasMore 分页标记
+
+**必选参数 :**
+
+`keyword` : 搜索关键词
+
+**可选参数 :**
+
+`limit` : 返回数量, 默认 30
+`offset` : 偏移量
+`scene` : 场景, 默认 normal
+
+**接口地址 :** `/search/song/list/page`
+
+**调用例子 :** `/search/song/list/page?keyword=如果呢&limit=30`
+
+### 按歌词搜索
+
+说明 : 调用此接口 , 传入歌词片段可搜索包含该歌词的歌曲, 返回 resources 数组（含 lyric 匹配行、 highlightText 高亮文本、 歌曲详情）
+
+**必选参数 :**
+
+`keyword` : 歌词片段
+
+**可选参数 :**
+
+`limit` : 返回数量, 默认 30
+`offset` : 偏移量
+
+**接口地址 :** `/search/lyric`
+
+**调用例子 :** `/search/lyric?keyword=天青色等烟雨`
+
+### 动态搜索
+
+说明 : 调用此接口 , 传入关键词可搜索用户发布的动态
+
+**必选参数 :**
+
+`keyword` : 关键词
+
+**可选参数 :**
+
+`limit` : 返回数量, 默认 30
+`offset` : 偏移量
+
+**接口地址 :** `/event/search`
+
+**调用例子 :** `/event/search?keyword=周杰伦`
+
+### 评论默认文案
+
+说明 : 调用此接口 , 传入评论区 threadId 可获取该评论区输入框的默认提示文案数组
+
+**必选参数 :**
+
+`threadId` : 评论区 ID（如 `A_EV_2_6559519868_32953014`）
+
+**接口地址 :** `/comment/default/text`
+
+**调用例子 :** `/comment/default/text?threadId=A_EV_2_6559519868_32953014`
+
+### 热评墙广场信息
+
+说明 : 调用此接口 , 可获取今天热评墙广场的配置信息
+
+**接口地址 :** `/comment/hotwall/square/info`
+
+**调用例子 :** `/comment/hotwall/square/info`
+
+### 首页轮播（v3）
+
+说明 : 调用此接口 , 获取 v3 版首页轮播图（v9.6.13 客户端使用版本）
+
+**可选参数 :**
+
+`clientType` : 客户端类型, 默认 android
+
+**接口地址 :** `/banner/v3`
+
+**调用例子 :** `/banner/v3?clientType=android`
+
 ### 搜索建议 - PC端
 
 说明 : 调用此接口, 传入搜索关键词, 获取搜索建议
