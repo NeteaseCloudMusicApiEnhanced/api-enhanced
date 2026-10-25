@@ -260,11 +260,10 @@ async function constructServer(moduleDefs) {
     }),
   )
 
-/**
-   * ===== 易盾（yidun）密码登录接入口 =====
-   * 4 个接口 /login /send /sca /state，实现全在 yidun/yidun-api.js。
-   * 不需要时可删掉这整段相关代码。
-   */
+  /**
+   * ===== Yidun =====
+   * /login /send /sca /state，实现全在yidun/yidun-api.js。
+   * */
   app.use('/api/yidun', require(path.join(__dirname, 'yidun', 'yidun-api.js')))
 
   app.use(

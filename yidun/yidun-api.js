@@ -32,7 +32,9 @@ const tuMap = new Map() // sid -> { tu, loginType, at }
 
 const hex = (n) => crypto.randomBytes(n).toString('hex').toUpperCase()
 const md5 = (s) => crypto.createHash('md5').update(String(s)).digest('hex')
-const pick = (str, key) => (String(str).match(new RegExp('(?:^|;\\s*)' + key + '=([^;]+)')) || [])[1] || ''
+const pick = (str, key) =>
+  (String(str).match(new RegExp('(?:^|;\\s*)' + key + '=([^;]+)')) || [])[1] ||
+  ''
 const pairs = (str) =>
   String(str || '')
     .split(';')
@@ -71,28 +73,46 @@ const merge = (prev, list) => {
 async function call(uri, data, sid) {
   let r
   try {
-    r = await request(uri, data, { crypto: 'eapi', cookie: cookieOf(sid), ua: PC_UA, checkToken: 'v2' })
+    r = await request(uri, data, {
+      crypto: 'eapi',
+      cookie: cookieOf(sid),
+      ua: PC_UA,
+      checkToken: 'v2',
+    })
   } catch (e) {
     if (!e || !e.body) throw e // status≠200 时 SDK 是 reject({status,body,cookie})
     r = e
   }
   jar.set(sid, merge(cookieOf(sid), r.cookie))
   const body = r.body || {}
-  return { code: body.code, msg: body.message || body.msg || '', body, cookie: jar.get(sid) }
+  return {
+    code: body.code,
+    msg: body.message || body.msg || '',
+    body,
+    cookie: jar.get(sid),
+  }
 }
 
 /* 直接跑一个原生 module（它自己会用 createOption 拼 eapi 参数），只替它带上会话 cookie */
 async function callModule(fn, query, sid) {
   let r
   try {
-    r = await fn({ ...query, cookie: cookieOf(sid), ua: PC_UA, checkToken: 'v2' }, request)
+    r = await fn(
+      { ...query, cookie: cookieOf(sid), ua: PC_UA, checkToken: 'v2' },
+      request,
+    )
   } catch (e) {
     if (!e || !e.body) throw e
     r = e
   }
   jar.set(sid, merge(cookieOf(sid), r.cookie))
   const body = r.body || {}
-  return { code: body.code ?? r.status, msg: body.message || body.msg || '', body, cookie: jar.get(sid) }
+  return {
+    code: body.code ?? r.status,
+    msg: body.message || body.msg || '',
+    body,
+    cookie: jar.get(sid),
+  }
 }
 
 const looksLikeValidate = (s) => /^\S{100,}$/.test(String(s || ''))
@@ -100,7 +120,9 @@ function takeSca(sid, fromBody) {
   const sca = String(fromBody || '').trim()
   if (sca) {
     if (!looksLikeValidate(sca)) {
-      const e = new Error(`sca 不是有效 validate（长度 ${sca.length}，要求 ≥100 且不含空白）`)
+      const e = new Error(
+        `sca 不是有效 validate（长度 ${sca.length}，要求 ≥100 且不含空白）`,
+      )
       e.code = 'BAD_SCA'
       throw e
     }
@@ -121,14 +143,27 @@ function tuOf(sid) {
   }
   return hit
 }
-const bad = (res, e) => res.status(e && e.code === 'BAD_SCA' ? 400 : 500).json({ code: e && e.code === 'BAD_SCA' ? 400 : 500, msg: (e && e.message) || String(e) })
+const bad = (res, e) =>
+  res.status(e && e.code === 'BAD_SCA' ? 400 : 500).json({
+    code: e && e.code === 'BAD_SCA' ? 400 : 500,
+    msg: (e && e.message) || String(e),
+  })
 
 /* ① 登录：200 成功 / 8821 要滑块 / 8830 要短信码 */
 router.post('/login', async (req, res) => {
   try {
-    const { phone, captcha, password, countrycode = '86', sid = 'default' } = req.body || {}
+    const {
+      phone,
+      captcha,
+      password,
+      countrycode = '86',
+      sid = 'default',
+    } = req.body || {}
     if (!phone) return res.status(400).json({ code: 400, msg: '缺少 phone' })
-    if (!captcha && !password) return res.status(400).json({ code: 400, msg: 'captcha / password 至少填一个' })
+    if (!captcha && !password)
+      return res
+        .status(400)
+        .json({ code: 400, msg: 'captcha / password 至少填一个' })
 
     const restart = req.body?.restart === true
     const stage = restart ? null : tuOf(sid)
@@ -138,6 +173,7 @@ router.post('/login', async (req, res) => {
       scaMap.delete(sid)
     }
     const tu = String(req.body?.tu || '') || (stage && stage.tu) || ''
+
     /* 二阶段待验证却没填码：直接拒，否则一次性 MUSIC_TU 会被白耗 */
     if (tu && !captcha) {
       return res.status(400).json({
@@ -148,7 +184,14 @@ router.post('/login', async (req, res) => {
       })
     }
 
-    const data = { type: '1', https: 'true', phone: String(phone), countrycode: String(countrycode), remember: 'true', secrete: SECRETE }
+    const data = {
+      type: '1',
+      https: 'true',
+      phone: String(phone),
+      countrycode: String(countrycode),
+      remember: 'true',
+      secrete: SECRETE,
+    }
     if (sca) data.secureCaptcha = sca
     if (tu) {
       data.captcha = String(captcha)
@@ -162,7 +205,11 @@ router.post('/login', async (req, res) => {
     const r = await call('/api/w/login/cellphone', data, sid)
     const code = Number(r.code)
     if (code === 8830 && r.body.MUSIC_TU) {
-      tuMap.set(sid, { tu: String(r.body.MUSIC_TU), loginType: r.body.loginType || '', at: Date.now() })
+      tuMap.set(sid, {
+        tu: String(r.body.MUSIC_TU),
+        loginType: r.body.loginType || '',
+        at: Date.now(),
+      })
     } else if (code === 200) {
       tuMap.delete(sid)
     }
@@ -177,20 +224,32 @@ router.post('/login', async (req, res) => {
       body: r.body,
       cookie: r.cookie,
       cookieLen: r.cookie.length,
-      loginCookie: musicU ? `MUSIC_U=${musicU}` + (csrf ? `; __csrf=${csrf}` : '') : '',
+      loginCookie: musicU
+        ? `MUSIC_U=${musicU}` + (csrf ? `; __csrf=${csrf}` : '')
+        : '',
     })
   } catch (e) {
     bad(res, e)
   }
 })
 
-/* ② 发码：直接用原生 module/captcha_sent_v1.js，只把会话 cookie 塞给它 */
+/* ② 发码：调用 module/captcha_sent_v1.js，只把会话 cookie 塞给它 */
 router.post('/send', async (req, res) => {
   try {
     const { phone, ctcode = '86', sid = 'default' } = req.body || {}
     if (!phone) return res.status(400).json({ code: 400, msg: '缺少 phone' })
-    const r = await callModule(sendV1, { phone: String(phone), ctcode: String(ctcode) }, sid)
-    res.json({ code: r.code, msg: r.msg, body: r.body, cookie: r.cookie, cookieLen: r.cookie.length })
+    const r = await callModule(
+      sendV1,
+      { phone: String(phone), ctcode: String(ctcode) },
+      sid,
+    )
+    res.json({
+      code: r.code,
+      msg: r.msg,
+      body: r.body,
+      cookie: r.cookie,
+      cookieLen: r.cookie.length,
+    })
   } catch (e) {
     bad(res, e)
   }
@@ -201,8 +260,16 @@ router.post('/sca', (req, res) => {
   try {
     const { sid = 'default', sca = '' } = req.body || {}
     const v = takeSca(sid, sca)
-    if (!v) return res.status(400).json({ code: 400, msg: '缺少 sca（滑块的 validate）' })
-    res.json({ code: 200, msg: 'sca 已缓存，3 分钟内登录可省略该字段', len: v.length, ttlSec: SCA_TTL / 1e3 })
+    if (!v)
+      return res
+        .status(400)
+        .json({ code: 400, msg: '缺少 sca（滑块的 validate）' })
+    res.json({
+      code: 200,
+      msg: 'sca 已缓存，3 分钟内登录可省略该字段',
+      len: v.length,
+      ttlSec: SCA_TTL / 1e3,
+    })
   } catch (e) {
     bad(res, e)
   }
@@ -220,8 +287,18 @@ router.get('/state', (req, res) => {
   res.json({
     code: 200,
     sid,
-    sca: { has: !!sca, len: sca ? sca.sca.length : 0, ageSec: age(sca && sca.at), ttlSec: SCA_TTL / 1e3 },
-    stage: { has: !!stage, loginType: (stage && stage.loginType) || '', ageSec: age(stage && stage.at), ttlSec: TU_TTL / 1e3 },
+    sca: {
+      has: !!sca,
+      len: sca ? sca.sca.length : 0,
+      ageSec: age(sca && sca.at),
+      ttlSec: SCA_TTL / 1e3,
+    },
+    stage: {
+      has: !!stage,
+      loginType: (stage && stage.loginType) || '',
+      ageSec: age(stage && stage.at),
+      ttlSec: TU_TTL / 1e3,
+    },
     nmtid: { len: nmtid.length, real: nmtid.length >= 36 },
     cookieKeys: pairs(cookie).map(([k]) => k),
     cookieLen: cookie.length,

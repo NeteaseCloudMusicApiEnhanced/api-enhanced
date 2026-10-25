@@ -2,7 +2,7 @@
 
 > 一句话：一次 eapi 请求里，**UA、cookie 的 `os/appver/osver`、eapi header 对象**这三处必须指向同一个平台，
 > 否则 `-460`；不自洽还会连带把风控等级推高。
-> 这篇只讲判断方法与处理原则，**不给代码**；具体取值在 `yidun-api.js` 顶部（一个常量 + 一个对象）。
+具体取值在 `yidun-api.js` 顶部（一个常量 + 一个对象）。
 
 ## 一、三个地方会互相打架
 
@@ -65,4 +65,4 @@
 | 请求链路、4 个接口、错误码全表、坑 | [README.md](README.md) |
 | 具体常量取值与落点 | `yidun-api.js` 顶部（`PC_UA` 常量 + `PC_ID` 对象） |
 | 浏览器端怎么拉滑块 | [README.md](README.md) 第九节 |
-| `-462` 那一套（设备凭证 + check） | [README.md](README.md) 第十节，不在本篇范围 |
+| `-462` 那一套（设备凭证 + check） | [README.md](README.md) 第十节|

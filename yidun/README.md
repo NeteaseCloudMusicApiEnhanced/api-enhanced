@@ -1,7 +1,8 @@
-# 偷懒了喵（(^///^),整段是烧出来的，能看懂怎么用那就很强了，看不懂可以直接甩AI里）
+# 偷懒了喵(^///^)，能看懂怎么用那就很强了。
+
+# yidun-check.js是给旧接口的验证码用的，位置在第十章
 
 # yidun · 网易云密码登录（滑块 + 短信）
-
 
 > 一条链路：**密码 → `8821` 滑块 → `secureCaptcha` → `8830` → 短信码 + `MUSIC_TU` → `200`**
 > 服务端 4 个接口在 `yidun-api.js`，`server.js` 里只挂一行路由。
@@ -99,8 +100,8 @@ POST /api/yidun/login            → 8821
 
 | 方法 | 说明 |
 |---|---|
-| `sendSms({ phone, sid, ctcode? })` | 发码（eapi v1 口，只有它能配 eapi 登录；`sca` 已不再使用） |
-| `verifySlider({ sid, container?, width?, onReady?, onError? })` | 只挂滑块拿 validate，不登录（自检用） |
+| `sendSms({ phone, sid, ctcode? })` | 发码（eapi v1 口；`sca` 不使用） |
+| `verifySlider({ sid, container?, width?, onReady?, onError? })` | 只挂滑块拿 validate，不登录（可用于自检） |
 | `state(sid)` | 查会话：sca 有没有、二阶段票据、NMTID 真假 |
 | `nextStep(res)` | 把 `code` 翻成 `'done' \| 'captcha' \| 'slider' \| 'params' \| 'credential' \| 'failed'` |
 | `newSid()` | 生成会话 id |
@@ -123,7 +124,6 @@ POST /api/yidun/login            → 8821
   "cookie": "…", "cookieLen": 262,
   "loginCookie": "MUSIC_U=…; __csrf=…" }   // 只有 200 才有
 ```
-
 ### `POST /api/yidun/send`
 
 ```jsonc
@@ -131,8 +131,7 @@ POST /api/yidun/login            → 8821
 → { "code": 200, "msg": "…", "cookie": "…" }
 ```
 
-> 只有 eapi v1 一条通道，**`channel` 参数已经不需要了**；也不再支持 `sca`（原生模块没这个字段，
-> 而发码这一步实测不吃 8821）。想绕过这层直接打原生路由也行：`POST /captcha/sent/v1?phone=…&cookie=…`。
+> 发码可以直接用路由：`/captcha/sent/v1`。
 
 ### `POST /api/yidun/sca`
 
@@ -170,11 +169,11 @@ POST /api/yidun/login            → 8821
 | `502` | 账号或密码错误 | 别连试，错误次数会累计 |
 | `509` | 密码错误超过限制 | 等冷却（30 分钟~数小时），这期间别试 |
 | `406` | 操作频繁 | 发码连点触发，等 60 秒 |
-| `503` | 验证码错误 / 不存在 | 重新发码；注意**两条发码口的码不通用** |
+| `503` | 验证码错误 / 不存在 | 重新发码（留了weapi和eapi的发码口） |
 | `443` | 验证码不正确 | 同上 |
 | `409` | 操作太频繁 | 等一会 |
 | `-460` | 网络环境异常 | UA 与 cookie 的 `os/appver/osver` 不自洽（模块已对齐，出现说明环境被改） |
-| `-462` | 需要安全验证（weapi 专用） | 和我们这套无关；要走 `yidun-check.js` 那条老链路 |
+| `-462` | 需要安全验证（weapi（旧验证码口）） | 要用 `yidun-check.js` 这个文件|
 
 ### 客户端模块自己抛的
 
@@ -185,42 +184,23 @@ POST /api/yidun/login            → 8821
 | 服务端没起 / 路由 404 | `{ code: 404, msg: '响应不是 JSON' }` |
 
 
-1. **可以直接用原生接口**：`/captcha/sent/v1`（eapi）与 `/captcha/sent`（weapi）都在，参数 `phone/ctcode/cookie`；
+1. **可以直接用原生接口**：`/captcha/sent/v1`（eapi）与 `/captcha/sent`（weapi），参数 `phone/ctcode/cookie`；
 2. **validate 一次性**：拖完只能用一次，重试第二遍必须重新拖。`login()` 每次都会重新挂。
 3. **`MUSIC_TU` 一次性且只有 10 分钟**：没填码就发出去会把它废掉。所以模块和服务端都做了拦截。
 4. **两条发码口的码不通用**：eapi v1 的码只配 eapi 登录（本模块只有这条）。
 5. **必须同一个 `sid`**：换 sid = 换会话 = TU 和 sca 全丢。
-6. **`8821` 没有 `verifyToken`**：它跟 `-462` 不是一套，别想着走 `check`。
-7. **未知码**：原样返回，别硬试，先看 `msg` 和日志。
+6. **`8821` 没有 `verifyToken`**
+7. **未知码**：原样返回
 8. **密码错误次数累计**：`502` 别连点，会进 `509`。
 9. **滑块容器**：同一个容器重复 init 会静默失败，模块里已经先 `destroySlide()` 再挂。
 
-## 七、部署检查
-
-```bash
-# 1. 服务端能起来
-node --check server.js && node app.js
-
-# 2. 模块可访问（页面引它）
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/yidun/login-client_v1.js   # 200
-
-# 3. 接口在
-curl -s 'http://127.0.0.1:3000/api/yidun/state?sid=t' | head -c 120
-
-# 4. 原生接口没被影响
-curl -s 'http://127.0.0.1:3000/search?keywords=test&type=1' | head -c 80
-```
-
-页面随便放哪，只要能用 `/yidun/login-client_v1.js`（或相对路径 `../yidun/...`）引到模块。
-示例页见仓库外的 `yidun-test.html`（只调 `login()`，不含任何易盾逻辑）。
+无示例页
 
 ## 八、安全提醒
 
-这里帮我处理下吧（这 4 个接口**没有鉴权**。服务如果对外可达，任何人都能拿手机号跑密码登录（错误次数会累计到 `509`），
-`/api/yidun/state` 还能读到会话里的票据。对外部署前至少加一层 token 或限制在内网。）
+（这 4 个接口**没有鉴权**。服务如果对外可达，任何人都能拿手机号跑密码登录（错误次数会累计到 `509`），`/api/yidun/state` 还能读到会话里的票据。对外部署前至少加一层 token 或限制在内网。）
 
 ## 九、滑块模块 `yidun-slider_v1.js`
-
 浏览器端只干一件事：**把易盾滑块挂出来、让用户拖、把 `validate` 交回来**。提交校验（check）必须后端做，理由见下一节。
 
 ### 导出
@@ -253,10 +233,10 @@ curl -s 'http://127.0.0.1:3000/search?keywords=test&type=1' | head -c 80
 2. `mode` 不写默认是独立弹窗，内嵌必须 `mode: 'embed'`。
 3. 同一个容器重复 `init` 会静默失败（不渲染、不回调），所以模块内部先 `destroySlide()` 再挂。
 
-## 十、`-462` 的 check 模块（`yidun-check.js`，当前不用）
 
-这是**另一套机制**，和密码登录的 `8821` 无关，留着备用。
+## 十、`-462` 的 check 模块（`yidun-check.js`）
 
+这是**另一套机制**，和密码登录的 `8821` 无关。
 ### 它解决什么
 
 weapi 接口（`/weapi/w/login/cellphone`、`/weapi/sms/captcha/sent` 等）返回 `-462` 时会带一个挑战对象：
@@ -271,17 +251,14 @@ weapi 接口（`/weapi/w/login/cellphone`、`/weapi/sms/captcha/sent` 等）返�
 ```
 
 用户拖完滑块拿到 `validate` 后，要由**服务端**提交给网易云：
-
 ```
 POST https://st.music.163.com/weapi/frontrisk/verify/check
 ```
+SDK 没有这个接口的封装,所以单独写了这个模块。
 
-SDK 没有这个接口的封装，所以单独写了这个模块。
 
-### 为什么必须服务端
 
-1. 需要 weapi 加密（AES + RSA），放前端等于把密钥公开；
-2. 必须和触发 `-462` 的那次请求**共用同一个 cookie 会话**，否则 check 白做（响应 Set-Cookie 恒 0 条，状态记在会话上）。
+# 必须和触发 `-462` 的那次请求**共用同一个 cookie 会话**，否则 check 白做（响应 Set-Cookie 恒 0 条，状态记在会话上）。
 
 ### 用法
 

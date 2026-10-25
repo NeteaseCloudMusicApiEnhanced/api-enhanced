@@ -4,8 +4,6 @@
  * 页面只需要调 login()，8821/8830 的推进全部在内部完成：
  *   登录 → 8821 → 挂易盾滑块 → validate → 存 sca → 带 secureCaptcha 重试 → 8830
  *   → 调用方发码填码 → 再调一次 login()（自动带 MUSIC_TU）→ 200
- *
- * 只在浏览器里跑（依赖 DOM + 易盾 JS SDK），服务端逻辑在 eapi-login.js 与 server.js。
  */
 import { mountSlide, destroySlide } from './yidun-slider_v1.js'
 
@@ -65,7 +63,7 @@ export async function verifySlider(opts = {}) {
   return validate
 }
 
-/** 发短信验证码（eapi v1 口；只有它能配 eapi 登录） */
+/** 发短信验证码（eapi v1 口） */
 export async function sendSms(opts = {}) {
   const { phone, ctcode = '86', sid = newSid(), sca } = opts
   const body = { phone, ctcode, sid }
@@ -107,7 +105,8 @@ export async function login(o = {}) {
   }
 
   if (!phone) return { code: 400, msg: '缺少 phone' }
-  if (!password && !captcha) return { code: 400, msg: 'password / captcha 至少一个' }
+  if (!password && !captcha)
+    return { code: 400, msg: 'password / captcha 至少一个' }
 
   const body = { phone, password, captcha, sid }
   if (sca) body.sca = sca
