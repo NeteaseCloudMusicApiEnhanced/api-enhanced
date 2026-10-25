@@ -1,6 +1,7 @@
 const { default: axios } = require('axios')
 const encrypt = require('../util/crypto')
 const { APP_CONF } = require('../util/config.json')
+const runtimeState = require('../util/runtimeState')
 
 const generateNonce = () => {
   let nonce = ''
@@ -62,6 +63,9 @@ module.exports = async (query, request) => {
   if (!publicKey.sk) {
     throw new Error('xeapi public key response missing sk')
   }
+
+  // 获取成功后立即写入运行时状态，供 util/request.js 的 xeapi 请求使用
+  runtimeState.xeapiPublicKey = { ...publicKey, deviceId }
 
   return {
     status: 200,
