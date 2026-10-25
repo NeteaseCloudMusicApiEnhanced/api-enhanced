@@ -261,6 +261,21 @@ async function constructServer(moduleDefs) {
   )
 
   /**
+   * ===== Yidun =====
+   * /login /send /sca /state，实现全在yidun/yidun-api.js。
+   * */
+  app.use('/api/yidun', require(path.join(__dirname, 'yidun', 'yidun-api.js')))
+
+  app.use(
+    '/yidun',
+    (req, res, next) =>
+      /^\/(yidun-slider_v1|login-client_v1)\.js$/.test(req.path)
+        ? next()
+        : res.status(404).json({ code: 404, msg: 'not found' }),
+    express.static(path.join(__dirname, 'yidun')),
+  )
+
+  /**
    * Cache
    */
   app.use(cache('2 minutes', (_, res) => res.statusCode === 200))
