@@ -1,5 +1,6 @@
 export interface RequestBaseConfig {
   cookie?: string
+  headers?: Record<string, string | string[]>
   realIP?: string // IPv4/IPv6 filled in X-Real-IP
   proxy?: string // HTTP proxy
   randomCNIP?: boolean // Whether to use a random Chinese IP address filled in X-Real-IP
@@ -1085,6 +1086,10 @@ export function register_checktoken_v2(
 
 export function register_checktoken_v3(
   params: { refresh?: boolean | string } & RequestBaseConfig,
+): Promise<Response>
+
+export function register_neapikey(
+  params: { version?: string | number; behavior?: string } & RequestBaseConfig,
 ): Promise<Response>
 
 export function register_xeapikey(
@@ -2885,4 +2890,29 @@ export function voicelist_trans(
     position?: string | number
   } & MultiPageConfig &
     RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_detail(
+  params: {
+    groupId: string
+    scene?: string
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_feed_recommend(
+  params: {
+    fansGroupId: string
+    cursor?: string
+    size?: string | number
+  } & RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_user_groups(
+  params?: RequestBaseConfig,
+): Promise<Response>
+
+export function fans_group_user_group_detail(
+  params: {
+    groupId: string | number
+  } & RequestBaseConfig,
 ): Promise<Response>

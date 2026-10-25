@@ -1,5 +1,7 @@
 const request = require('./util/request')
 const { generateRandomChineseIP, generateDeviceId } = require('./util/index')
+const { loadNeapiKey } = require('./util/neapiKey')
+const registerNeapikey = require('./module/register_neapikey')
 
 /**
  * 启动 / 手动刷新运行时动态配置。
@@ -22,6 +24,18 @@ async function generateConfig() {
   }
   try {
     await request.refreshAnonymousToken()
+  } catch (error) {
+    console.log(error)
+  }
+  try {
+    const current = loadNeapiKey()
+    await registerNeapikey(
+      {
+        version: current ? current.version : 0,
+        behavior: current ? 'update' : 'open',
+      },
+      null,
+    )
   } catch (error) {
     console.log(error)
   }
