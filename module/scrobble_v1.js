@@ -13,6 +13,7 @@ const {
   buildMetaJson,
   doUpload,
 } = require('../util/ncbl')
+const { getCookieHeader, hasCookie } = require('../util/index')
 
 module.exports = async (query, request) => {
   // --- 参数校验 ---
@@ -32,7 +33,12 @@ module.exports = async (query, request) => {
   const sourceName = query.source || 'list'
 
   // --- 解析认证上下文 ---
-  const rawCookie = query.cookie || ''
+  const headerCookie = getCookieHeader(query.headers)
+  const rawCookie = hasCookie(query.cookie)
+    ? query.cookie
+    : hasCookie(headerCookie)
+      ? headerCookie
+      : process.env.NETEASE_COOKIE || ''
   const cookieObj = parseCookie(rawCookie)
   cookieObj.os = 'pc'
   const ctx = extractContext(cookieObj)

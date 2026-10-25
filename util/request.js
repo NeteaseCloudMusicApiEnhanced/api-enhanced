@@ -13,6 +13,8 @@ const tmpPath = require('os').tmpdir()
 const {
   cookieToJson,
   cookieObjToString,
+  getCookieHeader,
+  hasCookie,
   toBoolean,
   generateRandomChineseIP,
 } = require('./index')
@@ -243,13 +245,19 @@ const createRequest = async (uri, data, options) => {
       headers['X-Forwarded-For'] = ip
     }
 
-    let cookie = options.cookie || {}
+    let cookie = hasCookie(options.cookie)
+      ? options.cookie
+      : getCookieHeader(options.headers)
+    if (!hasCookie(cookie)) cookie = {}
     if (typeof cookie === 'string') {
       cookie = cookieToJson(cookie)
     }
 
     if (typeof cookie === 'object') {
       cookie = processCookieObject(cookie, crypto)
+      Object.keys(headers).forEach((name) => {
+        if (name.toLowerCase() === 'cookie') delete headers[name]
+      })
       headers['Cookie'] = cookieObjToString(cookie)
     }
     let url = ''

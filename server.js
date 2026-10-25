@@ -6,7 +6,7 @@ const request = require('./util/request')
 const packageJSON = require('./package.json')
 const exec = require('child_process').exec
 const cache = require('./util/apicache').middleware
-const { cookieToJson } = require('./util/index')
+const { cookieToJson, getCookieHeader, hasCookie } = require('./util/index')
 const fileUpload = require('express-fileupload')
 const decode = require('safe-decode-uri-component')
 const logger = require('./util/logger.js')
@@ -225,14 +225,15 @@ async function constructServer(moduleDefs) {
    */
   app.use((req, _, next) => {
     req.cookies = {}
-    //;(req.headers.cookie || '').split(/\s*;\s*/).forEach((pair) => { //  Polynomial regular expression //
-    ;(req.headers.cookie || '').split(/;\s+|(?<!\s)\s+$/g).forEach((pair) => {
-      let crack = pair.indexOf('=')
-      if (crack < 1 || crack == pair.length - 1) return
-      req.cookies[decode(pair.slice(0, crack)).trim()] = decode(
-        pair.slice(crack + 1),
-      ).trim()
-    })
+    getCookieHeader(req.headers)
+      .split(';')
+      .forEach((pair) => {
+        let crack = pair.indexOf('=')
+        if (crack < 1 || crack == pair.length - 1) return
+        req.cookies[decode(pair.slice(0, crack)).trim()] = decode(
+          pair.slice(crack + 1),
+        ).trim()
+      })
     next()
   })
 
@@ -291,13 +292,19 @@ async function constructServer(moduleDefs) {
         }
       })
 
-      let query = Object.assign(
-        {},
-        { cookie: req.cookies },
-        req.query,
-        req.body,
-        req.files,
-      )
+      const queryCookie = req.query && req.query.cookie
+      const bodyCookie = req.body && req.body.cookie
+      const fileCookie = req.files && req.files.cookie
+      const cookie = hasCookie(fileCookie)
+        ? fileCookie
+        : hasCookie(bodyCookie)
+          ? bodyCookie
+          : hasCookie(queryCookie)
+            ? queryCookie
+            : req.cookies
+      const query = Object.assign({}, req.query, req.body, req.files, {
+        cookie,
+      })
 
       try {
         let usedCrypto = ''

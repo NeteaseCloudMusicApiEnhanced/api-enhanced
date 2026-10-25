@@ -1,18 +1,26 @@
 // 听歌打卡
 
 const createOption = require('../util/option.js')
+const { getCookieHeader, hasCookie } = require('../util/index')
 const { APP_CONF } = require('../util/config.json')
 const DOMAIN = APP_CONF.clDomian
 module.exports = async (query, request) => {
   // 注入 os=osx 的 cookie
-  let cookie = query.cookie || ''
+  const headerCookie = getCookieHeader(query.headers)
+  let cookie = hasCookie(query.cookie)
+    ? query.cookie
+    : hasCookie(headerCookie)
+      ? headerCookie
+      : process.env.NETEASE_COOKIE || ''
   if (typeof cookie === 'object') {
     cookie = Object.assign({ os: 'osx' }, cookie)
   } else if (typeof cookie === 'string') {
     if (cookie.indexOf('os=') > -1) {
       cookie = cookie.replace(/os=[^;]+/g, 'os=osx')
-    } else {
+    } else if (cookie) {
       cookie = cookie + '; os=osx'
+    } else {
+      cookie = 'os=osx'
     }
   } else {
     cookie = 'os=osx'
