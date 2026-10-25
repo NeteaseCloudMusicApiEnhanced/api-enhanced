@@ -1,6 +1,6 @@
 {
   "name": "@neteasecloudmusicapienhanced/api",
-  "version": "4.41.1",
+  "version": "5.0.0",
   "description": "全网最全的网易云音乐API接口 || A revival project for NeteaseCloudMusicApi Node.js Services (Half Refactor & Enhanced)",
   "scripts": {
     "dev": "nodemon app.js",
@@ -11,9 +11,9 @@
     "prepare": "husky install",
     "docs:format": "node scripts/format-docs.js",
     "docs:check": "node scripts/format-docs.js --check",
-    "pkgwin": "node scripts/build-pkg.js . -t node18-win-x64 -C GZip -o precompiled/app",
-    "pkglinux": "node scripts/build-pkg.js . -t node18-linux-x64 -C GZip -o precompiled/app",
-    "pkgmacos": "node scripts/build-pkg.js . -t node18-macos-x64 -C GZip -o precompiled/app"
+    "pkgwin": "node scripts/build-pkg.js . -t node22-win-x64 -C GZip -o precompiled/app --no-bytecode --public-packages \"*\" --public",
+    "pkglinux": "node scripts/build-pkg.js . -t node22-linux-x64 -C GZip -o precompiled/app --no-bytecode --public-packages \"*\" --public",
+    "pkgmacos": "node scripts/build-pkg.js . -t node22-macos-x64 -C GZip -o precompiled/app --no-bytecode --public-packages \"*\" --public"
   },
   "bin": "./app.js",
   "pkg": {
@@ -52,7 +52,7 @@
   },
   "homepage": "https://neteasecloudmusicapienhanced.js.org/",
   "engines": {
-    "node": ">=12"
+    "node": ">=22"
   },
   "lint-staged": {
     "*.js": [
@@ -112,7 +112,7 @@
     "lint-staged": "^16.4.0",
     "mocha": "^11.8.0",
     "nodemon": "^3.1.14",
-    "pkg": "^5.8.1",
+    "@yao-pkg/pkg": "^6.23.0",
     "power-assert": "^1.6.1",
     "prettier": "^3.9.10",
     "typescript": "^5.9.3"
