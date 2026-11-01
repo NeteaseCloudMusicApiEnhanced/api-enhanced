@@ -35,9 +35,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # 纯单测，不需要网络，稳定必过
+      # 纯单测，不需要网络，稳定必过（unit/ 下为 hermetic 单测，test/ 是联网集成测试）
       - name: Unit tests
-        run: pnpm exec mocha -r intelli-espower-loader -t 60000 main.test.js --exit
+        run: pnpm test:unit
 
       - name: Docs format check
         run: pnpm docs:check
