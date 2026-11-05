@@ -1,7 +1,7 @@
 // 歌曲链接 - v1
 // 此版本不再采用 br 作为音质区分的标准
 // 而是采用 standard, exhigh, lossless, hires, jyeffect(高清臻音), vivid(臻音全景声), jymaster(超清母带), sky(沉浸环绕声) 进行音质判断
-// 当unblock为true时, 会尝试使用unblockmusic-utils进行解锁, 同时音质设置不会生效, 但仍然为必须传入参数
+// 当unblock为true(HTTP 传 'true', 库调用可传布尔 true)时, 会尝试使用unblockmusic-utils进行解锁, 同时音质设置不会生效, 但仍然为必须传入参数
 // 当level为sky时, 可通过 immerseType 选择沉浸声类型, 支持 c512(新版c51类型)、ste2(新版环绕立体声类型)、aac2(新版aac类型)、c51(c51类型)、ste(环绕立体声类型)、aac(aac类型), 默认为 c51
 //
 // unblock 失败语义（破坏性变更，文档见 public/docs/home.md）:
@@ -82,7 +82,10 @@ module.exports = async (query, request) => {
     encodeType: 'flac',
   }
   const options = createOption(query, 'xeapi')
-  if (query.unblock === 'true') {
+  // HTTP 查询参数永远是字符串; 而作为库调用(main.js)时可能传入布尔 true。
+  // 两种写法都必须进入解灰分支, 否则 unblock:true 会静默回落到官方试听,
+  // 这正是本次破坏性变更要消除的行为。
+  if (query.unblock === 'true' || query.unblock === true) {
     try {
       const result = await matchID(query.id, query.source)
       logger.info('Starting unblock(uses modules unblock):', query.id, result)

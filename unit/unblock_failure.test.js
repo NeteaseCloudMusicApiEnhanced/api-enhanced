@@ -213,4 +213,70 @@ describe('song/url/v1 unblock failure semantics', () => {
     assert.strictEqual(officialCalled, true)
     assert.strictEqual(response.body.code, 200)
   })
+
+  // interface.d.ts 允许 `unblock?: 'true' | 'false' | boolean`；库调用 (main.js) 直接把对象
+  // 透传给模块，所以布尔 true 必须和解灰分支的 'true' 等价，否则会静默回落到官方试听。
+  it('treats the boolean true from the library API as a request to unblock', async () => {
+    let matchIDCalls = 0
+    const response = await withStubs(
+      mockUnblock(async () => {
+        matchIDCalls += 1
+        return {
+          code: 200,
+          message: 'success',
+          data: { url: 'https://unblock.example/lib.flac' },
+        }
+      }),
+      () =>
+        songUrlV1({ id: '1869929814', level: 'exhigh', unblock: true }, () => {
+          throw new Error('must not fall through to the official API')
+        }),
+    )
+
+    assert.strictEqual(matchIDCalls, 1)
+    assert.strictEqual(response.status, 200)
+    assert.strictEqual(response.body.code, 200)
+    assert.strictEqual(
+      response.body.data[0].url,
+      'https://unblock.example/lib.flac',
+    )
+  })
+
+  it('propagates the failure status for the boolean form as well', async () => {
+    const response = await withStubs(
+      mockUnblock(async () => ({
+        code: 500,
+        message: 'No available source found',
+        data: null,
+      })),
+      () =>
+        songUrlV1({ id: '1', level: 'exhigh', unblock: true }, () => {
+          throw new Error('must not fall through to the official API')
+        }),
+    )
+
+    assertFailureShape(response, {
+      status: 500,
+      code: 500,
+      error: 'NO_AVAILABLE_SOURCE',
+      msg: 'unblock failed: no available source',
+    })
+  })
+
+  it('does not unblock when unblock is explicitly false', async () => {
+    let officialCalled = false
+    const response = await withStubs(
+      mockUnblock(async () => {
+        throw new Error('matchID must not be called when unblock=false')
+      }),
+      () =>
+        songUrlV1({ id: '1', level: 'exhigh', unblock: false }, () => {
+          officialCalled = true
+          return officialResponse
+        }),
+    )
+
+    assert.strictEqual(officialCalled, true)
+    assert.strictEqual(response.body.code, 200)
+  })
 })
