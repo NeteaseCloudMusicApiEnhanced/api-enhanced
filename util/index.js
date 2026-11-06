@@ -86,6 +86,26 @@ module.exports = {
     return val === 'true' || val == '1'
   },
 
+  toIdArray(v) {
+    if (v === undefined || v === null || v === '') return '[]'
+    if (Array.isArray(v)) return JSON.stringify(v)
+    if (typeof v === 'number') return JSON.stringify([v])
+    if (typeof v === 'string') {
+      const s = v.trim()
+      if (!s) return '[]'
+      // 已经是 JSON 数组字符串，直接透传（不重复包裹）
+      if (s.startsWith('[') && s.endsWith(']')) return s
+      // 逗号分隔或单值，按元素归一化：纯数字转 Number，其余保留字符串
+      const ids = s
+        .split(',')
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .map((x) => (/^-?\d+$/.test(x) ? Number(x) : x))
+      return JSON.stringify(ids)
+    }
+    return '[]'
+  },
+
   cookieToJson(cookie) {
     if (!cookie) return {}
     let cookieArr = cookie.split(';')
