@@ -163,7 +163,7 @@ docker run -d -p 3000:3000 moefurina/ncm-api:latest
    ```bash
    #!/bin/bash
    export PORT=9000
-   /var/lang/node16/bin/node app.js
+   /var/lang/node22/bin/node app.js
    ```
 4. 完成部署后，访问 API 网关的 URL 即可
 
