@@ -6,7 +6,12 @@ const request = require('./util/request')
 const packageJSON = require('./package.json')
 const exec = require('child_process').exec
 const cache = require('./util/apicache').middleware
-const { cookieToJson, getCookieHeader, hasCookie } = require('./util/index')
+const {
+  cookieToJson,
+  getCookieHeader,
+  hasCookie,
+  unblockMatch,
+} = require('./util/index')
 const fileUpload = require('express-fileupload')
 const decode = require('safe-decode-uri-component')
 const logger = require('./util/logger.js')
@@ -340,26 +345,49 @@ async function constructServer(moduleDefs) {
         )
 
         // 夹带私货部分：如果开启了通用解锁，并且是获取歌曲URL的接口，则尝试解锁（如果需要的话）ヾ(≧▽≦*)o
+        // 注意：路由以 app.all(path, handler) 注册，req.baseUrl 恒为空串，必须用 req.path 判断
         if (
-          req.baseUrl === '/song/url/v1' &&
+          req.path === '/song/url/v1' &&
           process.env.ENABLE_GENERAL_UNBLOCK === 'true'
         ) {
           const song = moduleResponse.body.data[0]
           if (
-            song.freeTrialInfo !== null ||
-            !song.url ||
-            [1, 4].includes(song.fee)
+            song &&
+            (song.freeTrialInfo !== null ||
+              !song.url ||
+              [1, 4].includes(song.fee))
           ) {
-            const {
-              matchID,
-            } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
-            logger.info('Starting unblock(uses general unblock):', req.query.id)
-            const result = await matchID(req.query.id)
-            song.url = result.data.url
-            song.freeTrialInfo = null
-            logger.info('Unblock success! url:', song.url)
+            try {
+              const {
+                matchID,
+              } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
+              logger.info(
+                'Starting unblock(uses general unblock):',
+                req.query.id,
+              )
+              // 走 unblockMatch：假成功外链过滤 + http→https 升级 + 多音源顺序兜底
+              const result = await unblockMatch(matchID, req.query.id)
+              if (
+                result &&
+                result.code === 200 &&
+                result.data &&
+                result.data.url
+              ) {
+                song.url = result.data.url
+                song.freeTrialInfo = null
+                logger.info('Unblock success! url:', song.url)
+              } else {
+                // 所有音源都没匹配到：保留原始链接（可能是试听片段），不要让整条请求崩掉
+                logger.warn(
+                  'Unblock failed, keep original url:',
+                  result && result.message,
+                )
+              }
+            } catch (e) {
+              logger.error('Error in general unblock:', e && e.message)
+            }
           }
-          if (song.url && song.url.includes('kuwo')) {
+          if (song && song.url && song.url.includes('kuwo')) {
             const proxy = process.env.PROXY_URL
             const useProxy = process.env.ENABLE_PROXY || 'false'
             if (useProxy === 'true' && proxy) {

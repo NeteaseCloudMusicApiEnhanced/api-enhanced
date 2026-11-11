@@ -6,7 +6,7 @@
 
 const logger = require('../util/logger.js')
 const createOption = require('../util/option.js')
-const { cookieToJson } = require('../util/index.js')
+const { cookieToJson, unblockMatch } = require('../util/index.js')
 module.exports = async (query, request) => {
   const {
     matchID,
@@ -20,7 +20,7 @@ module.exports = async (query, request) => {
   const options = createOption(query, 'xeapi')
   if (query.unblock === 'true') {
     try {
-      const result = await matchID(query.id, query.source)
+      const result = await unblockMatch(matchID, query.id, query.source)
       logger.info('Starting unblock(uses modules unblock):', query.id, result)
       const useProxy = process.env.ENABLE_PROXY || 'false'
       let proxyUrl = ''

@@ -3,13 +3,14 @@
 
 const createOption = require('../util/option.js')
 const logger = require('../util/logger.js')
+const { unblockMatch } = require('../util/index.js')
 
 module.exports = async (query, request) => {
   try {
     const {
       matchID,
     } = require('@neteasecloudmusicapienhanced/unblockmusic-utils')
-    const result = await matchID(query.id, query.source)
+    const result = await unblockMatch(matchID, query.id, query.source)
     const proxy = process.env.PROXY_URL
     logger.info('开始解灰', query.id, result)
     const useProxy = process.env.ENABLE_PROXY || 'false'
