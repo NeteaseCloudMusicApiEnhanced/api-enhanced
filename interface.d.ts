@@ -1391,7 +1391,12 @@ export const enum SoundQualityType {
 }
 
 export function song_url_v1(
-  params: { id: string | number; level: SoundQualityType } & RequestBaseConfig,
+  params: {
+    id: string | number
+    level: SoundQualityType
+    unblock?: 'true' | 'false' | boolean
+    source?: string
+  } & RequestBaseConfig,
 ): Promise<Response>
 
 export function song_copyright_rcmd(

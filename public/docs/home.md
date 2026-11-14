@@ -1307,6 +1307,8 @@ tags: 歌单标签
 `lossless`=>`无损`, `hires`=>`Hi-Res`, `jyeffect` => `高清臻音`, `dolby` => `杜比全景声`, `vivid` => `臻音全景声`, `jymaster` => `超清母带`, `sky` => `沉浸环绕声`
 `unblock`: 是否使用使用歌曲解锁, 分为`true`和`false`
 
+说明 : 当 `unblock=true` 且解灰失败时, 接口不再静默回落到官方试听, 而是返回非 200 状态码: `500`(无可用音源/内部错误)、`404`(指定的 `source` 不存在)、`400`(缺少 `id`), 响应体为 `{ code, msg: "unblock failed: ...", error: "NO_AVAILABLE_SOURCE", data: [] }`。迁移方式: 需要官方试听请去掉 `unblock` 参数重新请求; 解灰失败可直接重试, 或改用 `/song/url/match` 接口。
+
 **可选参数 :** `immerseType`: 沉浸声环绕声类型, 分为`c512` => `新版c51类型`, `ste2` => `新版环绕立体声类型`, `aac2` => `新版aac类型`, `c51` => `c51类型`, `ste` => `环绕立体声类型`, `aac` => `aac类型`, 仅在 `level=sky` 时生效, 默认为 `c51`
 
 **接口地址 :** `/song/url/v1`
