@@ -1,4 +1,4 @@
-// 一起听 多人-关注推荐歌曲
+// 目前不知道有什么用，反正逆向出来了...
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {
@@ -8,6 +8,6 @@ module.exports = (query, request) => {
   return request(
     `/api/follow/listen/user/rcmd/song`,
     data,
-    createOption(query, 'eapi', 'v2'),
+    createOption(query, 'eapi', 'v3_body'),
   )
 }

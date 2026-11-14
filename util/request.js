@@ -217,11 +217,16 @@ const generateRequestId = () => {
 
 const createRequest = async (uri, data, options) => {
   let token = ''
+  let body_checktoken = false;
   switch (options.checkToken) {
+    case 'v3_body':
+      body_checktoken = true;
     case 'v2':
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV2()
       break
+    case 'v3_body':
+      body_checktoken = true;
     case 'v3':
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV3()
@@ -280,6 +285,7 @@ const createRequest = async (uri, data, options) => {
         headers['User-Agent'] = options.ua || chooseUserAgent('weapi')
         data.csrf_token = csrfToken
         if (options.checkToken) {
+          if (body_checktoken) { data.checkToken = token; }
           headers['X-antiCheatToken'] = token
         }
         encryptData = encrypt.weapi(data)
@@ -321,6 +327,7 @@ const createRequest = async (uri, data, options) => {
         headers['x-buildver'] = xeapiBuildver
         if (cookie.MUSIC_U) headers['x-music-u'] = cookie.MUSIC_U
         if (options.checkToken) {
+          if (body_checktoken) { data.checkToken = token; }
           headers['X-antiCheatToken'] = token
         }
         const xeapiCookie = {
@@ -407,7 +414,10 @@ const createRequest = async (uri, data, options) => {
 
         if (cookie.MUSIC_U) header['MUSIC_U'] = cookie.MUSIC_U
         if (cookie.MUSIC_A) header['MUSIC_A'] = cookie.MUSIC_A
-        if (options.checkToken) header['X-antiCheatToken'] = token
+        if (options.checkToken) {
+          if (body_checktoken) { data.checkToken = token; }
+          header['X-antiCheatToken'] = token
+        }
         if (crypto === 'eapi' && cookie.NMTID) header['NMTID'] = cookie.NMTID
 
         headers['Cookie'] = createHeaderCookie(header)

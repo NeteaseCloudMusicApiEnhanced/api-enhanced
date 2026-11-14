@@ -10,6 +10,6 @@ module.exports = (query, request) => {
   return request(
     `/api/listen/together/multi/match/song/operate`,
     data,
-    createOption(query, 'eapi', 'v2'),
+    createOption(query, 'eapi', 'v3_body'),
   )
 }

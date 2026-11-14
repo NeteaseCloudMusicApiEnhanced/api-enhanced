@@ -13,7 +13,6 @@ module.exports = (query, request) => {
     from: newCreate ? 'CREATE' : 'LISTEN_TOGETHER',
     playedTime: query.playedTime || 0,
     nextSongIds: toIdArray(query.nextSongIds),
-    checkToken: query.checkToken || '',
   }
 
   // autoJoinUids 语义是"空数组就不传"，保持与apk原版一致
@@ -31,6 +30,6 @@ module.exports = (query, request) => {
   return request(
     `/api/listen/together/multi/room/create`,
     data,
-    createOption(query, 'eapi', 'v2'),
+    createOption(query, 'eapi', 'v3_body'),
   )
 }
