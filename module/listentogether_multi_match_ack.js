@@ -1,6 +1,6 @@
 // 一起听 多人-接受邀请
 // 注意：checkToken 必须放 body，服务端强制校验
-import { toBoolean } from '../util/index.js'
+const { toBoolean } = require('../util')
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const agree = query.agree !== undefined ? toBoolean(query.agree) : true // 默认同意

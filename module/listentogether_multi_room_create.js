@@ -1,6 +1,6 @@
 // 一起听 多人-创建房间
 const createOption = require('../util/option.js')
-const { toIdArray, toBoolean } = require('../util/index.js')
+const { toIdArray, toBoolean } = require('../util')
 module.exports = (query, request) => {
   const newCreate =
     query.newCreate !== undefined ? toBoolean(query.newCreate) : true // 默认新建
