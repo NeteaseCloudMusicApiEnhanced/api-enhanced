@@ -3807,7 +3807,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 ```
 创建私房 ─┐
           ├─> 房间（roomId）─> heartbeat（每 5s）─> exit
-进入匹配 ─┤                    └> status/get（每 60s 兜底）─> msg/history（每 5s）
+进入匹配 ─┤                    └> status/get（每 30s 兜底）─> msg/history（每 5s）
           │
 受邀加入 ─┘（match/ack）
 ```
@@ -3817,7 +3817,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 1. **高频心跳 (`/heartbeat`，5s 一次)**：极轻量，只拉取当前播放状态（含 `version` 和 `nextSongs` 前 4 首）。
 2. **版本比对**：如果心跳返回的 `version` 大于本地缓存的版本号，说明房间发生了变动（切歌、加歌、顶歌等）。
 3. **触发全量拉取**：检测到 `version` 变化时，立即拉取一次 `/wait/song/list` 全量队列和 `/msg/history` 聊天。
-4. **低频兜底 (`/status/get`，60s 一次)**：仅用于兜底刷新在线成员列表和房间权限。
+4. **低频兜底 (`/status/get`，30s 一次)**：仅用于兜底刷新在线成员列表和房间权限。
 
 #### 1. 多人一起听 - 创建房间
 
