@@ -3769,6 +3769,326 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 从机模式: 待整理
 
+### 多人一起听相关
+
+[在线 demo](/listen_together_multi.html)
+
+> **⚠️ 两套接口（公房 / 私房）**
+> 多人一起听接口分为**公房（匹配 / 好友）**和**私房（特殊权限房）**两套逻辑。
+> 客户端在轮询 `/multi/match/status/get` 时，会从返回的 `multiRoomPermission.specialOperate` 字段获取当前房间权限：
+> - `specialOperate === false` → 推歌 / 操作歌曲 / 拉取聊天记录统一走 `/match/` 系列接口。
+> - `specialOperate === true`（如私房或官方活动房）→ 上述请求需切换到 `/special/` 系列接口。
+>
+> 两套接口的入参和返回结构完全一致，仅限流策略和路由不同。
+>
+> **实现提醒**：`specialOperate` 必须**每次轮询 `/status/get` 都重新读取并覆盖本地状态**，不能在进房时只读一次。房间可能在运行中被运营切换权限类型。
+
+> **⚠️ 防缓存**
+> 本组接口全部返回动态数据。所有请求 URL 必须追加 `?timestamp=<当前毫秒时间戳>`（或通过统一封装的请求库自动添加），并建议携带 `Cache-Control: no-cache` / `Pragma: no-cache` 请求头。
+> 否则 `status/get` 等接口可能返回浏览器 / 代理缓存的旧数据，出现"接口调了但状态不刷新"的现象。
+
+> **⚠️ 桌面端 cookie 伪装**
+> 电脑端访问某些接口可能被服务端识别为非移动端而拒绝。可以把现有 cookie 做以下处理：
+> ```js
+> function getFakeAndroidCookie(c) {
+>   c = c.replace(/os=[^;]+/g, 'os=android')
+>        .replace(/appver=[^;]+/g, 'appver=9.1.65')
+>        .replace(/osver=[^;]+/g, 'osver=14');
+>   if (!c.includes('os=android')) c += '; os=android';
+>   if (!c.includes('appver='))    c += '; appver=9.1.65';
+>   if (!c.includes('osver='))     c += '; osver=14';
+>   if (!c.includes('channel='))   c += '; channel=xiaomi';
+>   return c;
+> }
+> ```
+
+---
+
+#### 房间生命周期总览
+
+```
+创建私房 ─┐
+        ├─> 房间（roomId）─> heartbeat（每 5s）─> exit
+进入匹配 ─┤                    └> status/get（每 30s）─> msg/history（每 5s）
+        │
+受邀加入 ─┘（match/ack）
+
+房间内操作：加歌 / 顶歌 / 点赞 / 切歌 / 删除  →  song/operate
+主动操作后建议在 0.8s / 2.5s / 5s 各拉一次 status/get 做快速对齐。
+```
+
+---
+
+#### 1. 多人一起听 - 创建房间
+
+说明 : 登录后调用此接口，可以创建一个多人一起听房间。
+
+**必选参数 :**
+`type` : 房间类型
+  - `1` : 私房（好友房，只能通过邀请加入，不进入匹配池）
+  - `2` : 公房（允许陌生人加入，进入匹配池）
+`songId` : 初始歌曲 id
+
+**可选参数 :**
+`groupIds` : 群组 id 列表，JSON 数组字符串格式，默认为 `[]`
+`inviteUids` : 邀请用户 id 列表，JSON 数组字符串格式，默认为 `[]`
+`from` : 来源，`CREATE` 或 `LISTEN_TOGETHER`，默认为 `CREATE`
+`playedTime` : 已播放时间，默认为 `0`
+`nextSongIds` : 下一首歌曲 id 列表，JSON 数组字符串格式，默认为 `[]`
+`autoJoinUids` : 自动加入用户 id 列表，JSON 数组字符串格式
+`artistId` : 歌手 id
+`playlistIds` : 歌单 id 列表，JSON 数组字符串格式
+
+**接口地址 :** `/listentogether/multi/room/create`
+
+**调用例子 :** `/listentogether/multi/room/create?type=1&songId=123456&groupIds=%5B%5D&inviteUids=%5B%5D`
+
+**成功返回关键字段 :**
+```
+data.multiLtRoomSnapshot.multiRoomInfoDTO: { roomId, creatorId, chatRoomId, firstUserId }
+```
+拿到 `roomId` / `chatRoomId` 后即可进入房间，开始 `heartbeat` + `status/get` 轮询。
+
+---
+
+#### 2. 多人一起听 - 进入匹配池（公房）
+
+说明 : 登录后调用此接口，进入公房匹配池。调用成功后需**每 2 秒轮询 `/multi/match/status/get`**，直到响应中出现 `multiLtRoomSnapshot.multiRoomInfoDTO.roomId`，再调用 `/multi/match/ack` 确认加入。
+
+建议在进入匹配池 35 秒后自动取消并提示超时。
+
+**必选参数 :**
+`songId` : 初始歌曲 id
+
+**可选参数 :**
+`checkToken` : 校验 token，默认为空字符串
+
+**接口地址 :** `/listentogether/multi/match`
+
+**调用例子 :** `/listentogether/multi/match?songId=123456&checkToken=`
+
+---
+
+#### 3. 多人一起听 - 取消匹配
+
+说明 : 退出匹配池。**仅取消"等待匹配"状态**，不会退出已加入的房间（已在房间需走 `/match/exit`）。
+
+**接口地址 :** `/listentogether/multi/match/cancel`
+
+**调用例子 :** `/listentogether/multi/match/cancel`
+
+---
+
+#### 4. 多人一起听 - 匹配确认（加入房间）
+
+说明 : 登录后调用此接口，可以接受或拒绝邀请，加入多人一起听房间。**调用前请确保当前账号未在其它房间中，否则会报错。**
+
+- 受邀加入：直接用邀请方提供的 `roomId` + `inviterUid` 调用。
+- 匹配成功：用 `status/get` 中返回的 `roomId` + `firstUserId` 作为 `inviterUid` 调用。
+
+**必选参数 :**
+`roomId` : 房间 id
+
+**可选参数 :**
+`agree` : 是否同意，`true` 或 `false`，默认为 `true`
+`inviterUid` : 邀请人用户 id
+
+**接口地址 :** `/listentogether/multi/match/ack`
+
+**调用例子 :** `/listentogether/multi/match/ack?roomId=123456&agree=true`
+
+---
+
+#### 5. 多人一起听 - 获取匹配 / 房间状态
+
+说明 : 调用此接口，可以获取当前多人一起听的匹配或房间状态，包含房间信息、在线用户、播放状态以及当前房间权限。是整个流程中**最重要**的接口。
+
+**接口地址 :** `/listentogether/multi/match/status/get`
+
+**调用例子 :** `/listentogether/multi/match/status/get?timestamp=1731590000123`
+
+**响应结构（关键字段）：**
+
+```js
+data: {
+  multiLtRoomSnapshot: {
+    multiRoomInfoDTO: {
+      roomId,          // 房间 id
+      chatRoomId,      // 聊天室 id，发送消息时必传
+      creatorId,       // 房主 uid
+      firstUserId      // 首个用户 uid，匹配成功时用作 ack 的 inviterUid
+    },
+    roomTagList: ['标签1', '标签2'],   // 房间标签
+    multiLtRoomUserAgg: {
+      onlineUserInfos: [{ uid, nickname, avatar }],
+      text,                          // 通用提示文案
+      nextText,                      // 下一首推荐文案，可能含 %s 占位符（需替换为 nickname）
+      nextSongRcmd: { nickname }     // 用于替换 nextText 中的 %s
+    },
+    roomPlaySongInfo: {
+      version,                       // 状态版本号，单调递增；小于本地当前版本的响应应丢弃
+      playingSongZanCnt,             // 当前歌曲累计赞数（见下方语义说明）
+      playedTime,                    // 已播放毫秒
+      playSong: {
+        songId,
+        songBizId,                   // ★ 数字类型，见下方 bizId 说明
+        songRcmdUid,                 // 点歌人 uid，0 表示系统推荐
+        alg
+      },
+      nextSongs: [{ songId, songBizId, songRcmdUid, alg, ... }]
+    }
+  },
+  multiRoomPermission: {
+    addSong, switchSong, topSong, specialOperate
+  }
+}
+```
+
+**字段语义（易踩坑）：**
+
+| 字段 | 语义与用法 |
+|---|---|
+| `roomPlaySongInfo.version` | 状态版本号。客户端收到小于本地当前版本的响应时应**丢弃**，防止乱序响应覆盖新状态。 |
+| `playingSongZanCnt` | 当前歌曲累计赞数，**由服务端维护**。前端只做展示，**禁止本地累加**（含 `Math.max` 合并），每次响应以服务端值为准。否则会和心跳 / 状态响应叠加导致"比服务端多 1"。 |
+| `playSong.songBizId` | **数字类型**（不是字符串）。转发给 `song/operate` 时必须保持数字，禁止 `String(bizId)` 转换。 |
+| `multiRoomPermission.specialOperate` | 每次响应都要**重新读取覆盖**，用于决定后续走 `/match/` 还是 `/special/` 系列接口。 |
+
+**空房判定建议**：连续 3 次响应中 `multiLtRoomSnapshot` 为空，才认为房间已结束或自己已被踢出，避免服务端抖动误判。
+
+---
+
+#### 6. 多人一起听 - 心跳
+
+说明 : 调用此接口，保持一起听房间的活跃状态。**同时返回播放信息**，可高频（5s）刷新播放进度与赞数，无需每次拉全量 `status/get`。
+
+**必选参数 :**
+`roomId` : 房间 id
+
+**接口地址 :** `/listentogether/multi/match/heartbeat`
+
+**调用例子 :** `/listentogether/multi/match/heartbeat?roomId=123456`
+
+**响应：** 包含 `roomPlaySongInfo`（结构同 `status/get`）与 `roomInfoDTO`（含 `roomClosed` 字段，为 `true` 表示房间已关闭）。建议心跳间隔 5s。
+
+---
+
+#### 7. 多人一起听 - 退出房间
+
+说明 : 调用此接口，退出当前多人一起听房间。
+
+**必选参数 :**
+`roomId` : 房间 id
+
+**可选参数 :**
+`exitType` : 退出类型，默认为 `NORMAL_END`
+
+**接口地址 :** `/listentogether/multi/match/exit`
+
+**调用例子 :** `/listentogether/multi/match/exit?roomId=123456&exitType=NORMAL_END`
+
+---
+
+#### 8. 多人一起听 - 操作歌曲（添加 / 顶歌 / 点赞 / 切歌 / 红心 / 删除）
+
+说明 : 登录后调用此接口，对一起听房间内的歌曲进行操作。
+
+**必选参数 :**
+`roomId` : 房间 id
+`operate` : 操作类型
+  - `1` : 添加
+  - `2` : 顶歌（移到队列最前）
+  - `3` : 点赞当前播放歌曲
+  - `4` : 切歌
+  - `5` : 红心
+  - `7` : 删除（只能删自己点的歌）
+`songId` : 歌曲 id
+
+**可选参数 :**
+`bizId` : 业务 id，数字类型，默认为 `0`（除 `operate=1` 添加外均必传）。
+
+> **⚠️ `bizId` 类型**：服务端返回的 `songBizId` 是**数字**类型（不是字符串）。转发给接口时必须保持数字，禁止 `String(bizId)` 转换，否则部分接口会因类型不匹配拒绝请求。
+
+**`bizId` 取值来源（按 `operate` 类型）：**
+
+| operate | bizId 来源 |
+|---|---|
+| `1` 添加 | 传 `0` |
+| `2` 顶歌 | 待播列表 `nextSongs` 中对应歌曲的 `songBizId` |
+| `3` 点赞 | 当前播放歌曲的 `songBizId`（`roomPlaySongInfo.playSong.songBizId`） |
+| `4` 切歌 | 同上，当前播放歌曲的 `songBizId` |
+| `5` 红心 | 同上 |
+| `7` 删除 | 待播列表 `nextSongs` 中对应歌曲的 `songBizId` |
+
+**接口地址 :**
+公房：`/listentogether/multi/match/song/operate`
+私房：`/listentogether/multi/special/song/operate`
+
+**调用例子 :** `/listentogether/multi/match/song/operate?roomId=123456&songId=7890&operate=1&bizId=0`
+
+**响应：** 可能包含 `data.roomSongInfo`（结构同 `roomPlaySongInfo`），客户端应当立即用其覆盖本地播放状态；`data.result === false` 时，`data.failedMsg` 为失败原因。若响应里没带 `roomSongInfo`，建议在操作后 0.8s / 2.5s / 5s 各拉一次 `status/get` 做快速对齐。
+
+---
+
+#### 9. 多人一起听 - 获取聊天历史
+
+说明 : 调用此接口，获取一起听房间内的聊天历史消息。建议轮询间隔 5s。
+
+**必选参数 :**
+`roomId` : 房间 id
+
+**可选参数 :**
+`direction` : 方向，默认为 `0`
+`size` : 分页数量，默认为 `20`
+`cursor` : 分页游标
+
+**接口地址 :**
+公房：`/listentogether/multi/match/msg/history`
+私房：`/listentogether/multi/special/msg/history`
+
+**调用例子 :** `/listentogether/multi/match/msg/history?roomId=123456&size=20`
+
+**响应关键字段：**
+
+```
+data.records: [{
+  sendUid,                         // 发送者 uid；为空表示系统消息
+  nickname, avatarUrl,
+  msgType,
+  emoji,                           // msgType=0 且 emoji 非空时为表情消息
+  clientExt, serverExt,            // serverExt.msgId 可用作稳定 id
+  imChatRoomMsgBody: {
+    mainStateText, text,
+    msgRichText.contentTextList: [{ highLighted, orpheus }]  // 含 "addSong?songId=xxx" 时可提取加歌按钮
+  },
+  resourceInfo: {                  // 卡片消息（推歌/系统分享）
+    coverUrl, title, artistName: [...]
+  },
+  onlyCanSeeUserIds,               // 非空数组时：只有列表中的 uid 能看到这条消息，需在客户端按当前 uid 过滤
+  sendTime
+}]
+```
+
+**客户端过滤建议**：`onlyCanSeeUserIds` 非空且不包含自己 uid 的消息应直接过滤掉，不要渲染。
+
+---
+
+#### 10. 多人一起听 - 发送聊天消息
+
+说明 : 登录后调用此接口，向一起听房间发送聊天消息。
+
+**必选参数 :**
+`roomId` : 房间 id
+`chatRoomId` : 聊天室 id（从 `status/get` 的 `multiRoomInfoDTO.chatRoomId` 获取）
+`text` : 消息内容
+
+**接口地址 :** `/listentogether/multi/chat/send`
+
+**调用例子 :** `/listentogether/multi/chat/send?roomId=123456&chatRoomId=abcdef&text=hello`
+
+> **⚠️ 写读延迟**：`chat/send` 返回 200 表示"请求已受理"，**不代表消息已落库**。立即拉 `msg/history` 可能拿不到刚发的消息。建议发送成功后立即拉一次 + 200ms / 800ms / 2000ms 各补拉一次，直到本地出现该消息或超时（5s 后可标记"发送失败"）。
+>
+> 如果需要"发送即时可见"的体验，前端可先做**乐观插入**（本地先渲染一条 `pending` 状态的临时消息），拉取到服务端版本后再替换掉。
+
 ### batch 批量请求接口
 
 说明 : 登录后调用此接口 ,传入接口和对应原始参数(原始参数非文档里写的参数,需参考源码),可批量请求接口

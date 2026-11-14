@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 阻止浏览器翻译：petite-vue 的 v-if 锚点会被翻译插件搬走 → insertBefore null -->
+    <meta name="google" content="notranslate" />
+    <title>一起听 - 多人模式 (HTTP 轮询 Demo)</title>
+
+    <!-- petite-vue 固定版本：避免 latest 漂移引入 diff 行为变化 -->
+    <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+
+    <style>
+        /* ---------- 基础布局 ---------- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+        h1 { font-size: 24px; font-weight: 600; color: #333; margin-bottom: 16px; }
+
+        /* ---------- 提示与消息 ---------- */
+        .message { padding: 12px 16px; background: #f9f9f9; border-radius: 6px; margin-bottom: 20px; font-size: 14px; color: #555; }
+        .hint { font-size: 12px; color: #999; }
+        .storage-warn { padding: 10px 14px; background: #fff3cd; color: #856404; border-radius: 6px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
+
+        /* ---------- 按钮 ---------- */
+        .btn { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+        .btn:hover { background: #555; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; margin: 0 4px 0 0; }
+        .btn-danger { background: #d9534f; } .btn-danger:hover { background: #c9302c; }
+        .btn-primary { background: #1db954; } .btn-primary:hover { background: #1aa34a; }
+        .btn-warn { background: #f0ad4e; } .btn-warn:hover { background: #ec971f; }
+
+        /* ---------- 区块 ---------- */
+        .section { margin-bottom: 24px; padding: 20px; background: #f9f9f9; border-radius: 6px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+        /* ---------- 表单 ---------- */
+        .input-group { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 6px; width: 200px; }
+
+        /* ---------- 列表 ---------- */
+        .user-list, .chat-list, .queue-list { list-style: none; max-height: 300px; overflow-y: auto; background: white; border-radius: 6px; padding: 10px; border: 1px solid #eee; margin-bottom: 10px; }
+        .empty-hint { padding: 10px; text-align: center; color: #999; font-size: 13px; background: white; border-radius: 6px; border: 1px solid #eee; }
+
+        /* ---------- 成员 ---------- */
+        .user-item { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+
+        /* ---------- 聊天 ---------- */
+        .chat-item { border-bottom: 1px dashed #eee; font-size: 13px; padding: 6px 0; display: flex; gap: 8px; }
+        .chat-item.system { color: #888; }
+        .chat-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .chat-body { flex: 1; }
+        .chat-body b { color: #333; }
+        .chat-item.system .chat-body b { color: #888; }
+        .chat-emoji { width: 48px; height: 48px; vertical-align: middle; }
+        .chat-card { margin-top: 4px; display: flex; align-items: center; gap: 8px; color: #666; background: #f5f5f5; padding: 6px; border-radius: 4px; }
+        .chat-card img { width: 36px; height: 36px; border-radius: 4px; }
+
+        /* ---------- 队列 ---------- */
+        .queue-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+        .queue-item:hover { background: #fafafa; }
+        .queue-cover { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; }
+
+        /* ---------- 当前歌曲 ---------- */
+        .song-info { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 16px; background: white; border-radius: 6px; border: 1px solid #eee; }
+        .song-cover { width: 60px; height: 60px; border-radius: 4px; object-fit: cover; }
+        .song-cover.loading { background: #eee; }
+
+        /* ---------- 标签 ---------- */
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: #e0e0e0; color: #333; margin-left: 8px; }
+        .tag-special { background: #f8d7da; color: #721c24; }
+        .tag-mine    { background: #d4edda; color: #155724; }
+        .tag-sys     { background: #e2e3e5; color: #383d41; }
+        .tag-other   { background: #fff3cd; color: #856404; }
+        .tag-next    { background: #cce5ff; color: #004085; }
+        .tag-room    { background: #e7e3ff; color: #3f2e8c; }
+        .tag-liked   { background: #ffe0b2; color: #a1421c; }
+
+        /* ---------- 分享链接 ---------- */
+        .share-link-box { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+        .share-link-box input { flex: 1; width: auto; font-size: 12px; color: #666; }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="container" translate="no" @vue:mounted="init">
+        <a href="/qrlogin.html" class="login-link" style="display:block;margin-bottom:20px;color:#666;">还没登录？点击登录</a>
+        <h1>一起听 - 多人模式 (HTTP 轮询 Demo)</h1>
+
+        <div class="storage-warn" v-show="storageBlocked">
+            ⚠️ 检测到浏览器阻止了本地存储（Edge 跟踪防护）。请点击地址栏盾牌图标 → 对本网站关闭跟踪防护 → 刷新页面。否则登录 Cookie 无法保存，所有接口都会失败。
+        </div>
+
+        <div class="message">状态: {{message}}</div>
+        <audio id="player" class="audio-player" controls></audio>
+
+        <!-- ============ 账号信息 ============ -->
+        <div class="section flex-between">
+            <div>
+                <div>当前账号: {{account.nickname}} (UID: {{account.userId}})</div>
+                <button class="btn" @click="login(false)" v-show="!account.login" style="margin-top: 10px;">获取登录状态</button>
+            </div>
+            <button class="btn btn-danger" @click="forceExitAndReset" v-show="account.login">强制重置状态</button>
+        </div>
+
+        <!-- ============ 房间操作区（未进房时） ============ -->
+        <div v-show="account.login && !roomInfo.roomId" class="section">
+            <h3>发起一起听</h3>
+            <div class="input-group">
+                <label>初始歌曲 ID:</label>
+                <input v-model="inputSongId" type="text" placeholder="例如: 1372188635" />
+            </div>
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" v-model="allowStranger" style="width: auto; cursor: pointer;" />
+                    允许陌生人加入 (进入匹配池)
+                </label>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <button class="btn" @click="createRoom" :disabled="isMatching">创建房间</button>
+                <button class="btn btn-primary" @click="startMatch" :disabled="isMatching">
+                    {{ isMatching ? '正在匹配中...' : '随机匹配 (公房)' }}
+                </button>
+                <button v-show="isMatching" class="btn btn-danger" @click="cancelMatch">取消匹配</button>
+            </div>
+
+            <details id="joinDetails">
+                <summary style="cursor:pointer; font-weight:500; color:#333; padding:8px 0;">加入已有房间</summary>
+                <div class="input-group" style="margin-top:10px;">
+                    <input v-model="shareLinkInput" type="text" placeholder="粘贴分享链接自动解析" style="width: 400px;" @input="parseShareLink" />
+                </div>
+                <div class="input-group">
+                    <input v-model="joinForm.roomId" type="text" placeholder="输入房间ID" style="width: 400px;" />
+                </div>
+                <div class="input-group">
+                    <input v-model="joinForm.inviterId" type="text" placeholder="邀请者UID" style="width: 400px;" />
+                </div>
+                <button class="btn" @click="joinRoom">确认加入</button>
+            </details>
+        </div>
+
+        <!-- ============ 房间概览（已进房时） ============ -->
+        <div v-show="roomInfo.roomId" class="section">
+            <div>
+                <b>房间 ID:</b> {{roomInfo.roomId}} | <b>ChatRoom ID:</b> {{roomInfo.chatRoomId}}
+                <span class="tag" :class="{ 'tag-special': roomInfo.specialOperate }">{{ roomInfo.specialOperate ? '私房 (Special)' : '公房 (Match)' }}</span>
+                <span v-for="(t, ti) in roomInfo.roomTags" :key="'roomtag-' + ti + '-' + t" class="tag tag-room">{{ t }}</span>
+            </div>
+            <div class="hint" style="margin-top:8px;" v-if="roomInfo.hintText">{{ roomInfo.hintText }}</div>
+            <div class="hint" style="margin-top:4px;" v-if="roomInfo.nextRcmdText">{{ roomInfo.nextRcmdText }}</div>
+
+            <div class="share-link-box">
+                <button class="btn btn-sm" @click="copyShareLink">复制分享链接</button>
+                <input type="text" :value="shareUrl" readonly />
+            </div>
+
+            <!-- 当前歌曲 -->
+            <div class="song-info">
+                <img v-show="playingInfo.cover" :src="playingInfo.cover || ''" class="song-cover" />
+                <div v-show="!playingInfo.cover" class="song-cover loading"></div>
+                <div style="flex:1;">
+                    <div><b>正在播放:</b> {{playingInfo.name || (playingInfo.songId ? '加载中…' : '暂无')}}</div>
+                    <div><b>歌手:</b> {{playingInfo.artist || (playingInfo.songId ? '加载中…' : '暂无')}}</div>
+                    <div style="font-size:12px;color:#999;">SongID: {{playingInfo.songId}} | BizID: {{playingInfo.bizId}} | 进度: {{playingInfo.playedTime}}s / {{playingInfo.duration}}s</div>
+                    <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                        <span :class="['tag', currentSongSource.type === 'mine' ? 'tag-mine' : (currentSongSource.type === 'sys' ? 'tag-sys' : 'tag-other')]">
+                            {{ currentSongSource.label }}
+                        </span>
+                        <!-- zanCnt 完全来自服务端，前端不做任何累加 -->
+                        <span class="tag tag-liked" style="font-size:12px;">❤ {{ playingInfo.zanCnt }}</span>
+                    </div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button class="btn btn-sm btn-warn" @click="likeCurrentSong">点赞 (♥ 可连点)</button>
+                </div>
+            </div>
+
+            <div class="control-buttons" style="margin-top: 16px;">
+                <button class="btn" @click="exitRoom">正常退出房间</button>
+            </div>
+        </div>
+
+        <!-- ============ 在线成员 ============ -->
+        <div v-show="roomInfo.roomId" class="section">
+            <h3>在线成员 ({{ roomInfo.roomUsers.length }})</h3>
+            <ul class="user-list">
+                <li v-for="(u, i) in roomInfo.roomUsers" :key="'user-' + (userUid(u) || 'x') + '-' + i" class="user-item">
+                    <img v-if="u.avatar" :src="u.avatar" class="user-avatar" />
+                    <span>{{ u.nickname || '匿名' }}</span>
+                    <span style="color:#999;">(UID: {{ userUid(u) || '?' }})</span>
+                    <span v-if="isMe(u)" class="tag tag-mine">我</span>
+                </li>
+            </ul>
+            <div v-show="roomInfo.roomUsers.length === 0" class="empty-hint">暂无成员信息</div>
+        </div>
+
+        <!-- ============ 待播列表 ============ -->
+        <div v-show="roomInfo.roomId" class="section">
+            <h3>待播列表 ({{ playingInfo.nextSongs.length }} 首)</h3>
+            <ul class="queue-list">
+                <li v-for="(song, idx) in playingInfo.nextSongs" :key="'song-' + song.songId + '-' + song.bizId + '-' + idx" class="queue-item">
+                    <img v-if="song.cover" :src="song.cover" class="queue-cover" />
+                    <div style="flex: 1;">
+                        <div>
+                            <span v-if="idx === 0" class="tag tag-next" style="margin-right:6px;">下一首</span>
+                            {{ song.name }}
+                        </div>
+                        <div style="font-size: 12px; color: #999;">
+                            {{ song.artist }}
+                            <span :class="['tag', song.isMine ? 'tag-mine' : (song.songRcmdUid ? 'tag-other' : 'tag-sys')]" style="margin-left:6px;">
+                                {{ song.sourceLabel }}
+                            </span>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" @click.stop="operateSong(OPERATE_TYPE.TOP, song.songId, song.bizId)">顶歌</button>
+                    <button v-if="song.isMine" class="btn btn-sm btn-danger"
+                            @click.stop="operateSong(OPERATE_TYPE.DELETE, song.songId, song.bizId)">删除</button>
+                </li>
+            </ul>
+            <div v-show="playingInfo.nextSongs.length === 0" class="empty-hint">暂无待播歌曲</div>
+        </div>
+
+        <!-- ============ 播放控制 ============ -->
+        <div v-show="roomInfo.roomId" class="section">
+            <h3>播放控制</h3>
+            <div class="input-group">
+                <label>歌曲 ID:</label>
+                <input v-model="inputSongId" type="text" placeholder="粘贴歌曲ID" :disabled="!roomInfo.permission.addSong" />
+                <button class="btn" @click="operateSong(OPERATE_TYPE.ADD, Number(inputSongId))" :disabled="!roomInfo.permission.addSong">添加歌曲</button>
+            </div>
+            <div class="control-buttons" style="margin-top: 12px; border-top: 1px solid #ddd; padding-top: 12px;">
+                <button class="btn" @click="nextSong" :disabled="!roomInfo.permission.switchSong">切歌 (Next)</button>
+                <button class="btn" @click="togglePlay">播放/暂停</button>
+                <button class="btn btn-warn" @click="likeCurrentSong">点赞当前 (♥)</button>
+            </div>
+            <div style="font-size: 12px; color: #999; margin-top: 8px;">
+                权限: 加歌 {{roomInfo.permission.addSong ? '✅' : '❌'}} | 切歌 {{roomInfo.permission.switchSong ? '✅' : '❌'}} | 顶歌 {{roomInfo.permission.topSong ? '✅' : '❌'}}
+            </div>
+        </div>
+
+        <!-- ============ 房间聊天 ============ -->
+        <div v-show="roomInfo.roomId" class="section">
+            <h3>房间聊天</h3>
+            <ul class="chat-list" id="chatList">
+                <li v-for="(msg, mi) in chatHistory"
+                    :key="'chat-' + (msg.id || 'noid') + '-' + (msg.sendTime || mi) + '-' + mi"
+                    :class="['chat-item', msg.isSystem ? 'system' : '']">
+                    <img v-if="msg.avatarUrl" :src="msg.avatarUrl" class="chat-avatar" />
+                    <div class="chat-body">
+                        <b v-if="msg.nickname">{{ msg.nickname }}:</b>
+                        <img v-if="msg.emojiUrl" :src="msg.emojiUrl" class="chat-emoji" />
+                        <span v-show="!msg.emojiUrl">{{ msg.text }}</span>
+                        <div v-if="msg.cover" class="chat-card">
+                            <img :src="msg.cover" />
+                            <span>{{ msg.songName }} - {{ msg.artistName }}</span>
+                            <button v-if="msg.suggestSongId && roomInfo.permission.addSong"
+                                    class="btn btn-sm btn-primary"
+                                    @click.stop="operateSong(OPERATE_TYPE.ADD, msg.suggestSongId)">加歌</button>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <div v-show="chatHistory.length === 0" class="empty-hint">暂无聊天消息</div>
+            <div class="input-group">
+                <input v-model="chatInput" type="text" placeholder="输入消息..." style="width: 300px;" @keyup.enter="sendChat" />
+                <button class="btn" @click="sendChat">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ==============================================================
+     * 一起听 - 多人模式 Demo (HTTP 轮询版)
+     * ==============================================================
+     *
+     * 【文件结构】
+     *   § 1  常量与工具
+     *   § 2  API 封装（统一 timestamp / no-cache）
+     *   § 3  安全存储（localStorage 被拦截时回退内存）
+     *   § 4  状态默认值工厂
+     *   § 5  应用定义（PetiteVue.createApp）
+     *       5.1 生命周期
+     *       5.2 房间操作
+     *       5.3 轮询调度
+     *       5.4 状态应用（服务端 → 本地）
+     *       5.5 歌曲 / 播放控制
+     *       5.6 聊天
+     *       5.7 分享 / 工具
+     *
+     * 【核心业务流程】
+     *   进入房间三种途径：
+     *     createRoom()  创建私房(type=1)或公房(type=2)
+     *     startMatch()  进匹配池 → 轮询 status/get → 匹配成功后自动 ack
+     *     joinRoom()    手动 roomId + inviterUid → match/ack
+     *
+     *   进房后开启轮询 startPolling()：
+     *     heartbeat           每 5s   拉播放状态（同时也刷新 zanCnt）
+     *     match/status/get    每 30s  拉成员 / 权限 / 队列
+     *     msg/history         每 5s   拉聊天
+     *
+     *   主动操作（加歌/顶歌/点赞/切歌/删除）后：
+     *     scheduleQuickSync()  在 0.8s / 2.5s / 5s 各触发一次 fetchStatus
+     *
+     * 【API 端点清单】
+     *   GET    /login/status
+     *   POST   /listentogether/multi/room/create
+     *   POST   /listentogether/multi/match
+     *   POST   /listentogether/multi/match/cancel
+     *   POST   /listentogether/multi/match/ack
+     *   POST   /listentogether/multi/match/exit
+     *   POST   /listentogether/multi/match/heartbeat
+     *   POST   /listentogether/multi/match/status/get
+     *   POST   /listentogether/multi/match/song/operate   (公房)
+     *   POST   /listentogether/multi/special/song/operate (私房)
+     *   POST   /listentogether/multi/match/msg/history    (公房)
+     *   POST   /listentogether/multi/special/msg/history  (私房)
+     *   POST   /listentogether/multi/chat/send
+     *   GET    /song/detail?ids=...
+     *
+     * 【关键设计原则（AI 学习点）】
+     *   1. 所有请求经 api() 封装 → 自动加 timestamp + no-cache，防止缓存
+     *   2. bizId 保持数字类型（服务端返回数字，不能强转字符串）
+     *   3. zanCnt 完全以服务端为准，前端绝不做 +1，否则会和心跳/状态叠加出错
+     *   4. 用 v-show 而非 v-if：petite-vue 对 v-if 锚点管理较弱，
+     *      反复切换容易触发 insertBefore null（翻译插件也会加剧）
+     *   5. v-for 的 key 要"稳定 + 唯一"，避免用纯 index
+     *   6. 轮询用 generation 令牌防"旧循环残留"，stopPolling 时立即递增
+     *   7. isMatching 期间只拉 status（房间还没分配），不进房不解锁轮询
+     *   8. emptyRoomCount 连续 3 次空房才清本地状态，防止服务端抖动误判
+     * ============================================================== */
+
+    /* ==============================================================
+     * § 1  常量与工具
+     * ============================================================== */
+
+    const log = (tag, msg, data = '') =>
+        console.log(`[${new Date().toLocaleTimeString()}] [${tag}] ${msg}`, data);
+
+    window.addEventListener('error', (e) => log('Global-Error', e.message, e.error));
+    window.addEventListener('unhandledrejection', (e) =>
+        log('Global-Reject', e.reason?.message || e.reason, e.reason));
+
+    /** 各种轮询/超时配置（毫秒） */
+    const TIMING = Object.freeze({
+        HEARTBEAT: 5000,       // 心跳：拉播放状态
+        STATUS: 30000,         // 全量状态：成员 / 权限 / 队列
+        MATCH_POLL: 2000,      // 匹配中轮询
+        CHAT: 5000,            // 聊天拉取
+        TICK: 1000,            // 轮询主循环步长
+        REQ_TIMEOUT: 8000,     // 单次请求超时
+        MATCH_TIMEOUT: 35000,  // 匹配总超时
+        QUICK_SYNC: [800, 2500, 5000], // 操作后快速同步的三档延迟
+    });
+
+    /**
+     * 歌曲操作类型。必须与后端 operate 枚举严格一致。
+     * @type {{ADD:1, TOP:2, LIKE:3, SWITCH:4, DELETE:7}}
+     */
+    const OPERATE_TYPE = Object.freeze({
+        ADD: 1,     // 加歌
+        TOP: 2,     // 顶歌（移到队列最前）
+        LIKE: 3,    // 点赞当前歌曲
+        SWITCH: 4,  // 切歌
+        DELETE: 7,  // 删除自己点的歌
+    });
+
+    const EXIT_TYPE = Object.freeze({ NORMAL: 'NORMAL_END' });
+
+    /* ==============================================================
+     * § 2  API 封装
+     * ============================================================== */
+    /**
+     * 统一封装的 axios 请求：
+     *  - 自动追加 ?timestamp=Date.now()（若 URL 中已有则跳过）
+     *  - 附加 Cache-Control / Pragma: no-cache（应对 CDN / 代理缓存）
+     *  - 默认超时 REQ_TIMEOUT
+     *
+     * @param {object} opts  axios 配置（url / method / data / headers ...）
+     * @returns {Promise<import('axios').AxiosResponse>}
+     */
+    const api = (opts) => {
+        const config = Object.assign({ timeout: TIMING.REQ_TIMEOUT }, opts);
+        if (config.url && !/[?&]timestamp=/.test(config.url)) {
+            config.url += (config.url.includes('?') ? '&' : '?') + 'timestamp=' + Date.now();
+        }
+        config.headers = Object.assign(
+            { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+            config.headers || {}
+        );
+        return axios(config);
+    };
+
+    /* ==============================================================
+     * § 3  安全存储
+     * ============================================================== */
+    /** 探测 localStorage 是否可用（Edge 跟踪防护会抛异常） */
+    const isStorageAvailable = () => {
+        try {
+            const k = '__storage_test__';
+            localStorage.setItem(k, '1');
+            localStorage.removeItem(k);
+            return true;
+        } catch (e) { return false; }
+    };
+
+    /** localStorage 被拦截时回退到内存，保证同会话内仍能读写 cookie */
+    const memStore = Object.create(null);
+    const safeStorage = {
+        get(key) {
+            try {
+                const v = localStorage.getItem(key);
+                if (v !== null) return v;
+            } catch (e) { log('Storage', '读取被阻止，已回退到内存', e.message); }
+            return memStore[key] || '';
+        },
+        set(key, value) {
+            memStore[key] = value;
+            try { localStorage.setItem(key, value); } catch (e) { }
+        },
+        remove(key) {
+            delete memStore[key];
+            try { localStorage.removeItem(key); } catch (e) { }
+        }
+    };
+
+    /* ==============================================================
+     * § 4  状态默认值工厂（resetLocalState 时复用）
+     * ============================================================== */
+    const createDefaultRoomInfo = () => ({
+        roomId: null,
+        creatorId: 0,
+        chatRoomId: '',
+        roomUsers: [],
+        roomTags: [],
+        hintText: '',
+        nextRcmdText: '',
+        specialOperate: false,
+        permission: { addSong: true, switchSong: true, topSong: true, specialOperate: false },
+    });
+
+    const createDefaultPlayingInfo = () => ({
+        songId: 0,
+        bizId: 0,            // 数字，与 API 一致
+        name: '', artist: '', cover: '',
+        playedTime: 0, duration: 0,
+        zanCnt: 0,
+        songRcmdUid: 0,
+        version: 0,
+        nextSongs: [],
+    });
+
+    /* ==============================================================
+     * § 5  应用
+     * ============================================================== */
+    PetiteVue.createApp({
+        /* ---------------- 顶层状态 ---------------- */
+        message: '请先登录',
+        storageBlocked: false,
+        account: { login: false, userId: 0, nickname: '' },
+
+        roomInfo: createDefaultRoomInfo(),
+        playingInfo: createDefaultPlayingInfo(),
+
+        // 表单
+        inputSongId: '1372188635',
+        allowStranger: false,
+        shareLinkInput: '',
+        joinForm: { roomId: '', inviterId: '' },
+        chatInput: '',
+        chatHistory: [],
+        isMatching: false,
+
+        // 轮询控制
+        pollTimer: null,
+        isPolling: false,
+        pollGeneration: 0,
+        lastHeartbeatTime: 0,
+        lastStatusTime: 0,
+        lastChatTime: 0,
+        matchTimeoutTimer: null,
+        quickSyncTimers: [],
+
+        // 失败 / 重入保护
+        emptyRoomCount: 0,
+        queueFetching: false,
+        statusFetching: false,
+        consecutiveFailures: 0,
+
+        // 把常量暴露给模板（petite-vue 模板里能访问到 this.OPERATE_TYPE）
+        OPERATE_TYPE,
+
+        /* ==================================================
+         * 5.1 生命周期
+         * ================================================== */
+
+        /** 页面挂载：探测存储 → 尝试静默登录 */
+        async init() {
+            this.storageBlocked = !isStorageAvailable();
+            if (this.storageBlocked) {
+                log('Init', '本地存储不可用：Cookie 无法保存，接口可能失败');
+                this.message = '本地存储被浏览器拦截，请按页面顶部提示操作';
+            }
+            try { await this.login(true); }
+            catch (e) { log('Init', '初始化异常', e); }
+        },
+
+        getCookie() { return safeStorage.get('cookie'); },
+
+        /** 给 cookie 打上 android 客户端伪装（部分接口需要） */
+        getFakeAndroidCookie() {
+            let c = this.getCookie();
+            c = c.replace(/os=[^;]+/g, 'os=android')
+                 .replace(/appver=[^;]+/g, 'appver=9.1.65')
+                 .replace(/osver=[^;]+/g, 'osver=14');
+            if (!c.includes('os=android')) c += '; os=android';
+            if (!c.includes('appver='))    c += '; appver=9.1.65';
+            if (!c.includes('osver='))     c += '; osver=14';
+            if (!c.includes('channel='))   c += '; channel=xiaomi';
+            return c;
+        },
+
+        /**
+         * 获取登录状态。
+         * @param {boolean} silent  true 时不弹窗，只更新 message
+         */
+        async login(silent = false) {
+            try {
+                const res = await api({ url: '/login/status', method: 'get' });
+                if (!res.data?.data || res.data.data.code != 200) {
+                    if (!silent) alert('请先在 /qrlogin.html 扫码登录');
+                    else this.message = '未登录，请点击上方链接登录';
+                    return;
+                }
+                this.account.userId   = res.data.data.profile.userId;
+                this.account.nickname = res.data.data.profile.nickname;
+                this.account.login    = true;
+                this.message = '登录成功';
+                await this.resumeIfInRoom();
+            } catch (e) {
+                if (!silent) alert('登录状态获取失败: ' + e.message);
+            }
+        },
+
+        /** 若服务端记录里还有上次的房间，自动恢复 */
+        async resumeIfInRoom() {
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/match/status/get',
+                    method: 'post',
+                    data: { cookie: this.getFakeAndroidCookie() },
+                });
+                const dto = res.data.data?.multiLtRoomSnapshot?.multiRoomInfoDTO;
+                if (dto && dto.roomId) {
+                    this.roomInfo.roomId     = dto.roomId;
+                    this.roomInfo.creatorId  = dto.creatorId;
+                    this.roomInfo.chatRoomId = dto.chatRoomId || '';
+                    this.message = '已恢复所在房间';
+                    await this.fetchStatus();
+                    if (!this.isPolling) this.startPolling();
+                }
+            } catch (e) { /* 无房间就静默忽略 */ }
+        },
+
+        /** 本地状态清空（不动服务端）。停轮询 / 清定时器 / 清 audio */
+        resetLocalState() {
+            this.stopPolling();
+            this.isMatching = false;
+            this.roomInfo = createDefaultRoomInfo();
+            this.playingInfo = createDefaultPlayingInfo();
+            this.chatHistory = [];
+            this.lastHeartbeatTime = 0;
+            this.lastStatusTime = 0;
+            this.lastChatTime = 0;
+            this.emptyRoomCount = 0;
+            this.consecutiveFailures = 0;
+            this.clearQuickSync();
+            clearTimeout(this.matchTimeoutTimer);
+            const audio = document.getElementById('player');
+            if (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
+        },
+
+        /* ==================================================
+         * 5.2 房间操作
+         * ================================================== */
+
+        /** 创建房间。allowStranger=true → type=2(公房)；否则 type=1(私房) */
+        async createRoom() {
+            this.message = '创建房间中...';
+            const songId = Number(this.inputSongId) || 1372188635;
+            const roomType = this.allowStranger ? 2 : 1;
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/room/create',
+                    method: 'post',
+                    data: { type: roomType, songId, groupIds: '[]', inviteUids: '[]', cookie: this.getFakeAndroidCookie() },
+                });
+                const snapshot = res.data.data?.multiLtRoomSnapshot;
+                if (res.data.code == 200 && snapshot) {
+                    this.roomInfo.roomId     = snapshot.multiRoomInfoDTO.roomId;
+                    this.roomInfo.creatorId  = snapshot.multiRoomInfoDTO.creatorId;
+                    this.roomInfo.chatRoomId = snapshot.multiRoomInfoDTO.chatRoomId || '';
+                    this.message = (this.allowStranger ? '公房(允许陌生人)' : '私房(好友房)') + '创建成功';
+                    this.startPolling();
+                } else {
+                    this.message = '创建失败: ' + (res.data.message || '未知错误');
+                }
+            } catch (error) {
+                this.message = '创建接口异常: ' + (error.response?.data?.message || error.message);
+            }
+        },
+
+        /** 进入匹配池 → 轮询 status/get 直到拿到 roomId */
+        async startMatch() {
+            this.message = '正在进入匹配池...';
+            const songId = Number(this.inputSongId) || 1372188635;
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/match',
+                    method: 'post',
+                    data: { songId, checkToken: '', cookie: this.getFakeAndroidCookie() },
+                });
+                if (res.data.code === 200) {
+                    this.isMatching = true;
+                    this.message = '匹配中，等待分配房间...';
+                    this.startPolling();
+                    this.matchTimeoutTimer = setTimeout(() => {
+                        if (this.isMatching) {
+                            this.cancelMatch();
+                            this.message = '匹配超时，请重试';
+                        }
+                    }, TIMING.MATCH_TIMEOUT);
+                } else {
+                    this.message = '匹配失败: ' + res.data.message;
+                }
+            } catch (error) {
+                this.message = '匹配接口异常: ' + (error.response?.data?.message || error.message);
+            }
+        },
+
+        /** 取消匹配 + 停轮询 */
+        async cancelMatch() {
+            this.message = '正在取消匹配...';
+            try {
+                await api({
+                    url: '/listentogether/multi/match/cancel',
+                    method: 'post',
+                    data: { cookie: this.getFakeAndroidCookie() },
+                });
+            } catch (error) { /* 忽略 */ }
+            this.isMatching = false;
+            clearTimeout(this.matchTimeoutTimer);
+            this.stopPolling();
+            this.message = '已取消匹配';
+        },
+
+        /** 手动加入房间：roomId + inviterUid → match/ack */
+        async joinRoom() {
+            const roomId    = String(this.joinForm.roomId    || '').trim();
+            const inviterId = String(this.joinForm.inviterId || '').trim();
+            if (!roomId || !inviterId) return this.message = '请输入房间ID和邀请者UID';
+            this.message = '加入房间中...';
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/match/ack',
+                    method: 'post',
+                    data: { roomId, inviterUid: inviterId, agree: true, cookie: this.getFakeAndroidCookie() },
+                });
+                if (res.data.code === 200 || res.data.status === 200) {
+                    const snapshot = res.data.data?.multiLtRoomSnapshot;
+                    this.roomInfo.roomId = roomId;
+                    if (snapshot?.multiRoomInfoDTO?.chatRoomId) {
+                        this.roomInfo.chatRoomId = snapshot.multiRoomInfoDTO.chatRoomId;
+                    }
+                    this.message = '加入成功';
+                    this.startPolling();
+                } else {
+                    this.message = '加入失败: ' + (res.data.message || '未知错误');
+                }
+            } catch (error) {
+                this.message = '加入接口异常: ' + (error.response?.data?.message || error.message);
+            }
+        },
+
+        /** 正常退出：调 exit 接口 + 清本地 */
+        async exitRoom() {
+            try {
+                await api({
+                    url: '/listentogether/multi/match/exit',
+                    method: 'post',
+                    data: { roomId: this.roomInfo.roomId, exitType: EXIT_TYPE.NORMAL, cookie: this.getFakeAndroidCookie() },
+                });
+                this.resetLocalState();
+                this.message = '已正常退出房间';
+            } catch (error) {
+                this.message = '退出接口异常，已本地重置';
+                this.resetLocalState();
+            }
+        },
+
+        /** 强制重置：先问服务端当前房间，再发 exit，再清本地（用于卡死/幽灵房间） */
+        async forceExitAndReset() {
+            this.message = '正在清理服务端残留状态...';
+            let targetRoomId = this.roomInfo.roomId || this.joinForm.roomId;
+            if (!targetRoomId) {
+                try {
+                    const statusRes = await api({ url: '/listentogether/multi/match/status/get', method: 'post', data: { cookie: this.getFakeAndroidCookie() } });
+                    const roomDTO = statusRes.data.data?.multiLtRoomSnapshot?.multiRoomInfoDTO;
+                    if (roomDTO && roomDTO.roomId) targetRoomId = roomDTO.roomId;
+                } catch (e) { /* 忽略 */ }
+            }
+            if (targetRoomId) {
+                try {
+                    await api({ url: '/listentogether/multi/match/exit', method: 'post', data: { roomId: targetRoomId, exitType: EXIT_TYPE.NORMAL, cookie: this.getFakeAndroidCookie() } });
+                } catch (e) { /* 忽略 */ }
+            }
+            this.resetLocalState();
+            this.message = '强制重置完成';
+        },
+
+        /* ==================================================
+         * 5.3 轮询调度
+         * ================================================== */
+
+        /**
+         * 启动轮询主循环。
+         * - isMatching 且未进房：只拉 status（MATCH_POLL 间隔）
+         * - 已进房：heartbeat / status / chat 三路按各自间隔触发
+         * - generation 令牌用于"旧循环自灭"：stopPolling 时 ++，旧回调返回
+         */
+        startPolling() {
+            this.stopPolling();
+            const gen = ++this.pollGeneration;
+            this.isPolling = true;
+            this.lastHeartbeatTime = 0;
+            this.lastStatusTime = 0;
+            this.lastChatTime = 0;
+            this.emptyRoomCount = 0;
+
+            const poll = async () => {
+                if (!this.isPolling || this.pollGeneration !== gen) return;
+                const now = Date.now();
+                try {
+                    if (this.isMatching && !this.roomInfo.roomId) {
+                        if (now - this.lastStatusTime >= TIMING.MATCH_POLL) {
+                            this.lastStatusTime = now;
+                            await this.fetchStatus();
+                        }
+                    } else if (this.roomInfo.roomId) {
+                        if (now - this.lastHeartbeatTime >= TIMING.HEARTBEAT) {
+                            this.lastHeartbeatTime = now;
+                            await this.heartbeat();
+                        }
+                        if (now - this.lastStatusTime >= TIMING.STATUS) {
+                            this.lastStatusTime = now;
+                            await this.fetchStatus();
+                        }
+                        if (now - this.lastChatTime >= TIMING.CHAT) {
+                            this.lastChatTime = now;
+                            await this.fetchChat();
+                        }
+                    }
+                } catch (e) {
+                    log('Poll', '异常', e?.message);
+                }
+                if (this.isPolling && this.pollGeneration === gen) {
+                    this.pollTimer = setTimeout(poll, TIMING.TICK);
+                }
+            };
+            poll();
+        },
+
+        /** 停轮询：generation++ 让旧回调立即失效，同时清 quickSync 定时器 */
+        stopPolling() {
+            this.isPolling = false;
+            this.pollGeneration++;
+            if (this.pollTimer) { clearTimeout(this.pollTimer); this.pollTimer = null; }
+            this.clearQuickSync();
+        },
+
+        clearQuickSync() {
+            this.quickSyncTimers.forEach(t => clearTimeout(t));
+            this.quickSyncTimers = [];
+        },
+
+        /** 主动操作后触发快速同步（0.8s / 2.5s / 5s 三档） */
+        scheduleQuickSync() {
+            this.clearQuickSync();
+            TIMING.QUICK_SYNC.forEach(d => {
+                const t = setTimeout(() => {
+                    if (this.roomInfo.roomId) this.fetchStatus();
+                }, d);
+                this.quickSyncTimers.push(t);
+            });
+        },
+
+        /* ==================================================
+         * 5.4 状态应用
+         * ================================================== */
+
+        /** 心跳：拉播放状态（顺带刷新 zanCnt） */
+        async heartbeat() {
+            if (!this.roomInfo.roomId) return;
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/match/heartbeat',
+                    method: 'post',
+                    data: { roomId: this.roomInfo.roomId, cookie: this.getFakeAndroidCookie() },
+                });
+                if (res.data.code === 200 && res.data.data) {
+                    this.consecutiveFailures = 0;
+                    const hb = res.data.data;
+                    if (hb.roomPlaySongInfo) this.applyPlayInfo(hb.roomPlaySongInfo);
+                    if (hb.roomInfoDTO?.roomClosed) {
+                        this.resetLocalState();
+                        this.message = '房间已关闭';
+                    }
+                } else {
+                    this.consecutiveFailures++;
+                    this.checkFailures();
+                }
+            } catch (e) {
+                this.consecutiveFailures++;
+                this.checkFailures();
+            }
+        },
+
+        /** 连续 3 次失败暂停轮询，防疯狂重试 */
+        checkFailures() {
+            if (this.consecutiveFailures >= 3) {
+                this.stopPolling();
+                this.message = '网络异常，已暂停轮询，请检查网络后刷新页面';
+            }
+        },
+
+        /** 全量状态：成员 / 权限 / 队列 / 当前歌曲 */
+        async fetchStatus() {
+            if (this.statusFetching) return false;
+            this.statusFetching = true;
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/match/status/get',
+                    method: 'post',
+                    data: { cookie: this.getFakeAndroidCookie() },
+                });
+                if (res.data.code === 200 && res.data.data) {
+                    this.consecutiveFailures = 0;
+                    await this.applyStatus(res.data.data);
+                    return true;
+                }
+            } catch (e) {
+                this.consecutiveFailures++;
+                this.checkFailures();
+            } finally {
+                this.statusFetching = false;
+            }
+            return false;
+        },
+
+        /**
+         * 把 status/get 的响应合并进本地状态。
+         * 三种情况会改变"是否在房间中"：
+         *   1. 匹配中拿到 roomId → 发 ack 确认
+         *   2. 本地无房间但服务端有 → 恢复
+         *   3. 服务端 multiRoom 为空连续 3 次 → 认为房间结束
+         */
+        async applyStatus(data) {
+            const multiRoom  = data.multiLtRoomSnapshot;
+            const permission = data.multiRoomPermission;
+
+            if (permission) {
+                this.roomInfo.permission = Object.assign(
+                    { addSong: true, switchSong: true, topSong: true, specialOperate: false },
+                    permission,
+                    {
+                        addSong:    permission.addSong    !== false,
+                        switchSong: permission.switchSong !== false,
+                        topSong:    permission.topSong    !== false,
+                        specialOperate: !!permission.specialOperate,
+                    }
+                );
+                this.roomInfo.specialOperate = !!permission.specialOperate;
+            }
+
+            // 1) 匹配成功
+            if (this.isMatching && !this.roomInfo.roomId && multiRoom?.multiRoomInfoDTO?.roomId) {
+                this.isMatching = false;
+                clearTimeout(this.matchTimeoutTimer);
+                this.roomInfo.roomId     = multiRoom.multiRoomInfoDTO.roomId;
+                this.roomInfo.creatorId  = multiRoom.multiRoomInfoDTO.creatorId;
+                this.roomInfo.chatRoomId = multiRoom.multiRoomInfoDTO.chatRoomId || '';
+                this.message = '匹配成功，已进入房间';
+                try {
+                    await api({
+                        url: '/listentogether/multi/match/ack',
+                        method: 'post',
+                        data: {
+                            roomId: this.roomInfo.roomId,
+                            inviterUid: multiRoom.multiRoomInfoDTO.firstUserId || 0,
+                            agree: true,
+                            cookie: this.getFakeAndroidCookie(),
+                        },
+                    });
+                } catch (e) { /* 忽略 */ }
+                this.lastStatusTime = 0;
+                return;
+            }
+
+            // 2) 本地无房间 / 服务端有 → 恢复
+            if (!this.roomInfo.roomId && multiRoom?.multiRoomInfoDTO?.roomId) {
+                this.roomInfo.roomId     = multiRoom.multiRoomInfoDTO.roomId;
+                this.roomInfo.creatorId  = multiRoom.multiRoomInfoDTO.creatorId;
+                this.roomInfo.chatRoomId = multiRoom.multiRoomInfoDTO.chatRoomId || '';
+                this.message = '已恢复所在房间';
+                if (!this.isPolling) this.startPolling();
+            }
+
+            if (!this.roomInfo.roomId) return;
+
+            // 3) 空房判定
+            if (!multiRoom) {
+                this.emptyRoomCount++;
+                if (this.emptyRoomCount >= 3) {
+                    this.resetLocalState();
+                    this.message = '房间已结束或你已离开';
+                }
+                return;
+            }
+            this.emptyRoomCount = 0;
+
+            // 更新房间基础信息
+            const dto = multiRoom.multiRoomInfoDTO || {};
+            if (dto.chatRoomId) this.roomInfo.chatRoomId = dto.chatRoomId;
+            if (dto.creatorId)  this.roomInfo.creatorId  = dto.creatorId;
+
+            if (Array.isArray(multiRoom.roomTagList)) {
+                this.roomInfo.roomTags = multiRoom.roomTagList.slice();
+            }
+
+            // 在线成员 + 提示文案
+            const agg = multiRoom.multiLtRoomUserAgg || {};
+            if (Array.isArray(agg.onlineUserInfos)) {
+                this.roomInfo.roomUsers = agg.onlineUserInfos.slice();
+            }
+            this.roomInfo.hintText = agg.text || '';
+            let nextText = agg.nextText || '';
+            if (nextText && agg.nextSongRcmd?.nickname) {
+                nextText = nextText.replace('%s', agg.nextSongRcmd.nickname);
+            }
+            this.roomInfo.nextRcmdText = nextText;
+
+            // 当前歌曲
+            if (multiRoom.roomPlaySongInfo) {
+                this.applyPlayInfo(multiRoom.roomPlaySongInfo);
+            }
+        },
+
+        /**
+         * 把播放信息合并进 playingInfo。
+         * 关键点：
+         *  - 版本号小于当前 → 丢弃（旧响应覆盖新响应）
+         *  - zanCnt 直接取服务端值，绝不做 Math.max 或本地 +1
+         *  - 若切歌则换 src、重置歌曲元数据，并触发 fetchSongDetail
+         */
+        applyPlayInfo(playInfo) {
+            if (!playInfo || !playInfo.playSong) return;
+            const ps = playInfo.playSong;
+            const version     = Number(playInfo.version || 0);
+            const lastVersion = Number(this.playingInfo.version || 0);
+            if (version && lastVersion && version < lastVersion) {
+                log('PlayInfo', `忽略旧版本 ${version} < ${lastVersion}`);
+                return;
+            }
+            if (version) this.playingInfo.version = version;
+
+            const serverZan = Number(playInfo.playingSongZanCnt || 0);
+            const playedSec = Math.floor((playInfo.playedTime || 0) / 1000);
+            const isSameSong = Number(ps.songId) === Number(this.playingInfo.songId);
+            const audio = document.getElementById('player');
+
+            if (isSameSong) {
+                // ★ zanCnt 一律以服务端为准
+                this.playingInfo.zanCnt       = serverZan;
+                this.playingInfo.playedTime   = playedSec;
+                if (ps.songBizId) this.playingInfo.bizId = ps.songBizId;   // 数字透传
+                this.playingInfo.songRcmdUid  = Number(ps.songRcmdUid || 0);
+
+                // 进度偏差超过 3s 才纠正，避免小抖动反复 seek
+                if (audio.src && Math.abs(audio.currentTime - playedSec) > 3) {
+                    try { audio.currentTime = playedSec; } catch (e) { /* 忽略 */ }
+                }
+
+                this.syncQueue(playInfo.nextSongs || []);
+                return;
+            }
+
+            // ---- 切歌 ----
+            this.playingInfo.songId      = Number(ps.songId);
+            this.playingInfo.bizId       = ps.songBizId || 0;             // 数字
+            this.playingInfo.songRcmdUid = Number(ps.songRcmdUid || 0);
+            this.playingInfo.zanCnt      = serverZan;
+            this.playingInfo.playedTime  = playedSec;
+            this.playingInfo.name        = '';
+            this.playingInfo.artist      = '';
+            this.playingInfo.cover       = '';
+            this.playingInfo.duration    = 0;
+
+            const newSrc = 'https://music.163.com/song/media/outer/url?id=' + ps.songId + '.mp3';
+            if (audio.src !== newSrc) {
+                audio.pause();
+                audio.onloadedmetadata = () => {
+                    try { audio.currentTime = Math.max(0, playedSec); } catch (e) { /* 忽略 */ }
+                    audio.play().catch(() => { /* 自动播放拦截 */ });
+                    audio.onloadedmetadata = null;
+                };
+                audio.src = newSrc;
+                audio.load();
+            }
+
+            this.fetchSongDetail(ps.songId);
+            this.syncQueue(playInfo.nextSongs || []);
+        },
+
+        /** 队列"指纹"没变就跳过重拉，避免无意义的 /song/detail */
+        syncQueue(serverNextSongs) {
+            const cur = this.playingInfo.nextSongs.map(s => s.songId + ':' + s.bizId).join(',');
+            const neu = serverNextSongs.map(s => s.songId + ':' + s.songBizId).join(',');
+            if (cur === neu) return;
+            if (serverNextSongs.length) this.fetchQueueDetails(serverNextSongs);
+            else this.playingInfo.nextSongs = [];
+        },
+
+        /** 拉当前歌曲元数据（名称 / 歌手 / 封面 / 时长） */
+        async fetchSongDetail(songId) {
+            try {
+                const res = await api({ url: `/song/detail?ids=${songId}` });
+                if (Number(this.playingInfo.songId) !== Number(songId)) return; // 请求期间又切歌了
+                if (res.data.code == 200 && res.data.songs?.length > 0) {
+                    const song = res.data.songs[0];
+                    this.playingInfo.name     = song.name;
+                    this.playingInfo.artist   = song.ar.map(a => a.name).join('/');
+                    this.playingInfo.cover    = song.al.picUrl;
+                    this.playingInfo.duration = Math.floor(song.dt / 1000);
+                }
+            } catch (e) { /* 忽略 */ }
+        },
+
+        /** 批量拉待播队列的元数据 + 来源标注 */
+        async fetchQueueDetails(nextSongs) {
+            const ids = nextSongs.map(s => s.songId).join(',');
+            if (!ids || this.queueFetching) return;
+            this.queueFetching = true;
+            try {
+                const res = await api({ url: `/song/detail?ids=${ids}` });
+                if (res.data.code == 200 && res.data.songs) {
+                    const songMap = {};
+                    res.data.songs.forEach(s => { songMap[s.id] = s; });
+                    this.playingInfo.nextSongs = nextSongs.map(q => {
+                        const detail = songMap[q.songId];
+                        const src = this.songSource({ songRcmdUid: q.songRcmdUid });
+                        return {
+                            songId: q.songId,
+                            bizId: q.songBizId || 0,      // 数字
+                            name:   detail ? detail.name : '未知歌曲',
+                            artist: detail ? detail.ar.map(a => a.name).join('/') : '',
+                            cover:  detail ? detail.al.picUrl : '',
+                            songRcmdUid: Number(q.songRcmdUid || 0),
+                            isMine: src.isMine,
+                            sourceLabel: src.label,
+                        };
+                    });
+                }
+            } catch (e) { /* 忽略 */ } finally { this.queueFetching = false; }
+        },
+
+        /* ==================================================
+         * 5.5 歌曲 / 播放控制
+         * ================================================== */
+
+        /**
+         * 统一的操作入口（加歌 / 顶歌 / 点赞 / 切歌 / 删除）。
+         * @param {number} operateType  OPERATE_TYPE 枚举
+         * @param {number|null} targetSongId
+         * @param {number|null} targetBizId   数字类型；为 null 时按 operateType 自动推导
+         * @returns {Promise<boolean>}  是否成功
+         */
+        async operateSong(operateType, targetSongId = null, targetBizId = null) {
+            if (!this.roomInfo.roomId) return false;
+
+            let songId = 0;
+            let bizId = 0;
+
+            if (operateType === OPERATE_TYPE.ADD) {
+                songId = targetSongId || Number(this.inputSongId);
+                bizId = 0;
+            } else if (operateType === OPERATE_TYPE.SWITCH) {
+                songId = targetSongId || this.playingInfo.songId;
+                bizId = targetBizId ?? this.playingInfo.bizId ?? 0;
+            } else {
+                // TOP / LIKE / DELETE：优先用传入的 bizId，否则从队列里找
+                songId = targetSongId || Number(this.inputSongId);
+                if (targetBizId !== null && targetBizId !== undefined) {
+                    bizId = targetBizId;
+                } else {
+                    const found = this.playingInfo.nextSongs.find(
+                        s => Number(s.songId) === Number(songId)
+                    );
+                    if (found) bizId = found.bizId;
+                    else if (Number(songId) === Number(this.playingInfo.songId)) {
+                        bizId = this.playingInfo.bizId ?? 0;
+                    }
+                }
+            }
+
+            if (!songId) { this.message = '请输入或选择歌曲'; return false; }
+
+            const url = this.roomInfo.specialOperate
+                ? '/listentogether/multi/special/song/operate'
+                : '/listentogether/multi/match/song/operate';
+
+            try {
+                const res = await api({
+                    url,
+                    method: 'post',
+                    data: { roomId: this.roomInfo.roomId, songId, bizId, operate: operateType, cookie: this.getFakeAndroidCookie() },
+                });
+
+                if (res.data.code == 200 && res.data.data?.result === false) {
+                    this.message = '操作失败: ' + (res.data.data.failedMsg || '');
+                    return false;
+                }
+                if (res.data.code == 200) {
+                    const d = res.data.data || {};
+                    if (d.roomSongInfo) this.applyPlayInfo(d.roomSongInfo);
+                    const msg = d.failedMsg;
+                    if (operateType === OPERATE_TYPE.ADD) this.inputSongId = '';
+                    if (operateType !== OPERATE_TYPE.LIKE) {
+                        this.message = msg || '操作成功';
+                    }
+                    this.scheduleQuickSync();
+                    return true;
+                }
+                this.message = '操作失败: ' + (res.data.message || '');
+                return false;
+            } catch (error) {
+                this.message = '操作接口异常: ' + (error.response?.data?.message || error.message);
+                return false;
+            }
+        },
+
+        /** 切歌：需要当前歌曲的 bizId，没有就先拉一次 status */
+        async nextSong() {
+            if (!this.roomInfo.permission.switchSong) return this.message = '无切歌权限';
+            if (!this.playingInfo.songId)            return this.message = '当前无播放歌曲';
+
+            if (!this.playingInfo.bizId) await this.fetchStatus();
+            if (!this.playingInfo.bizId) return this.message = '缺少当前歌曲 bizId，无法切歌，请稍后重试';
+
+            const beforeSongId = Number(this.playingInfo.songId);
+            const ok = await this.operateSong(
+                OPERATE_TYPE.SWITCH,
+                this.playingInfo.songId,
+                this.playingInfo.bizId
+            );
+            if (ok) {
+                this.message = '切歌指令已发送，等待服务端切换…';
+                setTimeout(async () => {
+                    await this.fetchStatus();
+                    if (Number(this.playingInfo.songId) === beforeSongId) {
+                        this.message = '已发送切歌，等待投票或服务端切换（可再点一次加强）';
+                    }
+                }, 1500);
+            }
+        },
+
+        /**
+         * 点赞当前歌曲。
+         * ★ 绝不做本地 +1；只发请求，让服务端返回的 roomSongInfo 或后续 fetchStatus 更新 zanCnt。
+         */
+        async likeCurrentSong() {
+            if (!this.playingInfo.songId) return this.message = '当前无播放歌曲';
+
+            if (!this.playingInfo.bizId) await this.fetchStatus();
+            if (!this.playingInfo.bizId) return this.message = '缺少当前歌曲 bizId，无法点赞';
+
+            const ok = await this.operateSong(
+                OPERATE_TYPE.LIKE,
+                this.playingInfo.songId,
+                this.playingInfo.bizId
+            );
+            if (ok) this.message = '点赞成功';
+        },
+
+        /** 浏览器层播放/暂停（不影响服务端状态） */
+        togglePlay() {
+            const audio = document.getElementById('player');
+            if (!audio.src) return this.message = '当前无播放音频';
+            if (audio.paused) {
+                audio.play().catch(() => {
+                    this.message = '播放被浏览器拦截，请再点一次';
+                });
+            } else {
+                audio.pause();
+            }
+        },
+
+        /* ==================================================
+         * 5.6 聊天
+         * ================================================== */
+
+        /** 拉聊天（私房/公房走不同 URL） */
+        async fetchChat() {
+            if (!this.roomInfo.roomId) return;
+            const url = this.roomInfo.specialOperate
+                ? '/listentogether/multi/special/msg/history'
+                : '/listentogether/multi/match/msg/history';
+            try {
+                const res = await api({
+                    url,
+                    method: 'post',
+                    data: {
+                        roomId: this.roomInfo.roomId,
+                        direction: 0,
+                        size: 20,
+                        cursor: '',
+                        cookie: this.getFakeAndroidCookie(),
+                    },
+                });
+                if (res.data.code == 200 && res.data.data?.records) {
+                    const records = res.data.data.records;
+                    const myUid = String(this.account.userId || '');
+                    const list = records
+                        .filter(item => {
+                            // onlyCanSeeUserIds 有值且不含我 → 过滤掉
+                            const only = item.onlyCanSeeUserIds;
+                            if (Array.isArray(only) && only.length > 0
+                                && !only.map(String).includes(myUid)) return false;
+                            return true;
+                        })
+                        .map((item, index) => this.mapChatRecord(item, index));
+
+                    const lastOldMsg = this.chatHistory.length > 0
+                        ? this.chatHistory[this.chatHistory.length - 1].id : '';
+                    const lastNewMsg = list.length > 0 ? list[list.length - 1].id : '';
+                    this.chatHistory = list;
+
+                    // 有新消息才滚到底
+                    if (lastOldMsg !== lastNewMsg) {
+                        setTimeout(() => {
+                            const el = document.getElementById('chatList');
+                            if (el) el.scrollTop = el.scrollHeight;
+                        }, 100);
+                    }
+                }
+            } catch (e) { /* 忽略 */ }
+        },
+
+        /**
+         * 把服务端原始聊天记录映射成 UI 可用的结构。
+         * @param {object} item   服务端 records[i]
+         * @param {number} index  仅用于兜底生成 id
+         */
+        mapChatRecord(item, index) {
+            const body      = item.imChatRoomMsgBody || {};
+            const rich      = body.msgRichText;
+            const emoji     = item.emoji || item.clientExt?.emoji || null;
+            const serverExt = item.serverExt || {};
+            const stableId  = String(serverExt.msgId || item.sendTime || `idx-${index}`);
+
+            const sendUid   = item.sendUid ?? serverExt.userId ?? null;
+            const nickname  = item.nickname  || serverExt.nickname  || '';
+            const avatarUrl = item.avatarUrl || serverExt.avatarUrl || '';
+            const isSystem  = !sendUid;
+
+            const isEmoji = item.msgType === 0 && emoji;
+            const emojiUrl = isEmoji ? (emoji.emojiAnimUrl || emoji.emojiImgUrl) : '';
+
+            // 从富文本里提取"加歌"按钮需要的 songId
+            let suggestSongId = null;
+            if (rich?.contentTextList) {
+                for (const c of rich.contentTextList) {
+                    if (c.highLighted && c.orpheus) {
+                        const m = c.orpheus.match(/addSong\?songId=(\d+)/);
+                        if (m) { suggestSongId = Number(m[1]); break; }
+                    }
+                }
+            }
+
+            const ri = item.resourceInfo;
+            return {
+                id: stableId,
+                sendUid,
+                nickname: isSystem ? (nickname || '系统') : nickname,
+                avatarUrl,
+                isSystem,
+                emojiUrl,
+                text: body.mainStateText || body.text || '',
+                cover: ri?.coverUrl || '',
+                songName: ri?.title || '',
+                artistName: Array.isArray(ri?.artistName)
+                    ? ri.artistName.join('/')
+                    : (ri?.artistName || ''),
+                resourceInfo: ri || null,
+                suggestSongId,
+                sendTime: item.sendTime,
+            };
+        },
+
+        /** 发送文本聊天 */
+        async sendChat() {
+            if (!this.chatInput.trim() || !this.roomInfo.chatRoomId) return;
+            const text = this.chatInput;
+            this.chatInput = '';
+            try {
+                const res = await api({
+                    url: '/listentogether/multi/chat/send',
+                    method: 'post',
+                    data: { roomId: this.roomInfo.roomId, chatRoomId: this.roomInfo.chatRoomId, text, cookie: this.getFakeAndroidCookie() },
+                });
+                if (res.data.code === 200) {
+                    // ★ 立即拉 + 200ms / 800ms / 2000ms 快速重试
+                    this.fetchChat();
+                    [200, 800, 2000].forEach(d => setTimeout(() => {
+                        if (this.roomInfo.roomId) this.fetchChat();
+                    }, d));
+                } else {
+                    this.message = '发送失败: ' + (res.data.message || '未知错误');
+                }
+            } catch (e) {
+                log('Chat', '发送异常', e.response?.data || e.message);
+            }
+        },
+
+        /* ==================================================
+         * 5.7 分享 / 工具
+         * ================================================== */
+
+        /** 分享链接：inviterUid 优先取自己，其次 creatorId */
+        get shareUrl() {
+            if (!this.roomInfo.roomId) return '';
+            const inviterUid = this.account.userId || this.roomInfo.creatorId || 0;
+            return `https://st.music.163.com/listen-together/multishare/index.html?roomId=${encodeURIComponent(this.roomInfo.roomId)}&inviterUid=${encodeURIComponent(inviterUid)}`;
+        },
+
+        /** 复制分享链接（优先 Clipboard API，降级 execCommand） */
+        async copyShareLink() {
+            const url = this.shareUrl;
+            if (!url) return this.message = '当前不在房间中';
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = url;
+                    ta.style.position = 'fixed';
+                    ta.style.top = '-1000px';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.focus(); ta.select();
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    if (!ok) throw new Error('execCommand 失败');
+                }
+                this.message = '分享链接已复制到剪贴板';
+            } catch (e) {
+                this.message = '复制失败，请手动复制下方链接';
+            }
+        },
+
+        /** 解析分享链接 → 自动填充 joinForm */
+        parseShareLink() {
+            const urlStr = this.shareLinkInput.trim();
+            if (!urlStr) return;
+            try {
+                const urlParams = new URLSearchParams(new URL(urlStr).search);
+                if (urlParams.get('roomId'))     this.joinForm.roomId    = urlParams.get('roomId');
+                if (urlParams.get('inviterUid')) this.joinForm.inviterId = Number(urlParams.get('inviterUid'));
+                if (this.joinForm.roomId && this.joinForm.inviterId) {
+                    this.message = '已自动解析分享链接，请点击"确认加入"';
+                    const detailsEl = document.getElementById('joinDetails');
+                    if (detailsEl) detailsEl.open = true;
+                }
+            } catch (e) { /* 非法 URL 静默忽略 */ }
+        },
+
+        /** 从在线成员对象中提取 uid（不同版本字段名不一致） */
+        userUid(u) {
+            if (!u) return '';
+            return u.uid ?? u.userId ?? u.userID ?? u.id ?? '';
+        },
+
+        /** 该成员是否是我自己 */
+        isMe(u) {
+            const uid = this.userUid(u);
+            return uid !== '' && String(uid) === String(this.account.userId) && this.account.userId;
+        },
+
+        /**
+         * 判断一首歌的来源：系统推荐 / 我点的 / 别人点的。
+         * @param {{songRcmdUid?:number, rcmdUid?:number}} song
+         */
+        songSource(song) {
+            const uid = Number(song?.songRcmdUid ?? song?.rcmdUid ?? 0);
+            if (!uid) return { type: 'sys', label: '系统推荐', isMine: false, uid: 0 };
+            if (String(uid) === String(this.account.userId)) {
+                return { type: 'mine', label: '我点的', isMine: true, uid };
+            }
+            return { type: 'other', label: `别人 (${uid})`, isMine: false, uid };
+        },
+
+        /** 当前歌曲的来源标注 */
+        get currentSongSource() {
+            return this.songSource({ songRcmdUid: this.playingInfo.songRcmdUid });
+        },
+    }).mount('#app');
+    </script>
+</body>
+
+</html>
