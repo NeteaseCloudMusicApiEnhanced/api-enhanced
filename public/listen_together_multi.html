@@ -382,6 +382,17 @@
         color: #1b5e20;
       }
 
+      /* 新增：公房 / 私房 标签样式 */
+      .tag-public {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .tag-private {
+        background: #d6d8db;
+        color: #383d41;
+      }
+
       .hint {
         font-size: 12px;
         color: #999;
@@ -560,7 +571,7 @@
               v-model="allowStranger"
               style="width: 18px; height: 18px"
             />
-            允许陌生人加入 (进入匹配池)
+            允许陌生人加入 (进入匹配池 → 公房)
           </label>
         </div>
         <div style="margin-bottom: 16px">
@@ -627,11 +638,18 @@
         <div style="word-break: break-all">
           <b>房间 ID:</b> {{roomInfo.roomId}} <br class="mobile-only" />
           <b>ChatRoom ID:</b> {{roomInfo.chatRoomId}}
+          <!-- 房间类型区分（公房 / 私房 / 特殊房） -->
           <div style="margin-top: 8px">
-            <span v-if="roomInfo.specialOperate" class="tag tag-special"
-              >私房 (Special)</span
+            <span :class="['tag', roomTypeInfo.cls]" style="margin-left: 0">
+              {{ roomTypeInfo.label }}
+            </span>
+            <span
+              :class="['tag', nextAddSongDuration > 0 ? 'tag-other' : 'tag-mine']"
+              style="margin-left: 4px"
             >
-            <span v-else class="tag tag-sys">公房 (Match)</span>
+              {{ nextAddSongDuration > 0 ? `加歌冷却 剩 ${nextAddSongDuration}s`
+              : '可加歌' }}
+            </span>
             <span
               v-for="(t, ti) in roomInfo.roomTags"
               :key="'roomtag-' + ti"
@@ -826,10 +844,11 @@
           <button
             class="btn"
             @click="operateSong(1, Number(inputSongId))"
-            :disabled="!roomInfo.permission.addSong"
+            :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
             style="margin-bottom: 0"
           >
-            添加歌曲
+            {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` :
+            '添加歌曲' }}
           </button>
         </div>
         <div
@@ -932,14 +951,13 @@
       const api = axios.create({ timeout: REQ_TIMEOUT })
 
       api.interceptors.request.use((config) => {
-        // 调用方显式声明可缓存 → 原样发出（不打时间戳、不加 no-cache 头）
         if (config.cacheable) {
           delete config.cacheable
           return config
         }
-      
-        // 默认：防缓存
-        config.params = Object.assign({}, config.params, { timestamp: Date.now() })
+        config.params = Object.assign({}, config.params, {
+          timestamp: Date.now(),
+        })
         config.headers = Object.assign({}, config.headers, {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           Pragma: 'no-cache',
@@ -1028,6 +1046,7 @@
             shareLinkInput: '',
             joinForm: { roomId: '', inviterId: '' },
             isMatching: false,
+            nextAddSongDuration: 0,
 
             chatInput: '',
             chatHistory: [],
@@ -1047,7 +1066,7 @@
             audioLevel: safeStorage.get('audio_level') || DEFAULT_AUDIO_LEVEL,
             audioLevels: AUDIO_LEVELS,
             userNameCache: {},
-            likedMap: {}, // { [songId(string)]: true }
+            likedMap: {},
             lastQueueVersion: 0,
           }
         },
@@ -1063,6 +1082,43 @@
             return this.songSource({
               songRcmdUid: this.playingInfo.songRcmdUid,
             })
+          },
+          /**
+           * 房间类型判定：
+           *  1) specialOperate === true      → 特殊房（优先级最高，不再区分公/私）
+           *  2) nextAddSongDuration > 0      → 公房（匹配房，默认 60s 加歌冷却）
+           *  3) 其余                          → 私房（好友房，无加歌冷却）
+           */
+          roomTypeInfo() {
+            if (this.roomInfo.specialOperate) {
+              return {
+                key: 'special',
+                label: '特殊房 (Special)',
+                cls: 'tag-special',
+                cooldown: Number(this.nextAddSongDuration) || 0,
+              }
+            }
+            const cd = Number(this.nextAddSongDuration) || 0
+            if (cd > 0) {
+              return {
+                key: 'public',
+                label: '公房（匹配房）',
+                cls: 'tag-public',
+                cooldown: cd,
+              }
+            }
+            return {
+              key: 'private',
+              label: '私房（好友房）',
+              cls: 'tag-private',
+              cooldown: 0,
+            }
+          },
+          canAddSong() {
+            return (
+              !!this.roomInfo.permission.addSong &&
+              this.nextAddSongDuration <= 0
+            )
           },
         },
 
@@ -1221,6 +1277,10 @@
                 this.roomInfo.roomId = dto.roomId
                 this.roomInfo.creatorId = dto.creatorId
                 this.roomInfo.chatRoomId = dto.chatRoomId || ''
+                if (res.data.nextAddSongDuration !== undefined) {
+                  this.nextAddSongDuration =
+                    Number(res.data.nextAddSongDuration) || 0
+                }
                 this.message = '已恢复所在房间'
                 await this.fetchStatus()
                 if (!this.isPolling) this.startPolling()
@@ -1267,9 +1327,12 @@
                 this.roomInfo.creatorId = snapshot.multiRoomInfoDTO.creatorId
                 this.roomInfo.chatRoomId =
                   snapshot.multiRoomInfoDTO.chatRoomId || ''
-                this.message =
-                  (this.allowStranger ? '公房(允许陌生人)' : '私房(好友房)') +
-                  '创建成功'
+                this.nextAddSongDuration =
+                  Number(res.data.nextAddSongDuration) || 0
+                const typeLabel = this.allowStranger
+                  ? '公房（允许陌生人 / 加歌冷却 60s）'
+                  : '私房（好友房 / 加歌无冷却）'
+                this.message = typeLabel + ' 创建成功'
                 this.startPolling()
               } else {
                 this.message = '创建失败: ' + (res.data.message || '未知错误')
@@ -1354,6 +1417,8 @@
                   this.roomInfo.chatRoomId =
                     snapshot.multiRoomInfoDTO.chatRoomId
                 }
+                this.nextAddSongDuration =
+                  Number(res.data.nextAddSongDuration) || 0
                 this.message = '加入成功'
                 this.startPolling()
               } else {
@@ -1420,6 +1485,7 @@
           resetLocalState() {
             this.stopPolling()
             this.isMatching = false
+            this.nextAddSongDuration = 0
             this.roomInfo = {
               roomId: null,
               creatorId: 0,
@@ -1544,11 +1610,15 @@
                 },
               })
               if (res.data.code === 200 && res.data.data) {
+                if (res.data.nextAddSongDuration !== undefined) {
+                  this.nextAddSongDuration =
+                    Number(res.data.nextAddSongDuration) || 0
+                }
                 this.consecutiveFailures = 0
                 const hb = res.data.data
                 if (hb.roomPlaySongInfo) {
                   this.applyPlayInfo(hb.roomPlaySongInfo)
-                  this.maybeSyncQueue(hb.roomPlaySongInfo) // 靠心跳检测 Version 变化
+                  this.maybeSyncQueue(hb.roomPlaySongInfo)
                 }
                 if (hb.roomInfoDTO?.roomClosed) {
                   this.resetLocalState()
@@ -1729,10 +1799,9 @@
                   audio.currentTime = playedSec
                 } catch (e) {}
               }
-              return // 只是同歌进度更新，直接返回
+              return
             }
 
-            // 切歌逻辑
             this.playingInfo.songId = Number(ps.songId)
             this.playingInfo.bizId = ps.songBizId
             this.playingInfo.songRcmdUid = Number(ps.songRcmdUid || 0)
@@ -2459,7 +2528,6 @@
               return false
             }
 
-            // 乐观更新：如果是顶歌或删除，立刻操作本地数组，让用户感觉 0 延迟
             if (operateType === 2 && bizId !== '0') {
               const idx = this.playingInfo.nextSongs.findIndex(
                 (s) => String(s.bizId) === bizId,
@@ -2499,7 +2567,6 @@
               if (res.data.code == 200) {
                 const d = res.data.data || {}
 
-                // 1. 乐观/立即更新
                 if (d.roomSongInfo) {
                   this.applyPlayInfo(d.roomSongInfo)
                 }
@@ -2518,7 +2585,6 @@
                   this.fetchChat().catch(() => {})
                 }
 
-                // 3. 主动触发心跳
                 if (this.roomInfo.roomId) {
                   this.lastHeartbeatTime = Date.now()
                   this.heartbeat().catch(() => {})

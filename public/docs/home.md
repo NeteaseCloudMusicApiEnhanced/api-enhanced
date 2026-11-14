@@ -3773,11 +3773,10 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 [在线 demo](/listen_together_multi.html)
 
-> **⚠️ 两套接口（公房 / 私房）**
-> 多人一起听接口分为**公房（匹配 / 好友）**和**私房（特殊权限房）**两套逻辑。
-> 客户端在轮询 `/multi/match/status/get` 时，会从返回的 `multiRoomPermission.specialOperate` 字段获取当前房间权限：
-> - `specialOperate === false` → 推歌 / 操作歌曲 / 拉取聊天记录统一走 `/match/` 系列接口。
-> - `specialOperate === true`（如私房或官方活动房）→ 上述请求需切换到 `/special/` 系列接口。
+> **⚠️ 两套接口（普通房 / 特殊房）**
+> 多人一起听接口分为**普通房**和**特殊房**两套逻辑。客户端在轮询 `/multi/match/status/get` 时，会从返回的 `multiRoomPermission.specialOperate` 字段获取当前房间权限：
+> - `specialOperate === false` → 推歌 / 操作歌曲 / 拉取聊天记录 / 拉取全量队列统一走 `/match/` 系列接口。**公房和私房都属于这一类。**
+> - `specialOperate === true`（官方活动房 / 带特殊权限的房间）→ 上述请求需切换到 `/special/` 系列接口。
 >
 > 两套接口的入参和返回结构完全一致，仅限流策略和路由不同。
 >
@@ -3802,7 +3801,47 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 > }
 > ```
 
-#### 房间生命周期总览
+#### 房间类型识别（公房 / 私房 / 特殊房）
+
+服务端存在**三种**房间类型，客户端应按如下顺序判断：
+
+| 判定顺序 | 条件 | 房间类型 | 接口前缀 |
+|---|---|---|---|
+| ① | `multiRoomPermission.specialOperate === true` | **特殊房**（官方活动房 / 带特殊权限） | `/listentogether/multi/special/*` |
+| ② | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 2` | **公房（匹配房）**（允许陌生人加入） | `/listentogether/multi/match/*` |
+| ③ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 1` | **私房（好友房）**（不允许陌生人加入） | `/listentogether/multi/match/*` |
+
+**说明：**
+
+- **`roomBizType` 才是区分公房/私房的可靠字段**（实测确认）：
+  - `roomBizType = 1` → **私房**（好友房，`room/create` 时 `type=1`）；
+  - `roomBizType = 2` → **公房**（匹配房，`room/create` 时 `type=2`，或通过 `match` 匹配进入）；
+  - 该字段同时出现在 `multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` 和 `multiLtRoomSnapshot.roomPlaySongInfo.roomBizType` 两处，两者值一致，读任意一处即可。
+- **`nextAddSongDuration` 不是房间类型判断字段**，它是"**当前剩余加歌冷却秒数**"，详见下一节。
+- **`specialOperate` 优先级最高**。一旦为 `true`，不再细分公/私。
+
+#### 加歌冷却（`nextAddSongDuration`）——由服务端计算，客户端只展示
+
+**语义：** `nextAddSongDuration` 是服务端算好的**当前剩余加歌冷却秒数**：
+
+| 值 | 含义 |
+|---|---|
+| `0` | 当前**可以加歌** |
+| `> 0` | 正在冷却中，值为**剩余秒数**（如 `38`） |
+
+**位置：** `status/get` 响应的 **`data.nextAddSongDuration`**（注意层级：在 `data` 下，不在顶层，也不在 `multiLtRoomSnapshot` 下）。`heartbeat` 响应同样带 `data.nextAddSongDuration`。
+
+**关键点（务必遵守）：**
+
+- **客户端不做本地倒计时**。不要 `setTimeout` 每秒自减，也不要缓存起点自己算。**直接展示服务端值即可**。
+- **加歌成功后，服务端会重置该值**。客户端可通过以下两种方式拿新值：
+  - 被动：等下一次 `heartbeat`（≤5s）或 `status/get`（≤30s）；
+  - 主动：加歌成功后**立刻调一次 `heartbeat`**，最快速度把 UI 切到"冷却中"。
+- **加歌失败时不启动冷却**。服务端不会更新 `nextAddSongDuration`，客户端无需本地回滚。
+- **心跳刷新有 5s 颗粒度**。UI 上显示的数字会以 5s 为步长跳变（如 60 → 55 → 50…），这是预期行为，**不要**为了平滑显示在本地自减。
+- 如果业务需要更细的显示精度，可以做**纯展示层插值**（记录"上次拿到该值的本地时间戳"+ 服务端值，UI 上做 `剩余 = max(0, 服务端值 - (now - 拿到的时刻)/1000)`），但**按钮禁用/启用状态必须仍以服务端最新值为准**，下次心跳后以服务端返回覆盖。
+
+## 房间生命周期总览
 
 ```
 创建私房 ─┐
@@ -3814,7 +3853,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 **高频同步方案（防刷、防限流的核心）：**
 不要高频拉取 `status/get`。正确的心跳同步策略是：
-1. **高频心跳 (`/heartbeat`，5s 一次)**：极轻量，只拉取当前播放状态（含 `version` 和 `nextSongs` 前 4 首）。
+1. **高频心跳 (`/heartbeat`，5s 一次)**：极轻量，只拉取当前播放状态（含 `version`、`nextSongs` 前 4 首、`nextAddSongDuration`）。
 2. **版本比对**：如果心跳返回的 `version` 大于本地缓存的版本号，说明房间发生了变动（切歌、加歌、顶歌等）。
 3. **触发全量拉取**：检测到 `version` 变化时，立即拉取一次 `/wait/song/list` 全量队列和 `/msg/history` 聊天。
 4. **低频兜底 (`/status/get`，30s 一次)**：仅用于兜底刷新在线成员列表和房间权限。
@@ -3825,17 +3864,22 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 **必选参数 :**
 `type` : 房间类型
-  - `1` : 私房（好友房，只能通过邀请加入，不进入匹配池）
-  - `2` : 公房（允许陌生人加入，进入匹配池）
+  - `1` : 私房（好友房，只能通过邀请加入，不进入匹配池）→ `roomBizType = 1`
+  - `2` : 公房（允许陌生人加入，进入匹配池）→ `roomBizType = 2`
 `songId` : 初始歌曲 id
 
 **接口地址 :** `/listentogether/multi/room/create`
 
 **成功返回关键字段 :**
 ```
-data.multiLtRoomSnapshot.multiRoomInfoDTO: { roomId, creatorId, chatRoomId, firstUserId }
+data.multiLtRoomSnapshot.multiRoomInfoDTO: {
+  roomId, creatorId, chatRoomId, firstUserId,
+  roomBizType   // 1=私房，2=公房（本地用来显示房间类型标签）
+}
+data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 ```
-拿到 `roomId` / `chatRoomId` 后即可进入房间，开始 `heartbeat` + `status/get` 轮询。
+
+拿到 `roomId` / `chatRoomId` / `roomBizType` 后即可进入房间，开始 `heartbeat` + `status/get` 轮询。**判断房间类型用 `roomBizType`，不要用 `nextAddSongDuration`。**
 
 #### 2. 多人一起听 - 进入匹配池（公房）
 
@@ -3844,6 +3888,8 @@ data.multiLtRoomSnapshot.multiRoomInfoDTO: { roomId, creatorId, chatRoomId, firs
 **必选参数 :** `songId` : 初始歌曲 id
 
 **接口地址 :** `/listentogether/multi/match`
+
+**说明 :** 通过 `match` 匹配进入的房间一定是**公房**（`roomBizType = 2`）。
 
 #### 3. 多人一起听 - 取消匹配
 
@@ -3860,6 +3906,8 @@ data.multiLtRoomSnapshot.multiRoomInfoDTO: { roomId, creatorId, chatRoomId, firs
 
 **接口地址 :** `/listentogether/multi/match/ack`
 
+**成功返回 :** 与 `status/get` 结构相同，可从 `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` 读取房间类型，从 `data.nextAddSongDuration` 读取当前剩余冷却。
+
 #### 5. 多人一起听 - 获取匹配 / 房间状态
 
 说明 : 调用此接口，可以获取当前多人一起听的匹配或房间状态。是整个流程中**最重要**的兜底接口。
@@ -3869,23 +3917,34 @@ data.multiLtRoomSnapshot.multiRoomInfoDTO: { roomId, creatorId, chatRoomId, firs
 **响应结构（关键字段）：**
 
 ```js
-data: {
-  multiLtRoomSnapshot: {
-    multiRoomInfoDTO: { roomId, chatRoomId, creatorId, firstUserId },
-    roomTagList: ['标签1', '标签2'],
-    multiLtRoomUserAgg: {
-      onlineUserInfos: [{ uid, nickname, avatar }],
-      text, nextText, nextSongRcmd
+{
+  code: 200,
+  data: {
+    multiLtRoomSnapshot: {
+      multiRoomInfoDTO: {
+        roomId, chatRoomId, creatorId, firstUserId,
+        roomType: "MULTI_MATCH_SONG",
+        roomBizType: 1,               // 1=私房，2=公房 ★ 房间类型判断字段
+        roomClosed: false
+      },
+      roomTagList: ['标签1', '标签2'],
+      multiLtRoomUserAgg: {
+        onlineNums, onlineUserInfos: [{ uid, nickname, avatar }],
+        text, nextText, nextSongRcmd
+      },
+      roomPlaySongInfo: {
+        version,                       // 状态版本号，单调递增
+        playingSongZanCnt,             // 当前歌曲累计赞数
+        playedTime,                    // 已播放毫秒
+        songDuration,                  // 当前歌曲总时长毫秒
+        playSong: { songId, songBizId, songRcmdUid },
+        nextSongs: [{ songId, songBizId, songRcmdUid }], // 仅前 4 首预览
+        roomBizType                    // 与 multiRoomInfoDTO.roomBizType 一致
+      }
     },
-    roomPlaySongInfo: {
-      version,                       // 状态版本号，单调递增
-      playingSongZanCnt,             // 当前歌曲累计赞数
-      playedTime,                    // 已播放毫秒
-      playSong: { songId, songBizId, songRcmdUid },
-      nextSongs: [{ songId, songBizId, songRcmdUid }] // 仅前 4 首预览
-    }
-  },
-  multiRoomPermission: { addSong, switchSong, topSong, specialOperate }
+    nextAddSongDuration: 0,            // ★ 单位秒；服务端算好的剩余冷却，0=可加歌
+    multiRoomPermission: { addSong, switchSong, topSong, specialOperate }
+  }
 }
 ```
 
@@ -3893,6 +3952,9 @@ data: {
 
 | 字段 | 语义与用法 |
 |---|---|
+| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` | **房间类型区分字段**：`1` = 私房，`2` = 公房。**只有 `specialOperate === false` 时才有区分意义**；`specialOperate === true` 视为特殊房，不细分公/私。 |
+| `data.nextAddSongDuration` | **服务端算好的剩余加歌冷却秒数**。`0` = 可加歌；`> 0` = 冷却中。**客户端不做本地倒计时**，直接展示即可；加歌成功后服务端重置，客户端通过下次 `heartbeat`/`status/get` 拿到新值。 |
+| `multiRoomPermission.specialOperate` | 是否为特殊房。**每次轮询都要覆盖本地状态**，且优先级高于 `roomBizType`。 |
 | `roomPlaySongInfo.version` | 状态版本号。客户端收到小于本地当前版本的响应时应**丢弃**，防止乱序覆盖。 |
 | `playingSongZanCnt` | 当前歌曲累计赞数，**由服务端维护**。前端只做展示，**本地不应累加**。 |
 | `playSong.songBizId` | **数字类型**。转发给 `song/operate` 时保持数字，但本地比对时建议统一转为 String 防止精度问题。 |
@@ -3903,17 +3965,22 @@ data: {
 
 **接口地址 :** `/listentogether/multi/match/heartbeat`
 
-**响应：** 包含 `roomPlaySongInfo`（结构同 `status/get`）与 `roomInfoDTO`（含 `roomClosed` 字段，为 `true` 表示房间已关闭）。
+**响应：**
+- `data.nextAddSongDuration`（秒）：**服务端算好的剩余冷却**，每次心跳都能拿到最新值。客户端直接覆盖本地字段即可，**不要**起本地计时器。
+- `data.roomPlaySongInfo`：结构同 `status/get`。
+- `data.roomInfoDTO`：含 `roomClosed` 字段，为 `true` 表示房间已关闭。
 
 #### 7. 多人一起听 - 退出房间
 
 **接口地址 :** `/listentogether/multi/match/exit`
 
+**说明 :** 退出后应清空本地房间状态：`roomId`、`roomBizType`、`specialOperate`、`nextAddSongDuration`（重置为 `0`），并停止所有轮询定时器。
+
 #### 8. 多人一起听 - 操作歌曲（添加 / 顶歌 / 点赞 / 切歌 / 红心 / 删除）
 
-**接口地址 :** 
-公房：`/listentogether/multi/match/song/operate`
-私房：`/listentogether/multi/special/song/operate`
+**接口地址 :**
+- 普通房（公房 + 私房，`specialOperate === false`）：`/listentogether/multi/match/song/operate`
+- 特殊房（`specialOperate === true`）：`/listentogether/multi/special/song/operate`
 
 **必选参数 :**
 `operate` : 操作类型
@@ -3924,19 +3991,27 @@ data: {
   - `5` : 红心（只发 IM 广播，不加入个人收藏！）
   - `7` : 删除（只能删自己点的歌）
 
+**关于「添加」（`operate=1`）的冷却交互：**
+
+1. 发加歌请求前：本地根据 **`nextAddSongDuration > 0`** 判断是否要禁用按钮。若为 `0`，允许点击。
+2. 加歌成功：**服务端重置 `nextAddSongDuration`**（例如公房从 `0` 变成 `60`）。客户端**不要**本地清零或本地自减，只需**立即触发一次 `heartbeat`** 来拉新值。
+3. 加歌失败（`result: false` / 接口异常）：服务端**不会**启动冷却，`nextAddSongDuration` 保持 `0`。客户端不需要做任何回滚。
+4. 冷却期间：每次心跳/status 会拿到递减的剩余秒数（如 60 → 55 → 50 → …），UI 直接展示即可。
+5. 冷却结束：心跳返回 `0`，按钮自动恢复可用。
+
 **关于「红心」（喜欢）的双重语义：**
 - `operate=5`：仅向房间发送 `interactType=5` 的 IM 广播（通知大家你红心了）。
 - **真正加入个人喜欢歌单**：必须单独调用 `/like/v1?id=<songId>&like=true`。
 - **查询已喜欢列表**：调用 `/likelist?uid=<uid>`。
 
 **前端体验优化：乐观更新与接口附带数据**
-执行 `song/operate` 成功后，响应体内通常会附带最新的 `roomSongInfo`（包含新播放的歌曲和最新 `version`）。前端应立即用该数据刷新播放器状态，并在本地数组中进行乐观更新（如顶歌后立刻把歌移到第一位），实现“0 延迟”的 UI 反馈。
+执行 `song/operate` 成功后，响应体内通常会附带最新的 `roomSongInfo`（包含新播放的歌曲和最新 `version`）。前端应立即用该数据刷新播放器状态，并在本地数组中进行乐观更新（如顶歌后立刻把歌移到第一位），实现"0 延迟"的 UI 反馈。
 
 #### 9. 多人一起听 - 获取聊天历史
 
 **接口地址 :**
-公房：`/listentogether/multi/match/msg/history`
-私房：`/listentogether/multi/special/msg/history`
+- 普通房（公房 + 私房，`specialOperate === false`）：`/listentogether/multi/match/msg/history`
+- 特殊房（`specialOperate === true`）：`/listentogether/multi/special/msg/history`
 
 **关键字段：** `records[].onlyCanSeeUserIds` 非空且不包含自己 uid 的消息应直接过滤掉，不要渲染。`interactType=2` 代表顶歌，`interactType=5` 代表红心。
 
@@ -3985,7 +4060,6 @@ data: {
 ```
 
 > **⚠️ 渲染注意**：返回的 `songLists` 中**包含当前正在播放的歌曲**。前端渲染待播列表时，必须过滤掉 `bizId` 等于当前正在播放的 `playSong.songBizId` 的项。
-
 
 ### batch 批量请求接口
 
