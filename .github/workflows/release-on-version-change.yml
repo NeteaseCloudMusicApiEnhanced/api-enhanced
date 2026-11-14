@@ -78,17 +78,17 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            target: node18-linux-x64
+            target: node22-linux-x64
             output: ncm-api-linux-x64
 
           - os: windows-latest
             platform: windows
-            target: node18-win-x64
+            target: node22-win-x64
             output: ncm-api-win-x64.exe
 
           - os: macos-latest
             platform: macos
-            target: node18-macos-x64
+            target: node22-macos-x64
             output: ncm-api-macos-x64
 
     steps:

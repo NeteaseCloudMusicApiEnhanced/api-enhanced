@@ -14,15 +14,15 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            target: node18-linux-x64
+            target: node22-linux-x64
             output: precompiled/app
           - os: windows-latest
             platform: win
-            target: node18-win-x64
+            target: node22-win-x64
             output: precompiled/app.exe
           - os: macos-latest
             platform: macos
-            target: node18-macos-x64
+            target: node22-macos-x64
             output: precompiled/app
 
     steps:
@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '24'
 
       - name: Setup pnpm
         run: npm install -g pnpm@9
