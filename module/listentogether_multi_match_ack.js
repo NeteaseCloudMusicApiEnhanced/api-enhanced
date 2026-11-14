@@ -12,6 +12,6 @@ module.exports = (query, request) => {
   return request(
     `/api/listen/together/multi/match/ack`,
     data,
-    createOption(query, 'eapi', 'v2_body'),
+    createOption(query, 'eapi', 'v2'),
   )
 }

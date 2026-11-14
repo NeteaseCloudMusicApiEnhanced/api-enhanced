@@ -224,16 +224,7 @@ const createRequest = async (uri, data, options) => {
       // 每次实时获取反作弊 token，不缓存
       token = await antiCheatTokenV3()
       break
-    case 'v2_body':
-      token = await antiCheatTokenV2()
-      break
-    case 'v3_body':
-      token = await antiCheatTokenV3()
-      break
   }
-  const hasCheckToken = !!options.checkToken
-  const injectTokenToBody =
-    options.checkToken === 'v2_body' || options.checkToken === 'v3_body'
 
   return new Promise((resolve, reject) => {
     // 变量声明和初始化
@@ -280,9 +271,8 @@ const createRequest = async (uri, data, options) => {
         headers['Referer'] = options.domain || DOMAIN
         headers['User-Agent'] = options.ua || chooseUserAgent('weapi')
         data.csrf_token = csrfToken
-        if (hasCheckToken) {
+        if (options.checkToken) {
           headers['X-antiCheatToken'] = token
-          if (injectTokenToBody) data.checkToken = token
         }
         encryptData = encrypt.weapi(data)
         url = (options.domain || DOMAIN) + '/weapi/' + uri.substr(5)
@@ -322,9 +312,8 @@ const createRequest = async (uri, data, options) => {
         headers['x-sdeviceid'] = cookie.sDeviceId || cookie.deviceId
         headers['x-buildver'] = xeapiBuildver
         if (cookie.MUSIC_U) headers['x-music-u'] = cookie.MUSIC_U
-        if (hasCheckToken) {
+        if (options.checkToken) {
           headers['X-antiCheatToken'] = token
-          if (injectTokenToBody) data.checkToken = token
         }
         const xeapiCookie = {
           ...cookie,
@@ -410,10 +399,7 @@ const createRequest = async (uri, data, options) => {
 
         if (cookie.MUSIC_U) header['MUSIC_U'] = cookie.MUSIC_U
         if (cookie.MUSIC_A) header['MUSIC_A'] = cookie.MUSIC_A
-        if (hasCheckToken) {
-          headers['X-antiCheatToken'] = token
-          if (injectTokenToBody) data.checkToken = token
-        }
+        if (options.checkToken) header['X-antiCheatToken'] = token
         if (crypto === 'eapi' && cookie.NMTID) header['NMTID'] = cookie.NMTID
 
         headers['Cookie'] = createHeaderCookie(header)

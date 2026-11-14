@@ -8,6 +8,6 @@ module.exports = (query, request) => {
   return request(
     `/api/follow/listen/user/rcmd/song`,
     data,
-    createOption(query, 'eapi', 'v2_body'),
+    createOption(query, 'eapi', 'v2'),
   )
 }
