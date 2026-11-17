@@ -1794,30 +1794,6 @@ tags: 歌单标签
 
 **调用例子 :** `/comment/info/list?type=0&ids=186016,347230`
 
-**返回数据 :**
-
-```json
-{
-  "data": [
-    {
-      "latestLikedUsers": null,
-      "liked": false,
-      "comments": null,
-      "resourceType": 4,
-      "resourceId": 186016,
-      "commentUpgraded": false,
-      "musicianSaidCount": 0,
-      "commentCountDesc": "100w+",
-      "likedCount": 347,
-      "commentCount": 1970844,
-      "shareCount": 109721,
-      "threadId": "R_SO_4_186016"
-    }
-  ],
-  "code": 200
-}
-```
-
 ### 热门评论
 
 说明 : 调用此接口 , 传入 type, 资源 id 可获得对应资源热门评论 ( 不需要登录 )
@@ -2400,6 +2376,29 @@ privilege:权限相关信息
 **接口地址 :** `/recommend/songs/v1`
 
 **调用例子 :** `/recommend/songs/v1`
+
+### 获取不感兴趣歌曲列表
+
+说明 : 登录后调用此接口 , 可获取用户标记为不感兴趣的歌曲、歌手与播客 id 列表
+
+**接口地址 :** `/dislike/list`
+
+**调用例子 :** `/dislike/list`
+
+返回数据 :
+
+```json
+{
+  "code": 200,
+  "data": {
+    "songIdList": ["431791474"],
+    "artistIdList": [],
+    "podcastIds": [],
+    "checkPoint": 1794300200342
+  },
+  "message": ""
+}
+```
 
 ### 每日推荐歌曲-不感兴趣
 
@@ -3236,6 +3235,14 @@ type : 地区
 
 **调用例子 :** `/dj/catelist`
 
+### 电台 - 分类列表(新版)
+
+说明 : 调用此接口 , 可获得新版客户端的播客分类树 , 返回一级分类及其下全部子分类 , 无需登录
+
+**接口地址 :** `/dj/category/list`
+
+**调用例子 :** `/dj/category/list`
+
 ### 电台 - 分类推荐
 
 说明 : 登录后调用此接口 , 传入分类,可获得对应类型电台列表
@@ -3807,6 +3814,20 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 **接口地址 :** `/song/purchased`
 
 **调用例子 :** `/song/purchased?limit=10`
+
+### 我收藏的播客(按时间分页)
+
+说明 : 登录后调用此接口 , 可获取当前用户收藏的播客(Mlog)动态列表
+
+**可选参数 :** `time`: 分页游标 , 默认为 -1 表示从最新一条开始 , 下一页传上次响应中的 `data.time`
+
+`limit`: 取出条数 , 默认为 30
+
+`type`: 动态类型 , 默认为 3
+
+**接口地址 :** `/mlog/mycollect`
+
+**调用例子 :** `/mlog/mycollect` `/mlog/mycollect?limit=10`
 
 ### 获取 mlog 播放地址
 
