@@ -88,34 +88,6 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 5. 直接点`Continue`
 6. `PROJECT NAME`自己填,`FRAMEWORK PRESET` 选 `Other` 然后直接点 `Deploy` 接着等部署完成即可
 
-
-## 腾讯云 serverless 部署
-
-因 `Vercel` 在国内访问太慢(不绑定自己的域名的情况下),在此提供腾讯云 serverless 部署方法
-
-### 操作方法
-
-1. [fork](https://github.com/neteasecloudmusicapienhanced/api-enhanced/fork) 此项目
-2. 在腾讯云 serverless 应用管理页面( https://console.cloud.tencent.com/sls ),点击`新建应用`
-3. 顶部`创建方式`选择 `Web 应用`
-4. 选择 `Express框架`,点击底部`下一步按钮`
-5. 输入`应用名`,上传方式选择`代码仓库`,进行 GitHub 授权(如已授权可跳过这一步),代码仓库选择刚刚 fork 的项目
-6. 启动文件填入:
-
-
-```
-#!/bin/bash
-export PORT=9000
-/var/lang/node16/bin/node app.js
-```
-
-7. 点击`完成`,等待部署完成,点击`资源列表`的 `API网关` 里的 `URL`,正常情况会打开文档地址,点击文档`例子`可查看接口调用效果
-
-- 注意
-  - 腾讯云 serverless 并不是免费的,前三个月有免费额度,之后收费
-  - 当前(2024-08-24), 用此法创建的话, 会`默认`关联一个"日志服务-日志主题"(创建过程中没有提醒), 此服务是计量收费的
-
-
 ## 可以使用代理
 
 在 query 参数中加上 proxy=your-proxy 即可让这一次的请求使用 proxy
