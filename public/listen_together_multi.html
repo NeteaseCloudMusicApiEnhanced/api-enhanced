@@ -1031,6 +1031,7 @@
               creatorId: 0,
               chatRoomId: '',
               roomBizType: 0,
+              roomType: '',
               roomUsers: [],
               roomTags: [],
               hintText: '',
@@ -1126,6 +1127,23 @@
                 cooldown: Number(this.nextAddSongDuration) || 0,
               }
             }
+            const roomType = String(this.roomInfo.roomType || '').toUpperCase()
+            if (roomType === 'MULTI_MATCH_SONG') {
+              return {
+                key: 'match',
+                label: '公开匹配房',
+                cls: 'tag-public',
+                cooldown: 0,
+              }
+            }
+            if (roomType === 'FOLLOW_LISTEN') {
+              return {
+                key: 'follow',
+                label: '关注一起听',
+                cls: 'tag-public',
+                cooldown: 0,
+              }
+            }
             const biz = Number(this.roomInfo.roomBizType)
             if (biz === 1) {
               return {
@@ -1139,14 +1157,6 @@
               return {
                 key: 'public-friend',
                 label: '公开好友房',
-                cls: 'tag-public',
-                cooldown: 0,
-              }
-            }
-            if (biz === 3) {
-              return {
-                key: 'public-match',
-                label: '公开匹配房',
                 cls: 'tag-public',
                 cooldown: 0,
               }
@@ -1361,8 +1371,12 @@
                 this.roomInfo.creatorId = snapshot.multiRoomInfoDTO.creatorId
                 this.roomInfo.chatRoomId =
                   snapshot.multiRoomInfoDTO.chatRoomId || ''
-                this.roomInfo.roomBizType =
-                  snapshot.multiRoomInfoDTO.roomBizType
+                if (snapshot?.multiRoomInfoDTO?.roomBizType !== undefined)
+                  this.roomInfo.roomBizType =
+                    snapshot.multiRoomInfoDTO.roomBizType
+                if (snapshot?.multiRoomInfoDTO?.roomType !== undefined)
+                  this.roomInfo.roomType =
+                    snapshot.multiRoomInfoDTO.roomType
                 this.nextAddSongDuration =
                   Number(res.data.nextAddSongDuration) || 0
                 const typeLabel = this.allowStranger
@@ -1510,6 +1524,8 @@
                   snapshot.multiRoomInfoDTO.chatRoomId || ''
                 this.roomInfo.roomBizType =
                   snapshot.multiRoomInfoDTO.roomBizType
+                this.roomInfo.roomType =
+                  snapshot.multiRoomInfoDTO.roomType
                 this.message = '匹配成功，已进入房间'
                 await this.fetchStatus()
                 if (!this.isPolling) this.startPolling()
@@ -1568,6 +1584,9 @@
                 if (snapshot?.multiRoomInfoDTO?.roomBizType !== undefined)
                   this.roomInfo.roomBizType =
                     snapshot.multiRoomInfoDTO.roomBizType
+                if (snapshot?.multiRoomInfoDTO?.roomType !== undefined)
+                  this.roomInfo.roomType =
+                    snapshot.multiRoomInfoDTO.roomType
                 this.nextAddSongDuration =
                   Number(res.data.nextAddSongDuration) || 0
                 this.message = '加入成功'
@@ -1643,6 +1662,7 @@
               creatorId: 0,
               chatRoomId: '',
               roomBizType: 0,
+              roomType: '',
               roomUsers: [],
               roomTags: [],
               hintText: '',
@@ -1894,6 +1914,8 @@
             if (dto.creatorId) this.roomInfo.creatorId = dto.creatorId
             if (dto.roomBizType !== undefined)
               this.roomInfo.roomBizType = dto.roomBizType
+            if (dto.roomType !== undefined)
+              this.roomInfo.roomType = dto.roomType
 
             if (Array.isArray(multiRoom.roomTagList)) {
               this.roomInfo.roomTags = multiRoom.roomTagList.slice()

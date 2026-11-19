@@ -3799,17 +3799,22 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 | 判定顺序 | 条件 | 房间类型 | 接口前缀 |
 |---|---|---|---|
 | ① | `multiRoomPermission.specialOperate === true` | **特殊房**（官方活动房 / 带特殊权限） | `/listentogether/multi/special/*` |
-| ② | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 1` | **私密好友房**（不允许陌生人加入） | `/listentogether/multi/match/*` |
-| ③ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 2` | **公开好友房**（允许陌生人加入） | `/listentogether/multi/match/*` |
-| ④ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 3` | **公开匹配房**（匹配进入） | `/listentogether/multi/match/*` |
+| ② | `specialOperate === false` 且 `multiRoomInfoDTO.roomType === "MULTI_MATCH_SONG"` | **公开匹配房**（通过匹配进入） | `/listentogether/multi/match/*` |
+| ③ | `specialOperate === false` 且 `multiRoomInfoDTO.roomType === "FOLLOW_LISTEN"` | **关注一起听** | `/listentogether/multi/match/*` |
+| ④ | `specialOperate === false`、`roomType` 非上述值、`roomBizType === 1` | **私密好友房**（不允许陌生人加入） | `/listentogether/multi/match/*` |
+| ⑤ | `specialOperate === false`、`roomType` 非上述值、`roomBizType === 2` | **公开好友房**（允许陌生人加入） | `/listentogether/multi/match/*` |
 
 **说明：**
 
-- **`roomBizType` 才是区分公房/私房的可靠字段**（实测确认）：
-  - `roomBizType = 1` → **私密好友房**（`room/create` 时 `type=1`）；
-  - `roomBizType = 2` → **公开好友房**（`room/create` 时 `type=2`）；
-  - `roomBizType = 3` → **公开匹配房**（通过 `match` 匹配进入）；
-  - 该字段同时出现在 `multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` 和 `multiLtRoomSnapshot.roomPlaySongInfo.roomBizType` 两处，两者值一致，读任意一处即可。
+- **只看 `roomBizType` 不够**：
+  - `roomBizType = 1` → 私密（好友房，`room/create` 时 `type=1`）；
+  - `roomBizType = 2` → 公开（**既可能是好友房，也可能是匹配房**；实测匹配房仍返回 `2`）；
+  - `roomBizType = 3` 目前未确认稳定语义，**不要用它判断匹配房**。
+- **区分匹配房要看 `roomType`**：
+  - `roomType = "MULTI_MATCH_SONG"` → 公开匹配房；
+  - `roomType = "FOLLOW_LISTEN"` → 关注一起听；
+  - 其他好友房再结合 `roomBizType` 显示私密/公开。
+- 该字段同时出现在 `multiLtRoomSnapshot.multiRoomInfoDTO` 和 `roomPlaySongInfo` 中，`roomType`/`roomBizType` 两处值一致，读任意一处即可。
 - **`nextAddSongDuration` 不是房间类型判断字段**，它是"**当前剩余加歌冷却秒数**"，详见下一节。
 - **`specialOperate` 优先级最高**。一旦为 `true`，不再细分公/私。
 
@@ -3871,7 +3876,8 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 ```
 data.multiLtRoomSnapshot.multiRoomInfoDTO: {
   roomId, creatorId, chatRoomId, firstUserId,
-  roomBizType   // 1=私房，2=公房（本地用来显示房间类型标签）
+  roomType,     // MULTI_MATCH_SONG / FOLLOW_LISTEN / 好友房类型
+  roomBizType   // 1=私密，2=公开（不能单独区分好友房/匹配房）
 }
 data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 ```
@@ -3886,7 +3892,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 **接口地址 :** `/listentogether/multi/match`
 
-**说明 :** 通过 `match` 匹配进入的房间是**公开匹配房**（`roomBizType = 3`）。
+**说明 :** 通过 `match` 匹配进入的房间 `roomType = "MULTI_MATCH_SONG"`；它的 `roomBizType` 仍可能是 `2`，所以匹配房要用 `roomType` 判断。
 
 #### 2.1 多人一起听 - 匹配事件（SSE，必须）
 
@@ -3947,8 +3953,8 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
     multiLtRoomSnapshot: {
       multiRoomInfoDTO: {
         roomId, chatRoomId, creatorId, firstUserId,
-        roomType: "MULTI_MATCH_SONG",
-        roomBizType: 1,               // 1=私房，2=公房 ★ 房间类型判断字段
+        roomType: "MULTI_MATCH_SONG",  // ★ 匹配房判断字段
+        roomBizType: 2,               // 1=私密，2=公开（匹配房也可能为 2）
         roomClosed: false
       },
       roomTagList: ['标签1', '标签2'],
@@ -3976,7 +3982,8 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 | 字段 | 语义与用法 |
 |---|---|
-| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` | **房间类型区分字段**：`1` = 私房，`2` = 公房。**只有 `specialOperate === false` 时才有区分意义**；`specialOperate === true` 视为特殊房，不细分公/私。 |
+| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomType` | **匹配房判断字段**：`MULTI_MATCH_SONG` = 公开匹配房，`FOLLOW_LISTEN` = 关注一起听；好友房再结合 `roomBizType`。 |
+| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` | **公/私密区分字段**：`1` = 私密，`2` = 公开；**不能单独区分匹配房和好友房**（匹配房也常为 `2`）。**只有 `specialOperate === false` 时才有区分意义**。 |
 | `data.nextAddSongDuration` | **服务端算好的剩余加歌冷却秒数**。`0` = 可加歌；`> 0` = 冷却中。**客户端不做本地倒计时**，直接展示即可；加歌成功后服务端重置，客户端通过下次 `heartbeat`/`status/get` 拿到新值。 |
 | `multiRoomPermission.specialOperate` | 是否为特殊房。**每次轮询都要覆盖本地状态**，且优先级高于 `roomBizType`。 |
 | `roomPlaySongInfo.version` | 状态版本号。客户端收到小于本地当前版本的响应时应**丢弃**，防止乱序覆盖。 |
