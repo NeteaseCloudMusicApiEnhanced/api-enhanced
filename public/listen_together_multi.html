@@ -1384,11 +1384,12 @@
             this.message = '正在连接匹配通知...'
             const songId = Number(this.inputSongId) || 1372188635
             this.closeMatchEvents()
+            this._matchSongId = songId
+            this._matchRequested = false
             const events = new EventSource(
               `/listentogether/multi/match/events?timestamp=${Date.now()}`,
             )
             this._matchEvents = events
-            let requested = false
             events.onmessage = (e) => {
               try {
                 this.handleMatchEvent(JSON.parse(e.data))
@@ -1399,39 +1400,45 @@
               if (this.isMatching)
                 this.message = '匹配通知连接中断，正在重连...'
             }
-            events.onopen = async () => {
-              if (this._matchEvents !== events || requested) return
-              requested = true
-              this.message = '已连接匹配通知，正在进入匹配池...'
-              try {
-                const res = await api({
-                  url: `/listentogether/multi/match`,
-                  method: 'post',
-                  data: {
-                    songId,
-                    cookie: this.getFakeAndroidCookie(),
-                  },
-                })
-                if (res.data.code === 200) {
-                  this.isMatching = true
-                  this.message = '匹配中，等待分配房间...'
-                  this.startPolling()
-                  this.matchTimeoutTimer = setTimeout(() => {
-                    if (this.isMatching) {
-                      this.cancelMatch()
-                      this.message = '匹配超时，请重试'
-                    }
-                  }, 35000)
-                } else {
-                  this.message = '匹配失败: ' + res.data.message
-                  this.closeMatchEvents()
-                }
-              } catch (error) {
-                this.message =
-                  '匹配接口异常: ' +
-                  (error.response?.data?.message || error.message)
+            events.onopen = () => {
+              if (this._matchEvents !== events) return
+              this.message = '匹配通知已建立，等待 mini NIM 登录...'
+            }
+          },
+
+          async requestMatch() {
+            if (this._matchRequested) return
+            this._matchRequested = true
+            const songId = this._matchSongId || 1372188635
+            this.message = '匹配通知已登录，正在进入匹配池...'
+            try {
+              const res = await api({
+                url: `/listentogether/multi/match`,
+                method: 'post',
+                data: {
+                  songId,
+                  cookie: this.getFakeAndroidCookie(),
+                },
+              })
+              if (res.data.code === 200) {
+                this.isMatching = true
+                this.message = '匹配中，等待分配房间...'
+                this.startPolling()
+                this.matchTimeoutTimer = setTimeout(() => {
+                  if (this.isMatching) {
+                    this.cancelMatch()
+                    this.message = '匹配超时，请重试'
+                  }
+                }, 35000)
+              } else {
+                this.message = '匹配失败: ' + res.data.message
                 this.closeMatchEvents()
               }
+            } catch (error) {
+              this.message =
+                '匹配接口异常: ' +
+                (error.response?.data?.message || error.message)
+              this.closeMatchEvents()
             }
           },
 
@@ -1447,7 +1454,8 @@
           async handleMatchEvent(event) {
             if (!event || typeof event !== 'object') return
             if (event.type === 'connected') {
-              this.message = '匹配通知已连接，等待房间...'
+              if (!this._matchEvents) return
+              await this.requestMatch()
               return
             }
             if (event.type === 'ready') {
