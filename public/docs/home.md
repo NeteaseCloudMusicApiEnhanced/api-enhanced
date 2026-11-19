@@ -3826,14 +3826,16 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 | 判定顺序 | 条件 | 房间类型 | 接口前缀 |
 |---|---|---|---|
 | ① | `multiRoomPermission.specialOperate === true` | **特殊房**（官方活动房 / 带特殊权限） | `/listentogether/multi/special/*` |
-| ② | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 2` | **公房（匹配房）**（允许陌生人加入） | `/listentogether/multi/match/*` |
-| ③ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 1` | **私房（好友房）**（不允许陌生人加入） | `/listentogether/multi/match/*` |
+| ② | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 1` | **私密好友房**（不允许陌生人加入） | `/listentogether/multi/match/*` |
+| ③ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 2` | **公开好友房**（允许陌生人加入） | `/listentogether/multi/match/*` |
+| ④ | `specialOperate === false` 且 `multiRoomInfoDTO.roomBizType === 3` | **公开匹配房**（匹配进入） | `/listentogether/multi/match/*` |
 
 **说明：**
 
 - **`roomBizType` 才是区分公房/私房的可靠字段**（实测确认）：
-  - `roomBizType = 1` → **私房**（好友房，`room/create` 时 `type=1`）；
-  - `roomBizType = 2` → **公房**（匹配房，`room/create` 时 `type=2`，或通过 `match` 匹配进入）；
+  - `roomBizType = 1` → **私密好友房**（`room/create` 时 `type=1`）；
+  - `roomBizType = 2` → **公开好友房**（`room/create` 时 `type=2`）；
+  - `roomBizType = 3` → **公开匹配房**（通过 `match` 匹配进入）；
   - 该字段同时出现在 `multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` 和 `multiLtRoomSnapshot.roomPlaySongInfo.roomBizType` 两处，两者值一致，读任意一处即可。
 - **`nextAddSongDuration` 不是房间类型判断字段**，它是"**当前剩余加歌冷却秒数**"，详见下一节。
 - **`specialOperate` 优先级最高**。一旦为 `true`，不再细分公/私。

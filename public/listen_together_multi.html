@@ -1030,6 +1030,7 @@
               roomId: null,
               creatorId: 0,
               chatRoomId: '',
+              roomBizType: 0,
               roomUsers: [],
               roomTags: [],
               hintText: '',
@@ -1125,22 +1126,39 @@
                 cooldown: Number(this.nextAddSongDuration) || 0,
               }
             }
-            const cd = Number(this.nextAddSongDuration) || 0
-            if (cd > 0) {
+            const biz = Number(this.roomInfo.roomBizType)
+            if (biz === 1) {
               return {
-                key: 'public',
-                label: '公房（匹配房）',
+                key: 'private',
+                label: '私密好友房',
+                cls: 'tag-private',
+                cooldown: 0,
+              }
+            }
+            if (biz === 2) {
+              return {
+                key: 'public-friend',
+                label: '公开好友房',
                 cls: 'tag-public',
-                cooldown: cd,
+                cooldown: 0,
+              }
+            }
+            if (biz === 3) {
+              return {
+                key: 'public-match',
+                label: '公开匹配房',
+                cls: 'tag-public',
+                cooldown: 0,
               }
             }
             return {
-              key: 'private',
-              label: '私房（好友房）',
-              cls: 'tag-private',
+              key: 'unknown',
+              label: '房间类型未知',
+              cls: 'tag-other',
               cooldown: 0,
             }
           },
+
           canAddSong() {
             return (
               !!this.roomInfo.permission.addSong &&
@@ -1343,6 +1361,8 @@
                 this.roomInfo.creatorId = snapshot.multiRoomInfoDTO.creatorId
                 this.roomInfo.chatRoomId =
                   snapshot.multiRoomInfoDTO.chatRoomId || ''
+                this.roomInfo.roomBizType =
+                  snapshot.multiRoomInfoDTO.roomBizType
                 this.nextAddSongDuration =
                   Number(res.data.nextAddSongDuration) || 0
                 const typeLabel = this.allowStranger
@@ -1433,6 +1453,9 @@
                   this.roomInfo.chatRoomId =
                     snapshot.multiRoomInfoDTO.chatRoomId
                 }
+                if (snapshot?.multiRoomInfoDTO?.roomBizType !== undefined)
+                  this.roomInfo.roomBizType =
+                    snapshot.multiRoomInfoDTO.roomBizType
                 this.nextAddSongDuration =
                   Number(res.data.nextAddSongDuration) || 0
                 this.message = '加入成功'
@@ -1506,6 +1529,7 @@
               roomId: null,
               creatorId: 0,
               chatRoomId: '',
+              roomBizType: 0,
               roomUsers: [],
               roomTags: [],
               hintText: '',
@@ -1755,6 +1779,8 @@
             const dto = multiRoom.multiRoomInfoDTO || {}
             if (dto.chatRoomId) this.roomInfo.chatRoomId = dto.chatRoomId
             if (dto.creatorId) this.roomInfo.creatorId = dto.creatorId
+            if (dto.roomBizType !== undefined)
+              this.roomInfo.roomBizType = dto.roomBizType
 
             if (Array.isArray(multiRoom.roomTagList)) {
               this.roomInfo.roomTags = multiRoom.roomTagList.slice()
