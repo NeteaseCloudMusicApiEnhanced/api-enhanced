@@ -332,6 +332,25 @@ body {
 }
 ```
 
+如果请求同时带有浏览器 Cookie 请求头和 `cookie` 参数，默认只使用 `cookie` 参数。可以额外传 `mergeCookie` 让服务端合并两者，适用于 `MUSIC_U` 等 HttpOnly cookie 无法被页面 JS 读取、但浏览器请求头里仍然存在的场景：
+
+- `mergeCookie=body`：合并，同名 cookie 以 `cookie` 参数为准（适合只传 `os`、`appver` 等客户端伪装字段，登录态由请求头补齐）；
+- `mergeCookie=header`：合并，同名 cookie 以请求头为准；
+- `mergeCookie=true`：等价于 `header`；
+- 不传、`false` 或 `0`：不合并（默认，保持旧行为）。
+
+`mergeCookie` 可以放在请求 body 或 query 中，body 优先。例如只覆盖 Android 伪装字段：
+
+```
+POST /listentogether/multi/match/status/get
+body {
+  "cookie": "os=android; appver=9.1.65; osver=14; channel=xiaomi",
+  "mergeCookie": "body"
+}
+```
+
+服务端最终使用的 cookie 是请求头里的完整 Cookie 加上上述伪装字段（`os` 等同名条目以 body 为准）。
+
 #### 3. 二维码登录
 
 说明: 二维码登录涉及到 3 个接口,调用务必带上时间戳,防止缓存
@@ -3773,7 +3792,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 [在线 demo](/listen_together_multi.html)
 
-> **Cookie 读取**：demo 直接通过浏览器 `document.cookie` 读取当前站点 cookie，不再依赖 `localStorage` / SafeStorage 预存。Cookie-Editor 导入的 cookie、登录接口 `Set-Cookie` 写入的 cookie 都能直接用于生成 FakeAndroidCookie。
+> **Cookie 读取**：demo 只把 `os=android`、`appver` 等伪装字段放在请求 body 的 `cookie` 中，并传 `mergeCookie: 'body'`；服务端会把请求头里的完整 Cookie（含 HttpOnly 的 `MUSIC_U`）合并进来，同名条目以 body 为准。因此用 Cookie-Editor 导入时只需要把 Cookie 的 Domain 改成当前站点，**不需要取消 HttpOnly 勾选**。
 
 > **⚠️ 两套接口（普通房 / 特殊房）**
 > 多人一起听接口分为**普通房**和**特殊房**两套逻辑。客户端在轮询 `/multi/match/status/get` 时，会从返回的 `multiRoomPermission.specialOperate` 字段获取当前房间权限：
@@ -3789,22 +3808,16 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 > 否则 `status/get` 等接口可能返回浏览器 / 代理缓存的旧数据，出现"接口调了但状态不刷新"的现象。
 
 > **⚠️ 桌面端 cookie 伪装**
-> 电脑端访问某些接口可能被服务端识别为非移动端而拒绝。读取 cookie 时请优先使用浏览器提供的 `document.cookie`：**通过 Cookie-Editor / 开发者工具导入的 cookie 会直接出现在 `document.cookie` 里**，不需要页面自己再用 `localStorage` 存一份（`localStorage.cookie` 只有走过扫码/账密登录页时才有值）。
+> 电脑端访问某些接口可能被服务端识别为非移动端而拒绝。不要把整串 cookie 复制进 body：只传需要覆盖的伪装字段，并设置 `mergeCookie: 'body'`，服务端会把请求头里的完整 Cookie（包括 HttpOnly 的 `MUSIC_U`）合并进来，同名条目以 body 为准：
 >
 > ```js
-> function getFakeAndroidCookie(c = document.cookie) {
->   c = c
->     .replace(/(^|;\s*)os=[^;]*/g, '$1os=android')
->     .replace(/(^|;\s*)appver=[^;]*/g, '$1appver=9.1.65')
->     .replace(/(^|;\s*)osver=[^;]*/g, '$1osver=14')
->     .replace(/(^|;\s*)channel=[^;]*/g, '$1channel=xiaomi');
->   if (!/(^|;\s*)os=android(;|$)/.test(c)) c += '; os=android';
->   if (!/(^|;\s*)appver=/.test(c)) c += '; appver=9.1.65';
->   if (!/(^|;\s*)osver=/.test(c)) c += '; osver=14';
->   if (!/(^|;\s*)channel=/.test(c)) c += '; channel=xiaomi';
->   return c;
+> const data = {
+>   cookie: 'os=android; appver=9.1.65; osver=14; channel=xiaomi',
+>   mergeCookie: 'body',
 > }
 > ```
+>
+> 这样 `MUSIC_U` 即使是 HttpOnly 也能正常使用；用 Cookie-Editor 导入时只需要把 Cookie 的 Domain 改成当前站点，不需要取消 HttpOnly 勾选。
 
 #### 房间类型识别（公房 / 私房 / 特殊房）
 

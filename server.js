@@ -181,6 +181,45 @@ function createConsoleSpinner(message = '启动中') {
 }
 
 /**
+ * 解析 cookie 合并模式（请求 body/query 中的 `mergeCookie` 参数）。
+ *
+ * - 不传 / false / 0 / none：不合并，保持原有行为（body/query 中的 cookie 完全覆盖请求头）
+ * - body：合并请求头与 body/query 的 cookie，同名条目以 body/query 为准
+ * - header：合并请求头与 body/query 的 cookie，同名条目以请求头为准
+ * - true / 1：等价于 header
+ *
+ * @param {unknown} value
+ * @returns {'' | 'header' | 'body'}
+ */
+function parseCookieMergeMode(value) {
+  if (value === undefined || value === null) return ''
+  const mode = String(value).trim().toLowerCase()
+  if (!mode || mode === 'false' || mode === '0' || mode === 'none') return ''
+  if (mode === 'true' || mode === '1') return 'header'
+  return mode === 'header' || mode === 'body' ? mode : ''
+}
+
+/**
+ * 把字符串或普通对象形式的 cookie 统一转成对象；无法识别时返回 null。
+ * 文件上传得到的 cookie 对象带有 Buffer/文件字段，这里会跳过，避免误合并。
+ *
+ * @param {unknown} cookie
+ * @returns {Record<string, string> | null}
+ */
+function toCookieObject(cookie) {
+  if (typeof cookie === 'string') return cookieToJson(decode(cookie))
+  if (
+    cookie &&
+    typeof cookie === 'object' &&
+    !Array.isArray(cookie) &&
+    Object.values(cookie).every((value) => typeof value === 'string')
+  ) {
+    return cookie
+  }
+  return null
+}
+
+/**
  * Construct the server of NCM API.
  *
  * @param {ModuleDefinition[]} [moduleDefs] Customized module definitions [advanced]
@@ -295,13 +334,31 @@ async function constructServer(moduleDefs) {
       const queryCookie = req.query && req.query.cookie
       const bodyCookie = req.body && req.body.cookie
       const fileCookie = req.files && req.files.cookie
-      const cookie = hasCookie(fileCookie)
+      let cookie = hasCookie(fileCookie)
         ? fileCookie
         : hasCookie(bodyCookie)
           ? bodyCookie
           : hasCookie(queryCookie)
             ? queryCookie
             : req.cookies
+
+      // 可选：把 body/query 中的 cookie 与浏览器请求头里的 cookie 合并，
+      // 解决 HttpOnly cookie（如 MUSIC_U）无法被页面 JS 读取、但请求头里存在的问题。
+      const mergeCookieMode = parseCookieMergeMode(
+        (req.body && req.body.mergeCookie) ??
+          (req.query && req.query.mergeCookie) ??
+          (req.files && req.files.mergeCookie),
+      )
+      if (mergeCookieMode) {
+        const explicitCookie = toCookieObject(cookie)
+        if (explicitCookie) {
+          cookie =
+            mergeCookieMode === 'body'
+              ? Object.assign({}, req.cookies, explicitCookie)
+              : Object.assign({}, explicitCookie, req.cookies)
+        }
+      }
+
       const query = Object.assign({}, req.query, req.body, req.files, {
         cookie,
       })
