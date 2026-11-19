@@ -3773,6 +3773,8 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 [在线 demo](/listen_together_multi.html)
 
+> **Cookie 读取**：demo 直接通过浏览器 `document.cookie` 读取当前站点 cookie，不再依赖 `localStorage` / SafeStorage 预存。Cookie-Editor 导入的 cookie、登录接口 `Set-Cookie` 写入的 cookie 都能直接用于生成 FakeAndroidCookie。
+
 > **⚠️ 两套接口（普通房 / 特殊房）**
 > 多人一起听接口分为**普通房**和**特殊房**两套逻辑。客户端在轮询 `/multi/match/status/get` 时，会从返回的 `multiRoomPermission.specialOperate` 字段获取当前房间权限：
 > - `specialOperate === false` → 推歌 / 操作歌曲 / 拉取聊天记录 / 拉取全量队列统一走 `/match/` 系列接口。**公房和私房都属于这一类。**
@@ -3787,16 +3789,19 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 > 否则 `status/get` 等接口可能返回浏览器 / 代理缓存的旧数据，出现"接口调了但状态不刷新"的现象。
 
 > **⚠️ 桌面端 cookie 伪装**
-> 电脑端访问某些接口可能被服务端识别为非移动端而拒绝。可以把现有 cookie 做以下处理：
+> 电脑端访问某些接口可能被服务端识别为非移动端而拒绝。读取 cookie 时请优先使用浏览器提供的 `document.cookie`：**通过 Cookie-Editor / 开发者工具导入的 cookie 会直接出现在 `document.cookie` 里**，不需要页面自己再用 `localStorage` 存一份（`localStorage.cookie` 只有走过扫码/账密登录页时才有值）。
+>
 > ```js
-> function getFakeAndroidCookie(c) {
->   c = c.replace(/os=[^;]+/g, 'os=android')
->        .replace(/appver=[^;]+/g, 'appver=9.1.65')
->        .replace(/osver=[^;]+/g, 'osver=14');
->   if (!c.includes('os=android')) c += '; os=android';
->   if (!c.includes('appver='))    c += '; appver=9.1.65';
->   if (!c.includes('osver='))     c += '; osver=14';
->   if (!c.includes('channel='))   c += '; channel=xiaomi';
+> function getFakeAndroidCookie(c = document.cookie) {
+>   c = c
+>     .replace(/(^|;\s*)os=[^;]*/g, '$1os=android')
+>     .replace(/(^|;\s*)appver=[^;]*/g, '$1appver=9.1.65')
+>     .replace(/(^|;\s*)osver=[^;]*/g, '$1osver=14')
+>     .replace(/(^|;\s*)channel=[^;]*/g, '$1channel=xiaomi');
+>   if (!/(^|;\s*)os=android(;|$)/.test(c)) c += '; os=android';
+>   if (!/(^|;\s*)appver=/.test(c)) c += '; appver=9.1.65';
+>   if (!/(^|;\s*)osver=/.test(c)) c += '; osver=14';
+>   if (!/(^|;\s*)channel=/.test(c)) c += '; channel=xiaomi';
 >   return c;
 > }
 > ```
@@ -3820,6 +3825,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 - **`nextAddSongDuration` 不是房间类型判断字段**，它是"**当前剩余加歌冷却秒数**"，详见下一节。
 - **`specialOperate` 优先级最高**。一旦为 `true`，不再细分公/私。
 
+
 #### 加歌冷却（`nextAddSongDuration`）——由服务端计算，客户端只展示
 
 **语义：** `nextAddSongDuration` 是服务端算好的**当前剩余加歌冷却秒数**：
@@ -3841,6 +3847,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 - **心跳刷新有 5s 颗粒度**。UI 上显示的数字会以 5s 为步长跳变（如 60 → 55 → 50…），这是预期行为，**不要**为了平滑显示在本地自减。
 - 如果业务需要更细的显示精度，可以做**纯展示层插值**（记录"上次拿到该值的本地时间戳"+ 服务端值，UI 上做 `剩余 = max(0, 服务端值 - (now - 拿到的时刻)/1000)`），但**按钮禁用/启用状态必须仍以服务端最新值为准**，下次心跳后以服务端返回覆盖。
 
+
 ## 房间生命周期总览
 
 ```
@@ -3858,6 +3865,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 3. **触发全量拉取**：检测到 `version` 变化时，立即拉取一次 `/wait/song/list` 全量队列和 `/msg/history` 聊天。
 4. **低频兜底 (`/status/get`，30s 一次)**：仅用于兜底刷新在线成员列表和房间权限。
 
+
 #### 1. 多人一起听 - 创建房间
 
 说明 : 登录后调用此接口，可以创建一个多人一起听房间。
@@ -3871,6 +3879,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 **接口地址 :** `/listentogether/multi/room/create`
 
 **成功返回关键字段 :**
+
 ```
 data.multiLtRoomSnapshot.multiRoomInfoDTO: {
   roomId, creatorId, chatRoomId, firstUserId,
@@ -3970,6 +3979,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 - `data.roomPlaySongInfo`：结构同 `status/get`。
 - `data.roomInfoDTO`：含 `roomClosed` 字段，为 `true` 表示房间已关闭。
 
+
 #### 7. 多人一起听 - 退出房间
 
 **接口地址 :** `/listentogether/multi/match/exit`
@@ -4033,6 +4043,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 - `page` : JSON 字符串格式的分页参数。例如 `{"size": 100}`。翻页时传入 `cursor`，如 `{"size": 100, "cursor": "20"}`。
 
 **返回结构（关键部分）：**
+
 ```json
 {
   "code": 200,

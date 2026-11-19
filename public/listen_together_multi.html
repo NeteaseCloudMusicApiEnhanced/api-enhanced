@@ -547,6 +547,14 @@
         </button>
       </div>
 
+      <div class="hint" v-if="cookieInfo" style="margin-top: 8px">
+        当前站点 Cookie（document.cookie）：{{cookieInfo.count}} 条
+        <span v-if="!cookieInfo.hasAuth" style="color: #d93025">
+          （Cookie 中未包含 MUSIC_U，FakeAndroidCookie 可能缺少登录态；请先登录，或用
+          Cookie-Editor 把网易云 Cookie 导入当前站点）
+        </span>
+      </div>
+
       <div v-show="account.login && !roomInfo.roomId" class="section">
         <h3>发起一起听</h3>
         <div class="input-group">
@@ -986,6 +994,37 @@
         },
       }
 
+      // 把 "a=1; b=2" 解析成 Map（按第一个 '=' 切分，保留值里的 '='）
+      const parseCookieString = (raw) => {
+        const map = new Map()
+        if (!raw) return map
+        String(raw)
+          .split(';')
+          .forEach((pair) => {
+            const idx = pair.indexOf('=')
+            if (idx < 1) return
+            const name = pair.slice(0, idx).trim()
+            const value = pair.slice(idx + 1).trim()
+            if (!name) return
+            map.set(name, value)
+          })
+        return map
+      }
+
+      const stringifyCookieMap = (map) =>
+        Array.from(map, ([name, value]) => `${name}=${value}`).join('; ')
+
+      // 浏览器当前站点的 cookie：Cookie-Editor / 开发者工具导入的、以及登录接口
+      // Set-Cookie 写入的条目都能在这里读到，不需要页面自己再存一份。
+      const readBrowserCookie = () => {
+        try {
+          return document.cookie || ''
+        } catch (e) {
+          log('Cookie', '读取 document.cookie 被阻止', e.message)
+          return ''
+        }
+      }
+
       const AUDIO_LEVELS = [
         { key: 'standard', label: '标准 128k' },
         { key: 'higher', label: '较高 192k' },
@@ -1002,6 +1041,8 @@
           return {
             message: '请先登录',
             account: { login: false, userId: 0, nickname: '' },
+            // document.cookie 的读取情况，用于页面提示排查登录问题
+            cookieInfo: null,
             roomInfo: {
               roomId: null,
               creatorId: 0,
@@ -1173,21 +1214,29 @@
             }
           },
 
-          getCookie() {
-            return safeStorage.get('cookie')
+          /**
+           * 直接读取浏览器当前站点的 cookie（document.cookie）：
+           * Cookie-Editor / 开发者工具导入的条目、登录接口 Set-Cookie 写入的条目都能拿到，
+           * 不再依赖 localStorage 里由登录页保存的那份副本。
+           */
+          getBrowserCookieMap() {
+            const browser = parseCookieString(readBrowserCookie())
+
+            this.cookieInfo = {
+              count: browser.size,
+              hasAuth: browser.has('MUSIC_U'),
+            }
+            return browser
           },
 
           getFakeAndroidCookie() {
-            let c = this.getCookie()
-            c = c
-              .replace(/os=[^;]+/g, 'os=android')
-              .replace(/appver=[^;]+/g, 'appver=9.1.65')
-              .replace(/osver=[^;]+/g, 'osver=14')
-            if (!c.includes('os=android')) c += '; os=android'
-            if (!c.includes('appver=')) c += '; appver=9.1.65'
-            if (!c.includes('osver=')) c += '; osver=14'
-            if (!c.includes('channel=')) c += '; channel=xiaomi'
-            return c
+            const cookieMap = this.getBrowserCookieMap()
+            // 强制伪装成 Android 客户端，避免桌面端被服务端拒绝
+            cookieMap.set('os', 'android')
+            cookieMap.set('appver', '9.1.65')
+            cookieMap.set('osver', '14')
+            cookieMap.set('channel', 'xiaomi')
+            return stringifyCookieMap(cookieMap)
           },
 
           async copyShareLink() {
@@ -1250,8 +1299,12 @@
                 method: 'get',
               })
               if (!res.data?.data || res.data.data.code != 200) {
-                if (!silent) alert('请先在 /qrlogin.html 扫码登录')
-                else this.message = '未登录，请点击上方链接登录'
+                const cookieMap = this.getBrowserCookieMap()
+                const tip = cookieMap.size
+                  ? '未登录或登录已失效，请点击上方链接重新登录'
+                  : '未检测到任何 Cookie，请先登录，或用 Cookie-Editor 把网易云 Cookie 导入当前站点'
+                if (!silent) alert(tip)
+                else this.message = tip
                 return
               }
               this.account.userId = res.data.data.profile.userId
