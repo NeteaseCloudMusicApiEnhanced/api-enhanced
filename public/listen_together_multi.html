@@ -2473,6 +2473,9 @@
                   'chatwl02.yunxinfw.com:443',
                 ],
                 secure: true,
+                // 浏览器版默认协商二进制 NIM 帧；演示页强制 JSON，
+                // 这样 DevTools 的 WebSocket 帧可以直接看到明文 JSON。
+                binaryWebsocket: false,
                 onconnect: () => {
                   this.imConnected = true
                   this.imStatus = 'IM 已连接，等待 30005'
