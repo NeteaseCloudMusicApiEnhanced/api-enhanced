@@ -155,18 +155,6 @@ docker run -d -p 3000:3000 moefurina/ncm-api:latest
 2. 在 Vercel 官网新建项目，导入 fork 的仓库
 3. 直接 Deploy
 
-## 腾讯云 Serverless 部署
-
-1. fork 本项目
-2. 在腾讯云 serverless 控制台新建 Web 应用，选择 Express 框架
-3. 代码仓库选择 fork 的项目，启动文件填写：
-   ```bash
-   #!/bin/bash
-   export PORT=9000
-   /var/lang/node16/bin/node app.js
-   ```
-4. 完成部署后，访问 API 网关的 URL 即可
-
 ## Node.js 方式调用
 
 支持直接在 Node.js 项目中引入和调用，返回 Promise：
@@ -241,8 +229,6 @@ pnpm test
 ### 依赖此项目的优秀开源项目
 
 - [qier2222/YesPlayMusic](https://github.com/qier222/YesPlayMusic)
-
-- [MaigoLabs/amaoke.app](https://github.com/MaigoLabs/amaoke.app)
 
 - [Yueby/music-together](https://github.com/Yueby/music-together)
 
