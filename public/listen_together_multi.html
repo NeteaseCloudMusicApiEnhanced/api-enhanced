@@ -739,6 +739,21 @@
 
       <div v-show="roomInfo.roomId" class="section">
         <h3>在线成员 ({{ roomInfo.roomUsers.length }})</h3>
+        <div
+          class="hint"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+          "
+        >
+          <button class="btn btn-sm" @click="toggleImMembers">
+            {{ imConnected ? '断开 IM 实时成员' : '连接 IM 实时成员' }}
+          </button>
+          <span>{{ imStatus }}</span>
+        </div>
         <ul class="user-list">
           <li
             v-for="(u, i) in roomInfo.roomUsers"
@@ -1059,6 +1074,9 @@
 
             chatInput: '',
             chatHistory: [],
+
+            imConnected: false,
+            imStatus: '',
 
             pollTimer: null,
             isPolling: false,
@@ -2399,6 +2417,104 @@
               }
             } else {
               this.message = '已取消喜欢'
+            }
+          },
+
+          loadChatroomSdk() {
+            if (window.Chatroom) return Promise.resolve()
+            return new Promise((resolve, reject) => {
+              const script = document.createElement('script')
+              script.src =
+                'https://fastly.jsdelivr.net/npm/@yxim/nim-web-sdk@9.21.19/dist/SDK/NIM_Web_Chatroom.js'
+              script.onload = () => resolve()
+              script.onerror = () => reject(new Error('加载 NIM Chatroom SDK 失败'))
+              document.head.appendChild(script)
+            })
+          },
+
+          async toggleImMembers() {
+            if (this.imConnected) {
+              try {
+                this._imChatroom && this._imChatroom.disconnect()
+              } catch (e) {}
+              this._imChatroom = null
+              this.imConnected = false
+              this.imStatus = '已断开'
+              return
+            }
+            if (!this.roomInfo.chatRoomId)
+              return (this.imStatus = '当前没有 ChatRoom ID')
+            this.imStatus = '获取聊天室凭据…'
+            try {
+              const res = await api({
+                url: '/listentogether/multi/chatroom/token',
+                method: 'post',
+                data: {
+                  roomId: this.roomInfo.chatRoomId,
+                  cookie: this.getFakeAndroidCookie(),
+                },
+              })
+              const data = res.data && res.data.data
+              if (res.data.code !== 200 || !data || !data.token)
+                throw new Error((res.data && res.data.message) || '未取得聊天室凭据')
+              this.imStatus = '加载 IM SDK…'
+              await this.loadChatroomSdk()
+              this.imStatus = '连接聊天室…'
+              const chatroom = window.Chatroom.getInstance({
+                appKey: '3a6a3e48f6854dfa4e4464f3bdaec3b4',
+                account: data.accId,
+                token: data.token,
+                chatroomId: this.roomInfo.chatRoomId,
+                chatroomNick: 'api-enhanced-demo',
+                chatroomAvatar: ' ',
+                autoconnect: false,
+                chatroomAddresses: [
+                  'chatwl01.yunxinfw.com:443',
+                  'chatwl02.yunxinfw.com:443',
+                ],
+                secure: true,
+                onconnect: () => {
+                  this.imConnected = true
+                  this.imStatus = 'IM 已连接，等待 30005'
+                },
+                ondisconnect: (err) => {
+                  this.imConnected = false
+                  this.imStatus =
+                    'IM 断开: ' + ((err && err.message) || 'unknown')
+                },
+                onerror: (err) => {
+                  this.imStatus = 'IM 错误: ' + ((err && err.message) || 'unknown')
+                },
+                onmsgs: (msgs) => {
+                  for (const msg of msgs || []) {
+                    let custom = msg.custom
+                    if (typeof custom === 'string') {
+                      try {
+                        custom = JSON.parse(custom)
+                      } catch (e) {}
+                    }
+                    const ext = custom && custom.serverExt
+                    if (!ext || Number(ext.type) !== 30005 || !ext.content)
+                      continue
+                    const users = ext.content.onlineUserInfos
+                    if (Array.isArray(users)) {
+                      this.roomInfo.roomUsers = users.map((u) => ({
+                        uid: u.uid,
+                        nickname: u.nickname || '听友',
+                        avatar: u.avatar || '',
+                      }))
+                      this.imStatus = `IM 实时成员 ${users.length} 人（30005）`
+                    }
+                  }
+                },
+              })
+              this._imChatroom = chatroom
+            } catch (e) {
+              this.imConnected = false
+              const message = e.message || String(e)
+              this.imStatus = /clientip|414/.test(message)
+                ? 'IM 连接失败：API 出口 IP 被云信判定为内网/代理（yunxinCode 414），请在公网出口运行 api-enhanced 后重试'
+                : 'IM 连接失败: ' + message
             }
           },
 

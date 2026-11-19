@@ -4085,6 +4085,67 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 > **⚠️ 渲染注意**：返回的 `songLists` 中**包含当前正在播放的歌曲**。前端渲染待播列表时，必须过滤掉 `bizId` 等于当前正在播放的 `playSong.songBizId` 的项。
 
+#### 12. 多人一起听 - 获取聊天室 IM 凭据
+
+说明 : 普通 IM 模式进聊天室时，官方客户端用这组账号/token 登录网易云信。返回的 `accId`、`token` 可直接用于 NIM Chatroom SDK。
+
+**接口地址 :** `/listentogether/multi/chatroom/token`
+
+**必选参数 :** `roomId` : **chatRoomId**，即 `multiRoomInfoDTO.chatRoomId`，纯数字；不是一起听房间 ID（带下划线的那个）。
+
+**可选参数 :** `bizName` : 默认 `music_listenTogether`；`appType` : 默认 `6`。
+
+**返回 :** `data.accId`、`data.token`、`data.addr`（主 NIM link 地址，通常不是聊天室 WebSocket 地址）。
+
+> **⚠️ 凭据安全**：`token` 是账号级 IM 凭据，只应交给可信客户端，不要写入公开日志或返回给第三方。
+
+进聊天室后，`LTMultiUserChangeMsg` 会出现在 `serverExt.type = 30005`：
+
+```json
+{
+  "serverExt": {
+    "type": 30005,
+    "bizType": 3,
+    "content": {
+      "onlineNums": 4,
+      "onlineUserInfos": [{ "uid": 12625392267, "nickname": "...", "avatar": "..." }],
+      "version": 164,
+      "serverSeq": 1795099211984,
+      "currentSongBizId": 1346657213,
+      "nextSongBizId": 1346817735
+    }
+  }
+}
+```
+
+该消息约每 30 秒周期性推送一次，成员进出时也会额外触发。
+
+#### 13. 多人一起听 - 获取聊天室地址
+
+说明 : 独立/匿名聊天室模式使用；普通 IM 模式优先用上面的 `chatroom/token`。
+
+**接口地址 :** `/listentogether/multi/chatroom/addr`
+
+**必选参数 :** `roomId` : chatRoomId
+
+**可选参数 :** `bizTag` : 默认 `music_listenTogether`；`appType` : 默认 `6`。
+
+#### 14. 多人一起听 - 查询聊天室原始消息
+
+说明 : 直接查询云信聊天室消息，和 `/match/msg/history` 的文本业务历史不同。
+
+**接口地址 :** `/listentogether/multi/chatroom/history`
+
+**必选参数 :** `roomId` : chatRoomId
+
+**可选参数 :**
+- `timeStamp` : 毫秒时间戳，默认当前时间
+- `limit` : 1~100，默认 30
+- `reverse` : `false` 时正序，默认倒序
+- `queryMsgTypeList` : JSON 数组字符串，默认 `["text"]`
+- `uniqueBizId` : 一起听房间 ID，可留空
+
+
 ### batch 批量请求接口
 
 说明 : 登录后调用此接口 ,传入接口和对应原始参数(原始参数非文档里写的参数,需参考源码),可批量请求接口
