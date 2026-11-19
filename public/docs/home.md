@@ -4099,6 +4099,8 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 > **⚠️ 凭据安全**：`token` 是账号级 IM 凭据，只应交给可信客户端，不要写入公开日志或返回给第三方。
 
+> **⚠️ 出口 IP**：该接口会校验来源 IP。API 服务若在 Docker/内网或部分代理后，可能返回 `yunxinCode: 414, clientip invalid`；请让 api-enhanced 使用公网出口，或在本机直连环境调用。
+
 进聊天室后，`LTMultiUserChangeMsg` 会出现在 `serverExt.type = 30005`：
 
 ```json
