@@ -3880,13 +3880,40 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 #### 2. 多人一起听 - 进入匹配池（公房）
 
-说明 : 登录后调用此接口，进入公房匹配池。调用成功后需**每 2 秒轮询 `/multi/match/status/get`**，直到响应中出现 `multiLtRoomSnapshot.multiRoomInfoDTO.roomId`，再调用 `/multi/match/ack` 确认加入。建议在进入匹配池 35 秒后自动取消并提示超时。
+说明 : 登录后调用此接口，进入公房匹配池。**只调用本接口无法完成匹配**：官方客户端会通过 mini NIM 推送 `STRANGER_MULTI_MATCH_WAIT_ACK`，必须同时订阅 SSE `/listentogether/multi/match/events`，收到 `roomId` 后立即调用 `/multi/match/ack`。建议在进入匹配池 35 秒后自动取消并提示超时。
 
 **必选参数 :** `songId` : 初始歌曲 id
 
 **接口地址 :** `/listentogether/multi/match`
 
-**说明 :** 通过 `match` 匹配进入的房间一定是**公房**（`roomBizType = 2`）。
+**说明 :** 通过 `match` 匹配进入的房间是**公开匹配房**（`roomBizType = 3`）。
+
+#### 2.1 多人一起听 - 匹配事件（SSE，必须）
+
+说明 : 服务端会为当前账号建立 mini NIM 长连接，把官方匹配通知转成 SSE。浏览器/客户端必须先订阅它，再调用 `/multi/match`。
+
+**接口地址 :** `GET /listentogether/multi/match/events`
+
+**事件格式（`data:` 后的 JSON）:**
+
+```json
+{ "type": "connected" }
+{ "type": "ready", "roomId": "..." }
+{ "type": "failed", "reason": "..." }
+{ "type": "timeout" }
+{ "type": "error", "message": "..." }
+{ "type": "closed", "reason": "..." }
+```
+
+**处理 :**
+
+1. `EventSource('/listentogether/multi/match/events')`；
+2. `onopen` 后调用 `/listentogether/multi/match`；
+3. 收到 `ready` 后立即 `POST /listentogether/multi/match/ack`，参数 `roomId`、`inviterUid=0`、`agree=true`；
+4. 收到 `failed` / `timeout` 停止并提示；
+5. 取消匹配时关闭 SSE。
+
+> 如果只轮询 `/multi/match/status/get`，服务端不会把匹配候选暴露出来，匹配会超时。
 
 #### 3. 多人一起听 - 取消匹配
 
@@ -3899,7 +3926,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 说明 : 登录后调用此接口，可以接受或拒绝邀请，加入多人一起听房间。
 
 - 受邀加入：直接用邀请方提供的 `roomId` + `inviterUid` 调用。
-- 匹配成功：用 `status/get` 中返回的 `roomId` + `firstUserId` 作为 `inviterUid` 调用。
+- 匹配成功：从 SSE `ready` 事件取 `roomId`，`inviterUid = 0` 调用。
 
 **接口地址 :** `/listentogether/multi/match/ack`
 

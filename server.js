@@ -11,6 +11,7 @@ const fileUpload = require('express-fileupload')
 const decode = require('safe-decode-uri-component')
 const logger = require('./util/logger.js')
 const { APP_CONF } = require('./util/config.json')
+const matchEvents = require('./util/match-events')
 
 /**
  * The version check result.
@@ -298,6 +299,71 @@ async function constructServer(moduleDefs) {
       parseNested: true,
     }),
   )
+
+  /**
+   * Multi-listen matching SSE bridge.
+   * HTTP /multi/match only enters the pool; the official client completes the
+   * match after a mini NIM STRANGER_MULTI_MATCH_WAIT_ACK notification.
+   */
+  app.get('/listentogether/multi/match/events', async (req, res) => {
+    let cookie = cookieToJson(getCookieHeader(req.headers))
+    // Same fallback as the regular modules: a server-side login can live in
+    // NETEASE_COOKIE even when the browser has no readable MUSIC_U cookie.
+    if (!cookie.MUSIC_U && process.env.NETEASE_COOKIE)
+      cookie = Object.assign(cookieToJson(process.env.NETEASE_COOKIE), cookie)
+    if (!cookie.MUSIC_U) {
+      res.status(401).json({ code: 401, message: '需要登录' })
+      return
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    })
+    if (res.flushHeaders) res.flushHeaders()
+    let closed = false
+    let unsubscribe = null
+    let ping = null
+    let timeout = null
+    const cleanup = () => {
+      if (closed) return
+      closed = true
+      if (ping) clearInterval(ping)
+      if (timeout) clearTimeout(timeout)
+      if (unsubscribe) unsubscribe()
+    }
+    const send = (event) => {
+      if (closed) return
+      try {
+        res.write(`data: ${JSON.stringify(event)}\n\n`)
+      } catch (error) {
+        cleanup()
+        return
+      }
+      if (event.type === 'closed') {
+        cleanup()
+        res.end()
+      }
+    }
+    try {
+      unsubscribe = await matchEvents.subscribe(cookie, send)
+    } catch (error) {
+      send({ type: 'error', message: error.message })
+      cleanup()
+      res.end()
+      return
+    }
+    ping = setInterval(() => {
+      if (!closed) res.write(': ping\n\n')
+    }, 15000)
+    timeout = setTimeout(() => {
+      send({ type: 'timeout' })
+      cleanup()
+      res.end()
+    }, 150000)
+    req.on('close', cleanup)
+  })
 
   /**
    * Cache
