@@ -414,6 +414,73 @@
         color: #666;
       }
 
+      .subtitle {
+        font-size: 12px;
+        font-weight: 400;
+        color: #999;
+        margin-left: 8px;
+      }
+
+      .status-strip {
+        position: sticky;
+        top: 8px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #eee;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(8px);
+        font-size: 13px;
+        color: #444;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #bbb;
+        flex: 0 0 auto;
+      }
+
+      .status-dot.online {
+        background: #1db954;
+      }
+
+      .status-dot.busy {
+        background: #f0ad4e;
+      }
+
+      .status-chip {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #f2f2f2;
+        color: #666;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .status-spacer {
+        flex: 1;
+      }
+
+      .room-id-line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .room-id-line .btn {
+        margin: 0;
+      }
+
       /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
@@ -484,25 +551,57 @@
         .queue-list {
           max-height: 250px;
         }
+
+        .status-strip {
+          top: 4px;
+          padding: 8px 10px;
+        }
+
+        .status-strip .btn {
+          padding: 4px 8px;
+        }
       }
     </style>
   </head>
 
   <body>
     <div id="app" class="container">
-      <a
-        href="/qrlogin.html"
-        class="login-link"
-        style="
-          display: block;
-          margin-bottom: 20px;
-          color: #666;
-          font-size: 14px;
-        "
-        >还没登录？点击登录</a
-      >
-      <h1>一起听 - 多人模式 (HTTP 轮询 Demo)</h1>
-      <div class="message">状态: {{message}}</div>
+      <h1>
+        一起听 - 多人模式
+        <span class="subtitle">HTTP + mini NIM SSE</span>
+      </h1>
+      <div class="status-strip">
+        <span
+          :class="['status-dot', account.login ? (isMatching ? 'busy' : 'online') : '']"
+        ></span>
+        <strong>{{ account.login ? account.nickname : '未登录' }}</strong>
+        <span class="status-chip">{{ roomStatusText }}</span>
+        <span v-if="roomInfo.roomId" class="status-chip">
+          {{ roomTypeInfo.label }}
+        </span>
+        <span v-if="roomInfo.roomId" class="status-chip">
+          {{ roomInfo.roomUsers.length }} 人
+        </span>
+        <span class="status-spacer"></span>
+        <button
+          v-if="roomInfo.roomId"
+          class="btn btn-sm"
+          :disabled="refreshing"
+          @click="refreshRoom"
+        >
+          {{ refreshing ? '刷新中…' : '刷新房间' }}
+        </button>
+        <a
+          v-if="!account.login"
+          href="/qrlogin.html"
+          class="btn btn-sm"
+          style="text-decoration: none"
+          >登录</a
+        >
+      </div>
+      <div class="message" role="status" aria-live="polite">
+        状态: {{message}}
+      </div>
 
       <div class="audio-player">
         <audio id="player" controls style="width: 100%"></audio>
@@ -593,6 +692,9 @@
             取消匹配
           </button>
         </div>
+        <div class="hint" v-if="!isMatching" style="margin-bottom: 16px">
+          匹配会先建立 SSE 通知通道，通常 5–30 秒；需要两名在线用户。
+        </div>
 
         <details id="joinDetails">
           <summary
@@ -636,8 +738,25 @@
 
       <div v-show="roomInfo.roomId" class="section">
         <div style="word-break: break-all">
-          <b>房间 ID:</b> {{roomInfo.roomId}} <br class="mobile-only" />
-          <b>ChatRoom ID:</b> {{roomInfo.chatRoomId}}
+          <div class="room-id-line">
+            <span><b>房间 ID:</b> {{roomInfo.roomId}}</span>
+            <button
+              class="btn btn-sm"
+              @click="copyText(roomInfo.roomId, '房间 ID')"
+            >
+              复制
+            </button>
+          </div>
+          <div class="room-id-line">
+            <span><b>ChatRoom ID:</b> {{roomInfo.chatRoomId || '—'}}</span>
+            <button
+              v-if="roomInfo.chatRoomId"
+              class="btn btn-sm"
+              @click="copyText(roomInfo.chatRoomId, 'ChatRoom ID')"
+            >
+              复制
+            </button>
+          </div>
           <!-- 房间类型区分（公房 / 私房 / 特殊房） -->
           <div style="margin-top: 8px">
             <span :class="['tag', roomTypeInfo.cls]" style="margin-left: 0">
@@ -941,9 +1060,17 @@
             type="text"
             placeholder="输入消息..."
             style="flex: 1; max-width: none"
+            :disabled="chatSending || !roomInfo.chatRoomId"
             @keyup.enter="sendChat"
           />
-          <button class="btn" @click="sendChat" style="margin: 0">发送</button>
+          <button
+            class="btn"
+            :disabled="chatSending || !chatInput.trim() || !roomInfo.chatRoomId"
+            @click="sendChat"
+            style="margin: 0"
+          >
+            {{ chatSending ? '发送中…' : '发送' }}
+          </button>
         </div>
       </div>
     </div>
@@ -1076,10 +1203,12 @@
 
             chatInput: '',
             chatHistory: [],
+            chatSending: false,
 
             imConnected: false,
             imStatus: '',
 
+            refreshing: false,
             pollTimer: null,
             isPolling: false,
             pollGeneration: 0,
@@ -1107,6 +1236,10 @@
               this.account.userId || this.roomInfo.creatorId || 0
             return `https://st.music.163.com/listen-together/multishare/index.html?roomId=${encodeURIComponent(this.roomInfo.roomId)}&inviterUid=${encodeURIComponent(inviterUid)}`
           },
+          roomStatusText() {
+            if (this.isMatching) return '匹配中'
+            return this.roomInfo.roomId ? '房间中' : '未加入'
+          },
           currentSongSource() {
             return this.songSource({
               songRcmdUid: this.playingInfo.songRcmdUid,
@@ -1114,9 +1247,10 @@
           },
           /**
            * 房间类型判定：
-           *  1) specialOperate === true      → 特殊房（优先级最高，不再区分公/私）
-           *  2) nextAddSongDuration > 0      → 公房（匹配房，默认 60s 加歌冷却）
-           *  3) 其余                          → 私房（好友房，无加歌冷却）
+           *  1) specialOperate === true          → 特殊房
+           *  2) roomType === MULTI_MATCH_SONG    → 公开匹配房
+           *  3) roomType === FOLLOW_LISTEN       → 关注一起听
+           *  4) roomBizType 1/2                  → 私密/公开好友房
            */
           roomTypeInfo() {
             if (this.roomInfo.specialOperate) {
@@ -1234,15 +1368,14 @@
             return 'os=android; appver=9.1.65; osver=14; channel=xiaomi'
           },
 
-          async copyShareLink() {
-            const url = this.shareUrl
-            if (!url) return (this.message = '当前不在房间中')
+          async copyText(text, label = '内容') {
+            if (!text) return (this.message = `没有可复制的${label}`)
             try {
               if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(url)
+                await navigator.clipboard.writeText(String(text))
               } else {
                 const ta = document.createElement('textarea')
-                ta.value = url
+                ta.value = String(text)
                 ta.style.position = 'fixed'
                 ta.style.top = '-1000px'
                 ta.style.opacity = '0'
@@ -1253,9 +1386,28 @@
                 document.body.removeChild(ta)
                 if (!ok) throw new Error('execCommand 失败')
               }
-              this.message = '分享链接已复制到剪贴板'
+              this.message = `${label}已复制`
             } catch (e) {
-              this.message = '复制失败，请手动复制下方链接'
+              this.message = `复制失败，请手动复制${label}`
+            }
+          },
+
+          async copyShareLink() {
+            if (!this.shareUrl) return (this.message = '当前不在房间中')
+            await this.copyText(this.shareUrl, '分享链接')
+          },
+
+          async refreshRoom() {
+            if (!this.roomInfo.roomId || this.refreshing) return
+            this.refreshing = true
+            try {
+              await this.fetchStatus()
+              await this.fetchChat()
+              this.message = '房间状态已刷新'
+            } catch (e) {
+              this.message = '刷新失败: ' + (e.message || e)
+            } finally {
+              this.refreshing = false
             }
           },
 
@@ -2683,9 +2835,10 @@
           },
 
           async sendChat() {
-            if (!this.chatInput.trim() || !this.roomInfo.chatRoomId) return
-            const text = this.chatInput
-            this.chatInput = ''
+            if (this.chatSending) return
+            const text = this.chatInput.trim()
+            if (!text || !this.roomInfo.chatRoomId) return
+            this.chatSending = true
             try {
               const res = await api({
                 url: `/listentogether/multi/chat/send`,
@@ -2697,11 +2850,18 @@
                   cookie: this.getFakeAndroidCookie(),
                 },
               })
-              if (res.data.code === 200) this.fetchChat()
-              else
+              if (res.data.code === 200) {
+                if (this.chatInput === text) this.chatInput = ''
+                await this.fetchChat()
+              } else {
                 this.message = '发送失败: ' + (res.data.message || '未知错误')
+              }
             } catch (e) {
-              log('Chat', '发送异常', e.response?.data || e.message)
+              this.message =
+                '发送异常: ' +
+                (e.response?.data?.message || e.message || '未知错误')
+            } finally {
+              this.chatSending = false
             }
           },
 
