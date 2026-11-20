@@ -84,24 +84,55 @@ async function tokenFor(cookie) {
   return data
 }
 
-function ensureSession(key, session, cookie) {
-  if (!session.ready) {
-    session.ready = (async () => {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function connectMini(session, key, cookie) {
+  let lastError = new Error('连接 mini NIM 超时，请重试')
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (session.closed) throw new Error('匹配通知连接已关闭')
+    let mini = null
+    let starting = true
+    try {
       const data = await tokenFor(cookie)
-      if (session.closed) throw new Error('匹配通知连接已关闭')
-      const mini = new MiniNim()
+      mini = new MiniNim({ timeoutMs: 20000 })
       session.client = mini
       mini.on('notice', ({ timestamp, content }) => {
         const event = parseMatch(content)
         if (event) broadcast(session, { ...event, timestamp })
       })
       mini.on('closed', (reason) => {
-        if (session.closed) return
+        if (starting || session.closed) return
         session.closed = true
         broadcast(session, { type: 'closed', reason })
         sessions.delete(key)
       })
       await mini.start({ accId: data.accId, token: data.token })
+      starting = false
+      if (mini.ended) throw new Error('mini NIM 连接已断开')
+      return mini
+    } catch (error) {
+      starting = false
+      lastError = error instanceof Error ? error : new Error(String(error))
+      if (mini) {
+        mini.removeAllListeners('closed')
+        try {
+          mini.close('mini NIM 重试')
+        } catch (e) {}
+      }
+      session.client = null
+      if (session.closed) throw new Error('匹配通知连接已关闭')
+      if (attempt < 2) await sleep(800 * (attempt + 1))
+    }
+  }
+  throw lastError
+}
+
+function ensureSession(key, session, cookie) {
+  if (!session.ready) {
+    session.ready = (async () => {
+      await connectMini(session, key, cookie)
     })().catch((error) => {
       session.closed = true
       sessions.delete(key)

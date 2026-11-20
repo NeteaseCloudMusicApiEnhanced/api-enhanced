@@ -2,14 +2,6 @@
 const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
 const matchMethods = {
   async startMatch() {
-              this.message = '正在重置匹配状态...'
-              try {
-                await api({
-                  url: `/listentogether/multi/match/cancel`,
-                  method: 'post',
-                  data: { cookie: this.getFakeAndroidCookie() },
-                })
-              } catch (e) {}
               this.message = '正在连接匹配通知...'
               const songId = this.selectedSongId || 1372188635
               this.closeMatchEvents()
@@ -41,7 +33,15 @@ const matchMethods = {
               this._matchRequested = true
               const songId = this._matchSongId || 1372188635
               this.message = '匹配通知已登录，正在进入匹配池...'
+              this._matchIgnoreFailedUntil = Date.now() + 2500
               try {
+                try {
+                  await api({
+                    url: `/listentogether/multi/match/cancel`,
+                    method: 'post',
+                    data: { cookie: this.getFakeAndroidCookie() },
+                  })
+                } catch (e) {}
                 const res = await api({
                   url: `/listentogether/multi/match`,
                   method: 'post',
@@ -98,6 +98,9 @@ const matchMethods = {
                 return
               }
               if (event.type === 'failed') {
+                // /match/cancel can emit a MATCH_FAILED for the old pool while
+                // we are resetting it; do not let that abort the new match.
+                if (Date.now() < (this._matchIgnoreFailedUntil || 0)) return
                 this.isMatching = false
                 clearTimeout(this.matchTimeoutTimer)
                 this.closeMatchEvents()

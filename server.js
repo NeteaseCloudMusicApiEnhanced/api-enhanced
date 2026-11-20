@@ -346,6 +346,9 @@ async function constructServer(moduleDefs) {
         res.end()
       }
     }
+    ping = setInterval(() => {
+      if (!closed) res.write(': ping\n\n')
+    }, 15000)
     try {
       unsubscribe = await matchEvents.subscribe(cookie, send)
     } catch (error) {
@@ -354,9 +357,6 @@ async function constructServer(moduleDefs) {
       res.end()
       return
     }
-    ping = setInterval(() => {
-      if (!closed) res.write(': ping\n\n')
-    }, 15000)
     timeout = setTimeout(() => {
       send({ type: 'timeout' })
       cleanup()

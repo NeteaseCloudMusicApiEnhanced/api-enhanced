@@ -192,6 +192,7 @@ class MiniNim extends EventEmitter {
     this.timeout = null
     this.rejectLogin = null
     this.lastReceived = Date.now()
+    this.timeoutMs = Number(options.timeoutMs) || 20000
   }
 
   start(credentials) {
@@ -348,7 +349,7 @@ class MiniNim extends EventEmitter {
       })
       socket.on('error', () => stop('无法连接网易云 mini NIM，请检查网络'))
       socket.once('close', () => stop('mini NIM 连接已断开'))
-      this.timeout = setTimeout(() => stop('连接 mini NIM 超时，请重试'), 12000)
+      this.timeout = setTimeout(() => stop('连接 mini NIM 超时，请重试'), this.timeoutMs)
       this.timeout.unref()
     })
   }
