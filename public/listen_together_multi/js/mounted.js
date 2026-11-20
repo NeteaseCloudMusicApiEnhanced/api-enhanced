@@ -16,7 +16,9 @@ function mounted() {
               this.closeChat()
           })
           window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && this.chatOpen) this.closeChat()
+            if (event.key !== 'Escape') return
+            if (this.songOpen) this.closeSongDialog()
+            else if (this.chatOpen) this.closeChat()
           })
           this.$watch('message', (value) => this.pushLog('status', value))
           this.pushLog('app', '控制台已加载')

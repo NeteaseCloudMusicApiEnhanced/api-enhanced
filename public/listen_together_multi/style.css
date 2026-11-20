@@ -651,7 +651,7 @@
 
       .room-members {
         grid-column: 1;
-        grid-row: 2 / span 2;
+        grid-row: 2;
       }
 
       .room-queue {
@@ -676,6 +676,9 @@
       }
 
       .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 60;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -757,6 +760,142 @@
 
       .app-header .status-strip a.btn {
         text-decoration: none;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+        margin-left: 4px;
+      }
+
+      .header-actions .btn {
+        margin: 0;
+        white-space: nowrap;
+      }
+
+      /* ================= 当前歌曲卡片 ================= */
+      .song-info {
+        align-items: flex-start;
+      }
+
+      .song-meta {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .song-title-row,
+      .song-artist-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .song-title-row {
+        margin-bottom: 4px;
+      }
+
+      .song-label {
+        flex: 0 0 auto;
+        color: #999;
+        font-size: 12px;
+      }
+
+      .song-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 16px;
+        color: #222;
+      }
+
+      .song-artist {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #666;
+        font-size: 13px;
+      }
+
+      .marquee {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+
+      .marquee-track {
+        display: inline-flex;
+        gap: 32px;
+        min-width: max-content;
+        animation: song-marquee 12s linear infinite;
+        will-change: transform;
+      }
+
+      .marquee:hover .marquee-track {
+        animation-play-state: paused;
+      }
+
+      .song-meta-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 6px;
+        overflow-x: auto;
+        white-space: nowrap;
+        color: #999;
+        font-size: 12px;
+        scrollbar-width: none;
+      }
+
+      .song-meta-line::-webkit-scrollbar {
+        display: none;
+      }
+
+      .song-tags {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 8px;
+      }
+
+      .song-permissions {
+        margin-top: 6px;
+        color: #999;
+        font-size: 11px;
+      }
+
+      .song-actions {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+
+      .song-actions .btn {
+        margin: 0;
+      }
+
+      @keyframes song-marquee {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .marquee-track {
+          animation: none;
+        }
       }
 
       .chat-fab {
@@ -1089,6 +1228,11 @@
 
         .app-header .status-strip {
           justify-content: flex-start;
+        }
+
+        .header-actions {
+          width: 100%;
+          justify-content: flex-end;
         }
 
         h1 {

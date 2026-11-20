@@ -7,6 +7,24 @@ const computed = {
               this.account.userId || this.roomInfo.creatorId || 0
             return `https://st.music.163.com/listen-together/multishare/index.html?roomId=${encodeURIComponent(this.roomInfo.roomId)}&inviterUid=${encodeURIComponent(inviterUid)}`
           },
+          songName() {
+            return (
+              this.playingInfo.name ||
+              (this.playingInfo.songId ? '加载中…' : '暂无')
+            )
+          },
+          songArtist() {
+            return (
+              this.playingInfo.artist ||
+              (this.playingInfo.songId ? '加载中…' : '暂无')
+            )
+          },
+          songNameLong() {
+            return String(this.songName || '').length > 24
+          },
+          songArtistLong() {
+            return String(this.songArtist || '').length > 18
+          },
           currentSongUrl() {
             return this.playingInfo.songId
               ? `https://music.163.com/song?id=${encodeURIComponent(this.playingInfo.songId)}`

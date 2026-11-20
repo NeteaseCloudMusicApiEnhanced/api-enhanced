@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=6" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=7" />
 
   </head>
   <body>
@@ -38,35 +38,29 @@
           {{ roomInfo.roomUsers.length }} 人
         </span>
         <span class="status-spacer"></span>
-        <button
-          v-if="roomInfo.roomId"
-          class="btn btn-sm"
-          :disabled="refreshing"
-          @click="refreshRoom"
-        >
-          {{ refreshing ? '刷新中…' : '刷新房间' }}
-        </button>
-        <button
-          v-if="roomInfo.roomId"
-          class="btn btn-sm topbar-chat"
-          @click="toggleChat"
-        >
-          聊天<span v-if="chatUnread"> ({{ chatUnread > 99 ? '99+' : chatUnread }})</span>
-        </button>
-        <button
-          v-if="roomInfo.roomId"
-          class="btn btn-sm btn-primary topbar-add"
-          @click="openSongDialog('add')"
-        >
-          ＋ 添加歌曲
-        </button>
-        <a
-          v-if="!account.login"
-          href="/qrlogin.html"
-          class="btn btn-sm"
-          style="text-decoration: none"
-          >登录</a
-        >
+        <div class="header-actions">
+          <button
+            v-if="roomInfo.roomId"
+            class="btn btn-sm topbar-chat"
+            @click="toggleChat"
+          >
+            聊天<span v-if="chatUnread"> ({{ chatUnread > 99 ? '99+' : chatUnread }})</span>
+          </button>
+          <button
+            v-if="roomInfo.roomId"
+            class="btn btn-sm btn-primary topbar-add"
+            @click="openSongDialog('add')"
+          >
+            ＋ 添加歌曲
+          </button>
+          <a
+            v-if="!account.login"
+            href="/qrlogin.html"
+            class="btn btn-sm"
+            style="text-decoration: none"
+            >登录</a
+          >
+        </div>
       </div>
       </header>
       <div class="message" role="status" aria-live="polite">
@@ -329,28 +323,32 @@
           />
           <div v-else class="song-cover loading"></div>
           <div class="song-meta">
-            <div>
-              <b>正在播放:</b> {{playingInfo.name || (playingInfo.songId ?
-              '加载中…' : '暂无')}}
+            <div class="song-title-row">
+              <span class="song-label">正在播放</span>
+              <div v-if="songNameLong" class="marquee" :title="songName">
+                <div class="marquee-track">
+                  <span>{{ songName }}</span>
+                  <span aria-hidden="true">{{ songName }}</span>
+                </div>
+              </div>
+              <strong v-else class="song-name">{{ songName }}</strong>
             </div>
-            <div>
-              <b>歌手:</b> {{playingInfo.artist || (playingInfo.songId ?
-              '加载中…' : '暂无')}}
+            <div class="song-artist-row">
+              <span class="song-label">歌手</span>
+              <div v-if="songArtistLong" class="marquee" :title="songArtist">
+                <div class="marquee-track">
+                  <span>{{ songArtist }}</span>
+                  <span aria-hidden="true">{{ songArtist }}</span>
+                </div>
+              </div>
+              <span v-else class="song-artist">{{ songArtist }}</span>
             </div>
-            <div style="font-size: 12px; color: #999; margin-top: 4px">
-              SongID: {{playingInfo.songId}} | BizID: {{playingInfo.bizId}}
-              <br class="mobile-only" />
-              进度: {{playingInfo.playedTime}}s / {{playingInfo.duration}}s
+            <div class="song-meta-line">
+              <span>SongID: {{ playingInfo.songId }}</span>
+              <span>BizID: {{ playingInfo.bizId }}</span>
+              <span>进度: {{ playingInfo.playedTime }}s / {{ playingInfo.duration }}s</span>
             </div>
-            <div
-              style="
-                margin-top: 6px;
-                display: flex;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 4px;
-              "
-            >
+            <div class="song-tags">
               <span
                 :class="['tag', currentSongSource.type === 'mine' ? 'tag-mine' : (currentSongSource.type === 'sys' ? 'tag-sys' : 'tag-other')]"
                 style="margin-left: 0"
@@ -366,8 +364,21 @@
                 >
               </span>
             </div>
+            <div class="song-permissions">
+              权限: 加歌 {{ roomInfo.permission.addSong ? '✅' : '❌' }} | 切歌
+              {{ roomInfo.permission.switchSong ? '✅' : '❌' }} | 顶歌
+              {{ roomInfo.permission.topSong ? '✅' : '❌' }}
+            </div>
           </div>
           <div class="song-actions">
+            <button
+              class="btn btn-sm"
+              :disabled="!roomInfo.permission.switchSong"
+              @click="nextSong"
+            >
+              切歌
+            </button>
+            <button class="btn btn-sm" @click="togglePlay">播放/暂停</button>
             <button class="btn btn-sm btn-warn" @click="likeCurrentSong">
               点赞 (👍 可连点)
             </button>
@@ -495,45 +506,8 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section room-main room-controls">
-        <h3>播放控制</h3>
-        <div class="hint" style="margin-bottom: 12px">
-          添加歌曲请使用顶栏右侧的「＋ 添加歌曲」按钮。
-        </div>
-        <button class="btn btn-sm" @click="openSongDialog('add')">
-          打开添加歌曲
-        </button>
-        <div
-          class="control-buttons"
-          style="
-            margin-top: 12px;
-            border-top: 1px solid #ddd;
-            padding-top: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-          "
-        >
-          <button
-            class="btn"
-            @click="nextSong"
-            :disabled="!roomInfo.permission.switchSong"
-            style="margin-bottom: 0"
-          >
-            切歌 (Next)
-          </button>
-          <button class="btn" @click="togglePlay" style="margin-bottom: 0">
-            播放/暂停
-          </button>
-        </div>
-        <div style="font-size: 12px; color: #999; margin-top: 8px">
-          权限: 加歌 {{roomInfo.permission.addSong ? '✅' : '❌'}} | 切歌
-          {{roomInfo.permission.switchSong ? '✅' : '❌'}} | 顶歌
-          {{roomInfo.permission.topSong ? '✅' : '❌'}}
-        </div>
       </div>
 
-      </div>
       <div v-if="songOpen" class="song-overlay" @click.self="closeSongDialog">
         <div class="song-dialog" role="dialog" aria-modal="true" aria-label="添加歌曲">
           <div class="song-dialog-head">
@@ -875,16 +849,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=6"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=6"></script>
-    <script src="/listen_together_multi/js/state.js?v=6"></script>
-    <script src="/listen_together_multi/js/computed.js?v=6"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=6"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=6"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=6"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=6"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=6"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=6"></script>
-    <script src="/listen_together_multi/app.js?v=6"></script>
+    <script src="/listen_together_multi/js/core.js?v=7"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=7"></script>
+    <script src="/listen_together_multi/js/state.js?v=7"></script>
+    <script src="/listen_together_multi/js/computed.js?v=7"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=7"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=7"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=7"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=7"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=7"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=7"></script>
+    <script src="/listen_together_multi/app.js?v=7"></script>
   </body>
 </html>
