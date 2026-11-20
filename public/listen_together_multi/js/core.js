@@ -1,3 +1,5 @@
+(function () {
+'use strict'
 const log = (tag, msg, data = '') =>
         console.log(
           `[${new Date().toLocaleTimeString()}] [${tag}] ${msg}`,
@@ -75,8 +77,6 @@ const AUDIO_LEVELS = [
 
 const DEFAULT_AUDIO_LEVEL = 'higher'
 
-export {
-  log, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL,
-  TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, api, safeStorage, AUDIO_LEVELS,
-  DEFAULT_AUDIO_LEVEL,
-}
+
+window.LT = Object.assign(window.LT || {}, { log, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, api, safeStorage, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL })
+})()

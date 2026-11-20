@@ -1,6 +1,6 @@
-import { LISTEN_STICKERS } from './stickers.js'
-
-export const computed = {
+(function () {
+const { LISTEN_STICKERS } = window.LT
+const computed = {
           shareUrl() {
             if (!this.roomInfo.roomId) return ''
             const inviterUid =
@@ -98,3 +98,6 @@ export const computed = {
             )
           },
         }
+
+window.LT.computed = computed
+})()

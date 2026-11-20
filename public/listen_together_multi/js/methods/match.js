@@ -1,11 +1,6 @@
-import {
-  api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL,
-  CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS,
-  DEFAULT_AUDIO_LEVEL,
-} from '../core.js'
-import { LISTEN_STICKERS, loadSavedStickers } from '../stickers.js'
-
-export const matchMethods = {
+(function () {
+const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
+const matchMethods = {
   async startMatch() {
               this.message = '正在连接匹配通知...'
               const songId = this.selectedSongId || 1372188635
@@ -270,3 +265,6 @@ export const matchMethods = {
             },
 
 }
+
+window.LT.matchMethods = matchMethods
+})()

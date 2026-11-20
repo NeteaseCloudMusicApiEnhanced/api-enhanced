@@ -1,5 +1,5 @@
-import { safeStorage } from './core.js'
-
+(function () {
+const { safeStorage } = window.LT
 const LISTEN_STICKERS = [
         { emojiId: '3009', emojiGroupId: '3001', emojiName: '求UP', emojiImgUrl: 'https://p1.music.126.net/Rr8cgtWOBggaR70rrmIzHA==/109951167690335323.gif', width: 300, height: 300, format: 'gif' },
         { emojiId: '3006', emojiGroupId: '3001', emojiName: '击掌', emojiImgUrl: 'https://p1.music.126.net/lxA285-v8jSvcJxD1YDjsg==/109951166368227986.gif', width: 300, height: 300, format: 'gif' },
@@ -24,4 +24,7 @@ const loadSavedStickers = () => {
         }
       }
 
-export { LISTEN_STICKERS, loadSavedStickers }
+
+window.LT.LISTEN_STICKERS = LISTEN_STICKERS
+window.LT.loadSavedStickers = loadSavedStickers
+})()

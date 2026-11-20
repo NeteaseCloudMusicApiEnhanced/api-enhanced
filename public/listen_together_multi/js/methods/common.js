@@ -1,11 +1,6 @@
-import {
-  api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL,
-  CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS,
-  DEFAULT_AUDIO_LEVEL,
-} from '../core.js'
-import { LISTEN_STICKERS, loadSavedStickers } from '../stickers.js'
-
-export const commonMethods = {
+(function () {
+const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
+const commonMethods = {
   async init() {
               try {
                 await this.login(true)
@@ -96,3 +91,6 @@ export const commonMethods = {
             },
 
 }
+
+window.LT.commonMethods = commonMethods
+})()

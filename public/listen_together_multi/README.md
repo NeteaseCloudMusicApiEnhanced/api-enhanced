@@ -2,7 +2,9 @@
 
 `/listen_together_multi/` 是多人一起听的控制台 Demo。页面结构、样式和逻辑已经拆开，方便单独维护。
 
-布局采用顶部状态栏 + 成员/播放/聊天三栏工作区，灵感来自现代 Web 音乐控制台；数据来源和业务逻辑仍完全走 api-enhanced 的多人一起听接口，与独立的 PluvIIter/MusicParty 项目无关。
+页面使用 **classic script + `window.LT` 命名空间**，而不是 ES module。这样即使部署环境用 Babel/esbuild 把 JS 转成 CommonJS，也不会出现 `require is not defined`；脚本按 index.html 里的顺序加载即可。
+
+布局采用顶部状态栏 + 成员/播放/聊天三栏工作区，主色为网易红；数据来源和业务逻辑仍完全走 api-enhanced 的多人一起听接口，与独立的 PluvIIter/MusicParty 项目无关。
 
 
 ```text

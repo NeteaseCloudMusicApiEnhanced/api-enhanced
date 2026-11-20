@@ -1,4 +1,5 @@
-export function mounted() {
+(function () {
+function mounted() {
           this.init()
           const audio = document.getElementById('player')
           if (audio) {
@@ -39,3 +40,6 @@ export function mounted() {
           document.body.addEventListener('click', unlockAudio)
           document.body.addEventListener('touchstart', unlockAudio)
         }
+
+window.LT.mounted = mounted
+})()

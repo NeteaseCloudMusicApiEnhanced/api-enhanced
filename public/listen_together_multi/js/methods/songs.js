@@ -1,11 +1,6 @@
-import {
-  api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL,
-  CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS,
-  DEFAULT_AUDIO_LEVEL,
-} from '../core.js'
-import { LISTEN_STICKERS, loadSavedStickers } from '../stickers.js'
-
-export const songsMethods = {
+(function () {
+const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
+const songsMethods = {
   async searchSongs() {
               const keywords = this.songQuery.trim()
               if (!keywords) return (this.message = '请输入歌曲名或歌手')
@@ -422,3 +417,6 @@ export const songsMethods = {
             },
 
 }
+
+window.LT.songsMethods = songsMethods
+})()

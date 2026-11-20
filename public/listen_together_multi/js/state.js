@@ -1,7 +1,6 @@
-import { AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, safeStorage } from './core.js'
-import { loadSavedStickers } from './stickers.js'
-
-export function createState() {
+(function () {
+const { AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, safeStorage, loadSavedStickers } = window.LT
+function createState() {
           return {
             message: '请先登录',
             account: { login: false, userId: 0, nickname: '' },
@@ -99,3 +98,6 @@ export function createState() {
             lastQueueVersion: 0,
           }
         }
+
+window.LT.createState = createState
+})()
