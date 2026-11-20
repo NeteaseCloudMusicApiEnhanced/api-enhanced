@@ -254,7 +254,7 @@ async function constructServer(moduleDefs) {
         fileSize: MAX_UPLOAD_SIZE_BYTES,
       },
       useTempFiles: true,
-      tempFileDir: require('os').tmpdir(),
+      tempFileDir: require('./util').getUserDir(),
       abortOnLimit: true,
       parseNested: true,
     }),

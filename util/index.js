@@ -1,5 +1,6 @@
 const logger = require('./logger')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 
 // IP地址转换函数
@@ -207,6 +208,17 @@ module.exports = {
       chars.push(hexChars[randomIndex])
     }
     return chars.join('')
+  },
+
+  // 用户家目录；只读 HOME（serverless / 容器）时退回系统临时目录
+  getUserDir() {
+    const home = os.homedir()
+    try {
+      fs.accessSync(home, fs.constants.W_OK)
+      return home
+    } catch (_) {
+      return os.tmpdir()
+    }
   },
 }
 

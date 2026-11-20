@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 // 配置会轮换，启动时由 /register/neapikey 拉取后缓存到这里
-const neapiKeyPath = path.resolve(require('os').tmpdir(), 'neapi_key')
+const neapiKeyPath = path.resolve(require('./index').getUserDir(), 'neapi_key')
 
 let neapi_key = null
 
