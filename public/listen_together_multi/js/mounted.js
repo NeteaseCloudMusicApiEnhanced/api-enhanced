@@ -27,6 +27,7 @@ function mounted() {
           if (audio) {
             audio.volume = this.audioVolume
             const syncAudio = () => {
+              if (this.audioSwitching) return
               this.audioCurrentTime = Number(audio.currentTime) || 0
               this.audioDuration =
                 Number.isFinite(audio.duration) && audio.duration > 0
@@ -38,6 +39,8 @@ function mounted() {
               (event) => audio.addEventListener(event, syncAudio),
             )
             audio.onerror = () => {
+              this.audioSwitching = false
+              this.audioPlaying = false
               if (audio.src) log('Audio', '加载失败', audio.src)
             }
 

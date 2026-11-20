@@ -1283,12 +1283,12 @@
       /* ================= 播放条 ================= */
       .player-bar {
         display: grid;
-        grid-template-columns: 64px minmax(0, 1fr) minmax(300px, 1.25fr);
-        grid-template-rows: auto auto;
-        gap: 10px 14px;
+        grid-template-columns: 72px minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+        gap: 12px 16px;
         align-items: center;
         margin-top: 14px;
-        padding: 12px 14px;
+        padding: 16px;
         border: 1px solid #e5e7eb;
         border-left: 4px solid #c20c0c;
         border-radius: 10px;
@@ -1296,9 +1296,10 @@
       }
 
       .player-cover-wrap {
-        grid-row: 1 / span 2;
-        width: 64px;
-        height: 64px;
+        grid-column: 1;
+        grid-row: 1;
+        width: 72px;
+        height: 72px;
         border-radius: 8px;
         overflow: hidden;
         background: #f0f0f0;
@@ -1313,7 +1314,8 @@
       }
 
       .player-info {
-        grid-row: 1 / span 2;
+        grid-column: 2;
+        grid-row: 1;
         min-width: 0;
       }
 
@@ -1366,22 +1368,22 @@
       }
 
       .player-transport {
-        grid-column: 3;
-        grid-row: 1;
+        grid-column: 1 / -1;
+        grid-row: 2;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         min-width: 0;
       }
 
       .player-tools {
-        grid-column: 3;
-        grid-row: 2;
+        grid-column: 1 / -1;
+        grid-row: 3;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
         min-width: 0;
       }
 

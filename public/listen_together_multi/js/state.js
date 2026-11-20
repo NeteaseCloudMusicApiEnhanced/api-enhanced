@@ -135,6 +135,7 @@ function createState() {
             audioCurrentTime: 0,
             audioDuration: 0,
             audioPlaying: false,
+            audioSwitching: false,
             audioVolume: Math.min(
               1,
               Math.max(0, Number(safeStorage.get('audio_volume')) || 1),

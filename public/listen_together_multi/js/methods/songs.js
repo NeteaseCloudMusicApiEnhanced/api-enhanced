@@ -542,14 +542,34 @@ const songsMethods = {
               if (r.fallback)
                 this.message = '所选音质不可用，已自动降级到标准 128k'
 
+              this.audioSwitching = true
               audio.pause()
               audio.onloadedmetadata = () => {
+                const start = Math.max(0, t)
                 try {
-                  audio.currentTime = Math.max(0, t)
-                  this.audioCurrentTime = Math.max(0, t)
+                  audio.currentTime = start
                 } catch (e) {}
-                if (wasPlaying) audio.play().catch(() => {})
-                audio.onloadedmetadata = null
+                this.audioCurrentTime = start
+                this.audioDuration =
+                  Number.isFinite(audio.duration) && audio.duration > 0
+                    ? audio.duration
+                    : Number(this.playingInfo.duration) || 0
+                const finish = () => {
+                  this.audioSwitching = false
+                  this.audioPlaying = wasPlaying
+                  audio.onloadedmetadata = null
+                }
+                if (wasPlaying) {
+                  audio
+                    .play()
+                    .then(finish)
+                    .catch(() => {
+                      this.audioSwitching = false
+                      this.audioPlaying = false
+                      this.message = '音质已切换，但播放被浏览器拦截，请再点播放'
+                      audio.onloadedmetadata = null
+                    })
+                } else finish()
               }
               audio.src = r.url
               audio.load()
