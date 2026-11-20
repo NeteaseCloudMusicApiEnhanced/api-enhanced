@@ -653,27 +653,93 @@
         grid-row: 3;
       }
 
+      .chat-fab {
+        position: fixed;
+        z-index: 90;
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 15px;
+        background: #c20c0c;
+        color: #fff;
+        box-shadow:
+          0 12px 28px rgba(15, 23, 42, 0.3),
+          0 2px 6px rgba(15, 23, 42, 0.18);
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        transition:
+          background 0.15s ease,
+          transform 0.15s ease;
+      }
+
+      .chat-fab:hover {
+        background: #a50a0a;
+      }
+
+      .chat-fab.dragging {
+        cursor: grabbing;
+        transform: scale(1.06);
+      }
+
+      .chat-fab svg {
+        width: 27px;
+        height: 27px;
+        pointer-events: none;
+      }
+
+      .chat-fab.has-unread {
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .chat-fab-count {
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1;
+        pointer-events: none;
+      }
+
       /* ================= 聊天 / 工作日志弹窗 ================= */
       .chat-overlay {
         position: fixed;
         inset: 0;
         z-index: 100;
-        display: flex;
-        justify-content: flex-end;
-        padding: 16px;
-        background: rgba(15, 23, 42, 0.45);
-        backdrop-filter: blur(2px);
+        pointer-events: none;
+        padding: 0;
+        background: transparent;
       }
 
       .chat-dialog {
-        width: min(440px, 100%);
-        height: calc(100vh - 32px);
+        position: fixed;
+        pointer-events: auto;
+        width: min(440px, calc(100vw - 24px));
+        height: calc(100vh - 100px);
         display: flex;
         flex-direction: column;
         overflow: hidden;
         background: #fff;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+        box-shadow:
+          0 24px 60px rgba(15, 23, 42, 0.25),
+          0 4px 14px rgba(15, 23, 42, 0.12);
+        animation: chat-bubble-in 0.16s ease-out;
+      }
+
+      @keyframes chat-bubble-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
 
       .chat-dialog-head {
@@ -923,12 +989,18 @@
         }
 
         .chat-overlay {
+          pointer-events: auto;
+          background: #fff;
           padding: 0;
         }
 
         .chat-dialog {
+          inset: 0;
           width: 100%;
           height: 100%;
+          border: 0;
           border-radius: 0;
+          box-shadow: none;
+          animation: none;
         }
       }

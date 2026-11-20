@@ -1,5 +1,33 @@
 (function () {
 const { AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, safeStorage, loadSavedStickers } = window.LT
+const CHAT_FAB_SIZE = 58
+function loadChatButtonPos() {
+  const width = Number(window.innerWidth) || 1024
+  const height = Number(window.innerHeight) || 768
+  const fallback = {
+    x: Math.max(8, width - CHAT_FAB_SIZE - 20),
+    y: Math.max(8, height - CHAT_FAB_SIZE - 30),
+  }
+  try {
+    const saved = JSON.parse(safeStorage.get('chat_button_pos') || 'null')
+    if (
+      saved &&
+      Number.isFinite(Number(saved.x)) &&
+      Number.isFinite(Number(saved.y))
+    )
+      return {
+        x: Math.min(
+          Math.max(8, Number(saved.x)),
+          Math.max(8, width - CHAT_FAB_SIZE - 8),
+        ),
+        y: Math.min(
+          Math.max(8, Number(saved.y)),
+          Math.max(8, height - CHAT_FAB_SIZE - 8),
+        ),
+      }
+  } catch (e) {}
+  return fallback
+}
 function createState() {
           return {
             message: '请先登录',
@@ -58,6 +86,10 @@ function createState() {
             chatOpen: false,
             chatTab: 'chat',
             chatUnread: 0,
+            chatDragging: false,
+            chatButtonPos: loadChatButtonPos(),
+            viewportWidth: Number(window.innerWidth) || 1024,
+            viewportHeight: Number(window.innerHeight) || 768,
             logEntries: [],
 
             emojiPickerOpen: false,

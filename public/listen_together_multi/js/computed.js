@@ -91,6 +91,30 @@ const computed = {
             }
           },
 
+          chatDialogStyle() {
+            const width = Number(this.viewportWidth) || 1024
+            const height = Number(this.viewportHeight) || 768
+            if (width <= 600) return {}
+            const panelWidth = Math.min(430, width - 32)
+            const panelHeight = Math.min(620, height - 100)
+            const fab = this.chatButtonPos || { x: 0, y: 0 }
+            let left = fab.x + 58 + 12
+            if (left + panelWidth > width - 12)
+              left = fab.x - panelWidth - 12
+            left = Math.max(
+              12,
+              Math.min(left, Math.max(12, width - panelWidth - 12)),
+            )
+            let top = fab.y + 58 - panelHeight
+            if (top < 12) top = Math.min(fab.y, height - panelHeight - 12)
+            top = Math.max(12, Math.min(top, Math.max(12, height - panelHeight - 12)))
+            return {
+              left: left + 'px',
+              top: top + 'px',
+              width: panelWidth + 'px',
+              height: panelHeight + 'px',
+            }
+          },
           canAddSong() {
             return (
               !!this.roomInfo.permission.addSong &&

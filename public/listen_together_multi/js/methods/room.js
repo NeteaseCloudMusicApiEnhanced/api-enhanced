@@ -867,7 +867,22 @@ const roomMethods = {
                   this.chatHistory = list
 
                   if (lastOldMsg !== lastNewMsg) {
-                    if (!this.chatOpen) this.chatUnread++
+                    if (!this.chatOpen && oldLen > 0) {
+                      const oldIndex = lastOldMsg
+                        ? list.findIndex(
+                            (msg) => String(msg.id) === String(lastOldMsg),
+                          )
+                        : -1
+                      const incoming =
+                        oldIndex >= 0
+                          ? list.length - oldIndex - 1
+                          : list.length
+                      if (incoming > 0)
+                        this.chatUnread = Math.min(
+                          999,
+                          this.chatUnread + incoming,
+                        )
+                    }
                     setTimeout(() => {
                       const el = document.getElementById('chatList')
                       if (el) el.scrollTop = el.scrollHeight

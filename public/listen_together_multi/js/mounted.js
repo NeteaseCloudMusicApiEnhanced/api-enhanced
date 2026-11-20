@@ -1,7 +1,18 @@
 (function () {
 function mounted() {
+          this.viewportWidth = Number(window.innerWidth) || 1024
+          this.viewportHeight = Number(window.innerHeight) || 768
           this.logEntries = (window.LT.logs || []).slice(-300)
           window.addEventListener('lt-log', this.onLogEvent)
+          window.addEventListener('resize', this.onChatResize)
+          window.addEventListener('pointerdown', (event) => {
+            if (
+              this.chatOpen &&
+              event.target instanceof Element &&
+              !event.target.closest('.chat-dialog')
+            )
+              this.closeChat()
+          })
           window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && this.chatOpen) this.closeChat()
           })

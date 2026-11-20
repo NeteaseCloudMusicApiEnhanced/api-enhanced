@@ -90,6 +90,81 @@ const commonMethods = {
               return found ? found.label : key
             },
 
+  clampChatButton(x, y) {
+    const size = 58
+    const margin = 8
+    const width = Number(window.innerWidth) || 1024
+    const height = Number(window.innerHeight) || 768
+    return {
+      x: Math.min(Math.max(margin, Number(x) || 0), Math.max(margin, width - size - margin)),
+      y: Math.min(Math.max(margin, Number(y) || 0), Math.max(margin, height - size - margin)),
+    }
+  },
+
+  saveChatButtonPos() {
+    safeStorage.set('chat_button_pos', JSON.stringify(this.chatButtonPos))
+  },
+
+  startChatDrag(event) {
+    if (event.button !== undefined && event.button !== 0) return
+    const position = this.chatButtonPos || { x: 0, y: 0 }
+    this._chatDrag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: position.x,
+      y: position.y,
+      moved: false,
+    }
+    this.chatDragging = true
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch (e) {}
+    event.preventDefault()
+  },
+
+  onChatDrag(event) {
+    const drag = this._chatDrag
+    if (!drag) return
+    const dx = event.clientX - drag.startX
+    const dy = event.clientY - drag.startY
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) drag.moved = true
+    if (!drag.moved) return
+    this.chatButtonPos = this.clampChatButton(drag.x + dx, drag.y + dy)
+  },
+
+  endChatDrag(event) {
+    const drag = this._chatDrag
+    if (!drag) return
+    try {
+      event.currentTarget.releasePointerCapture(drag.pointerId)
+    } catch (e) {}
+    this._chatDrag = null
+    this.chatDragging = false
+    this.chatButtonPos = this.clampChatButton(
+      this.chatButtonPos.x,
+      this.chatButtonPos.y,
+    )
+    this.saveChatButtonPos()
+    if (!drag.moved) this.openChat()
+  },
+
+  cancelChatDrag() {
+    this._chatDrag = null
+    this.chatDragging = false
+  },
+
+  onChatResize() {
+    this.viewportWidth = Number(window.innerWidth) || 1024
+    this.viewportHeight = Number(window.innerHeight) || 768
+    if (!this.chatButtonPos) return
+    this.chatButtonPos = this.clampChatButton(
+      this.chatButtonPos.x,
+      this.chatButtonPos.y,
+    )
+    this.saveChatButtonPos()
+  },
+
   openChat() {
     this.chatOpen = true
     this.chatTab = 'chat'
