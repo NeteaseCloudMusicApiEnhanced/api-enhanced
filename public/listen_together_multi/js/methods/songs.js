@@ -1,62 +1,172 @@
 (function () {
 const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
 const songsMethods = {
-  async searchSongs() {
-              const keywords = this.songQuery.trim()
-              if (!keywords) return (this.message = '请输入歌曲名或歌手')
-              if (this.songSearching) return
-              this.songSearching = true
-              this.songResults = []
-              try {
-                const res = await api({
-                  url: '/cloudsearch',
-                  method: 'get',
-                  params: { keywords, type: 1, limit: 8 },
-                })
-                const raw = res.data?.result?.songs || []
-                this.songResults = raw.map((song) => ({
-                  id: String(song.id),
-                  name: song.name,
-                  artist: (song.ar || [])
-                    .map((artist) => artist.name)
-                    .filter(Boolean)
-                    .join(' / '),
-                  cover: song.al?.picUrl || '',
-                  duration: song.dt || 0,
-                }))
-                this.message = this.songResults.length
-                  ? `找到 ${this.songResults.length} 首歌曲`
-                  : '没有找到匹配的歌曲'
-              } catch (e) {
-                this.message =
-                  '搜索失败: ' +
-                  (e.response?.data?.message || e.message || '未知错误')
-              } finally {
-                this.songSearching = false
-              }
-            },
+  openSongDialog(mode = 'add') {
+    this.songDialogMode = mode === 'initial' ? 'initial' : 'add'
+    this.songOpen = true
+    this.songResults = []
+    if (this.songDialogMode === 'add') {
+      this.songInput = ''
+      this.selectedSong = null
+    } else if (this.selectedSong) {
+      this.songInput = this.selectedSong.name
+    }
+  },
+
+  closeSongDialog() {
+    this.songOpen = false
+    if (this._songTimer) clearTimeout(this._songTimer)
+  },
+
+  onSongInput() {
+    if (this._songTimer) clearTimeout(this._songTimer)
+    this.selectedSong = null
+    this.inputSongId = ''
+    this.songResults = []
+    const value = this.songInput.trim()
+    if (!value) return
+    if (/^\d{1,24}$/.test(value)) this.inputSongId = value
+    this._songTimer = setTimeout(() => this.resolveSongInput(), 450)
+  },
+
+  async resolveSongInput() {
+    const raw = this.songInput.trim()
+    if (!raw || this.songSearching) return
+    this.songSearching = true
+    this.songResults = []
+    try {
+      const reference = await this.resolveSongReference(raw)
+      if (reference.songId) {
+        await this.loadSongById(reference.songId)
+        return
+      }
+      if (reference.roomId) this.message = '这是房间链接，不是歌曲链接，已按关键词搜索'
+      this.songSearching = false
+      await this.searchSongs(raw)
+    } catch (e) {
+      this.message =
+        '歌曲解析失败: ' +
+        (e.response?.data?.message || e.message || '未知错误')
+    } finally {
+      this.songSearching = false
+    }
+  },
+
+  async resolveSongReference(raw) {
+    const match = String(raw).match(/https?:\/\/[^\s]+/i)
+    if (!match) return /^\d{1,24}$/.test(raw) ? { songId: raw } : {}
+    const link = match[0]
+    try {
+      const url = new URL(link)
+      const query = new URLSearchParams(url.search)
+      const hash = url.hash.includes('?')
+        ? new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1))
+        : new URLSearchParams()
+      const id =
+        query.get('id') ||
+        query.get('songId') ||
+        hash.get('id') ||
+        hash.get('songId')
+      if (/^\d{1,24}$/.test(id || '')) return { songId: id }
+    } catch (e) {}
+    try {
+      const res = await api({
+        url: '/share/resolve',
+        method: 'post',
+        data: { url: link },
+      })
+      if (res.data.code === 200) return res.data.data || {}
+    } catch (e) {
+      log('Song', '分享链接解析失败', e.message)
+    }
+    return {}
+  },
+
+  async loadSongById(id) {
+    const res = await api({
+      url: '/song/detail',
+      method: 'get',
+      params: { ids: String(id) },
+    })
+    const song = res.data?.songs?.[0]
+    if (!song) throw new Error('未找到这首歌曲')
+    const mapped = {
+      id: String(song.id),
+      name: song.name,
+      artist: (song.ar || [])
+        .map((artist) => artist.name)
+        .filter(Boolean)
+        .join(' / '),
+      cover: song.al?.picUrl || '',
+      duration: song.dt || 0,
+    }
+    this.selectedSong = mapped
+    this.inputSongId = mapped.id
+    this.songInput = mapped.name
+    this.songResults = []
+    this.message = `已解析歌曲: ${mapped.name}`
+    return mapped
+  },
+
+  async searchSongs(keywords) {
+    const query = String(keywords ?? this.songInput).trim()
+    if (!query) return (this.message = '请输入歌曲名或歌手')
+    if (this.songSearching) return
+    this.songSearching = true
+    this.songResults = []
+    try {
+      const res = await api({
+        url: '/cloudsearch',
+        method: 'get',
+        params: { keywords: query, type: 1, limit: 8 },
+      })
+      const raw = res.data?.result?.songs || []
+      this.songResults = raw.map((song) => ({
+        id: String(song.id),
+        name: song.name,
+        artist: (song.ar || [])
+          .map((artist) => artist.name)
+          .filter(Boolean)
+          .join(' / '),
+        cover: song.al?.picUrl || '',
+        duration: song.dt || 0,
+      }))
+      this.message = this.songResults.length
+        ? `找到 ${this.songResults.length} 首歌曲`
+        : '没有找到匹配的歌曲'
+    } catch (e) {
+      this.message =
+        '搜索失败: ' +
+        (e.response?.data?.message || e.message || '未知错误')
+    } finally {
+      this.songSearching = false
+    }
+  },
 
   selectSong(song) {
-              if (!song?.id) return
-              this.selectedSong = song
-              this.inputSongId = String(song.id)
-              this.songResults = []
-              this.message = `已选择: ${song.name}`
-            },
+    if (!song?.id) return
+    this.selectedSong = song
+    this.inputSongId = String(song.id)
+    this.songInput = song.name
+    this.songResults = []
+    this.message = `已选择: ${song.name}`
+  },
 
   async addSelectedSong() {
-              const songId = this.selectedSongId
-              if (!songId) return (this.message = '请先搜索并选择歌曲')
-              if (!this.roomInfo.permission.addSong)
-                return (this.message = '当前没有加歌权限')
-              if (this.nextAddSongDuration > 0)
-                return (this.message = `加歌冷却中，剩 ${this.nextAddSongDuration}s`)
-              const ok = await this.operateSong(1, songId)
-              if (ok) {
-                this.selectedSong = null
-                this.songQuery = ''
-              }
-            },
+    const songId = this.selectedSongId
+    if (!songId) return (this.message = '请先搜索或解析歌曲')
+    if (!this.roomInfo.permission.addSong)
+      return (this.message = '当前没有加歌权限')
+    if (this.nextAddSongDuration > 0)
+      return (this.message = `加歌冷却中，剩 ${this.nextAddSongDuration}s`)
+    const ok = await this.operateSong(1, songId)
+    if (ok) {
+      this.closeSongDialog()
+      this.selectedSong = null
+      this.songInput = ''
+      this.songResults = []
+    }
+  },
 
   async sendChat() {
               if (this.chatSending) return

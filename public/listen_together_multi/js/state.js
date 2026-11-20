@@ -107,10 +107,12 @@ function createState() {
             cloudLoaded: false,
             cloudError: '',
 
-            songQuery: '',
+            songInput: '',
             songResults: [],
             songSearching: false,
             selectedSong: null,
+            songOpen: false,
+            songDialogMode: 'add',
 
             imConnected: false,
             imStatus: '',

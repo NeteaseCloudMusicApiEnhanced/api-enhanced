@@ -664,6 +664,101 @@
         grid-row: 3;
       }
 
+      /* ================= 应用外壳 ================= */
+      body {
+        background: #eef2f7;
+      }
+
+      .container.app-shell {
+        max-width: 1280px;
+        padding: 28px;
+        border-radius: 14px;
+      }
+
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin: -28px -28px 20px;
+        padding: 16px 24px;
+        color: #f9fafb;
+        background:
+          linear-gradient(135deg, #111827 0%, #182233 60%, #0f172a 100%);
+        border-bottom: 3px solid #c20c0c;
+        border-radius: 14px 14px 0 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 10px;
+        height: 38px;
+        background: #c20c0c;
+        box-shadow: 0 0 18px rgba(194, 12, 12, 0.45);
+        flex: 0 0 auto;
+      }
+
+      .brand-name {
+        margin: 0;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        line-height: 1.15;
+      }
+
+      .brand-sub {
+        margin-top: 3px;
+        color: #9ca3af;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+
+      .app-header .status-strip {
+        position: static;
+        flex: 1;
+        justify-content: flex-end;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        backdrop-filter: none;
+        color: #e5e7eb;
+      }
+
+      .app-header .status-chip {
+        background: #1f2937;
+        color: #d1d5db;
+      }
+
+      .app-header .status-strip .btn {
+        background: #f9fafb;
+        color: #111827;
+      }
+
+      .app-header .status-strip .btn-primary {
+        background: #c20c0c;
+        color: #fff;
+        border-color: #c20c0c;
+      }
+
+      .app-header .status-strip .btn-primary:hover {
+        background: #a50a0a;
+      }
+
+      .app-header .status-strip a.btn {
+        text-decoration: none;
+      }
+
       .chat-fab {
         position: fixed;
         z-index: 90;
@@ -899,6 +994,70 @@
         flex: 0 0 auto;
       }
 
+      .topbar-chat {
+        display: none;
+      }
+
+      .song-smart {
+        margin-bottom: 12px;
+      }
+
+      .song-smart-input {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .song-smart-input input {
+        flex: 1 1 220px;
+        max-width: none;
+        min-width: 0;
+      }
+
+      .song-smart-input .btn {
+        margin-bottom: 0;
+      }
+
+      .song-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 110;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+      }
+
+      .song-dialog {
+        width: min(560px, 100%);
+        max-height: min(680px, calc(100vh - 32px));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+      }
+
+      .song-dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #fafafa;
+        flex: 0 0 auto;
+      }
+
+      .song-dialog-body {
+        padding: 14px;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
       /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
@@ -1013,6 +1172,25 @@
           pointer-events: auto;
           background: #fff;
           padding: 0;
+        }
+
+        .chat-fab {
+          display: none;
+        }
+
+        .topbar-chat {
+          display: inline-flex;
+        }
+
+        .song-overlay {
+          padding: 0;
+        }
+
+        .song-dialog {
+          width: 100%;
+          height: 100%;
+          max-height: none;
+          border-radius: 0;
         }
 
         .chat-dialog {

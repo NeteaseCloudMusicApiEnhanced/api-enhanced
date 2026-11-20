@@ -9,7 +9,9 @@ function mounted() {
             if (
               this.chatOpen &&
               event.target instanceof Element &&
-              !event.target.closest('.chat-dialog')
+              !event.target.closest('.chat-dialog') &&
+              !event.target.closest('.chat-fab') &&
+              !event.target.closest('.topbar-chat')
             )
               this.closeChat()
           })

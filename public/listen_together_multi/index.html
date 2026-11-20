@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=5" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=6" />
 
   </head>
   <body>
@@ -45,6 +45,20 @@
           @click="refreshRoom"
         >
           {{ refreshing ? '刷新中…' : '刷新房间' }}
+        </button>
+        <button
+          v-if="roomInfo.roomId"
+          class="btn btn-sm topbar-chat"
+          @click="toggleChat"
+        >
+          聊天<span v-if="chatUnread"> ({{ chatUnread > 99 ? '99+' : chatUnread }})</span>
+        </button>
+        <button
+          v-if="roomInfo.roomId"
+          class="btn btn-sm btn-primary topbar-add"
+          @click="openSongDialog('add')"
+        >
+          ＋ 添加歌曲
         </button>
         <a
           v-if="!account.login"
@@ -104,54 +118,55 @@
 
       <div v-show="account.login && !roomInfo.roomId" class="section">
         <h3>发起一起听</h3>
-        <div class="input-group">
-          <label>初始歌曲:</label>
-          <input
-            v-model="songQuery"
-            type="text"
-            placeholder="搜索歌曲名或歌手"
-            @keyup.enter="searchSongs"
-          />
-          <button
-            class="btn"
-            :disabled="songSearching"
-            @click="searchSongs"
-            style="margin-bottom: 0"
-          >
-            {{ songSearching ? '搜索中…' : '搜索' }}
-          </button>
-        </div>
-        <div v-if="songResults.length" class="song-results">
-          <button
-            v-for="song in songResults"
-            :key="'create-song-' + song.id"
-            type="button"
-            class="song-result"
-            @click="selectSong(song)"
-          >
-            <img v-if="song.cover" :src="song.cover" alt="" />
-            <span>
-              <b>{{ song.name }}</b>
-              <small>{{ song.artist }}</small>
-            </span>
-          </button>
-        </div>
-        <div v-if="selectedSong" class="selected-song">
-          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
-          <button class="btn btn-sm" @click="selectedSong = null">清除</button>
-        </div>
-        <details style="margin-bottom: 12px">
-          <summary style="cursor: pointer; color: #666; font-size: 13px">
-            手动输入歌曲 ID
-          </summary>
-          <div class="input-group" style="margin-top: 8px">
+        <div class="song-smart">
+          <div class="song-smart-input">
             <input
-              v-model="inputSongId"
+              v-model="songInput"
               type="text"
-              placeholder="例如: 1372188635"
+              placeholder="粘贴歌曲链接，或输入歌名/歌手"
+              @input="onSongInput"
+              @keyup.enter="resolveSongInput"
             />
+            <button
+              class="btn"
+              :disabled="songSearching"
+              @click="resolveSongInput"
+              style="margin-bottom: 0"
+            >
+              {{ songSearching ? '解析中…' : '解析 / 搜索' }}
+            </button>
           </div>
-        </details>
+          <p class="hint" style="margin: 6px 0 0">
+            支持网易云歌曲链接、163cn.tv 短链接；解析不到会自动按关键词搜索。
+          </p>
+          <div v-if="songResults.length" class="song-results">
+            <button
+              v-for="song in songResults"
+              :key="'create-song-' + song.id"
+              type="button"
+              class="song-result"
+              @click="selectSong(song)"
+            >
+              <img v-if="song.cover" :src="song.cover" alt="" />
+              <span>
+                <b>{{ song.name }}</b>
+                <small>{{ song.artist }}</small>
+              </span>
+            </button>
+          </div>
+          <div v-if="selectedSong" class="selected-song">
+            <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+            <button
+              class="btn btn-sm"
+              @click="
+                selectedSong = null;
+                songInput = '';
+              "
+            >
+              清除
+            </button>
+          </div>
+        </div>
         <div class="input-group" style="margin-bottom: 16px">
           <label
             style="
@@ -482,72 +497,12 @@
 
       <div v-show="roomInfo.roomId" class="section room-main room-controls">
         <h3>播放控制</h3>
-        <div class="input-group">
-          <label>添加歌曲:</label>
-          <input
-            v-model="songQuery"
-            type="text"
-            placeholder="搜索歌曲名或歌手"
-            :disabled="!roomInfo.permission.addSong"
-            @keyup.enter="searchSongs"
-          />
-          <button
-            class="btn"
-            :disabled="songSearching || !roomInfo.permission.addSong"
-            @click="searchSongs"
-            style="margin-bottom: 0"
-          >
-            {{ songSearching ? '搜索中…' : '搜索' }}
-          </button>
+        <div class="hint" style="margin-bottom: 12px">
+          添加歌曲请使用顶栏右侧的「＋ 添加歌曲」按钮。
         </div>
-        <div v-if="songResults.length" class="song-results">
-          <button
-            v-for="song in songResults"
-            :key="'room-song-' + song.id"
-            type="button"
-            class="song-result"
-            @click="selectSong(song)"
-          >
-            <img v-if="song.cover" :src="song.cover" alt="" />
-            <span>
-              <b>{{ song.name }}</b>
-              <small>{{ song.artist }}</small>
-            </span>
-          </button>
-        </div>
-        <div v-if="selectedSong" class="selected-song">
-          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
-          <button
-            class="btn btn-sm btn-primary"
-            :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
-            @click="addSelectedSong"
-          >
-            {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` :
-            '添加所选' }}
-          </button>
-          <button class="btn btn-sm" @click="selectedSong = null">取消</button>
-        </div>
-        <details style="margin: 8px 0 12px">
-          <summary style="cursor: pointer; color: #666; font-size: 13px">
-            手动输入歌曲 ID
-          </summary>
-          <div class="input-group" style="margin-top: 8px">
-            <input
-              v-model="inputSongId"
-              type="text"
-              placeholder="粘贴歌曲ID"
-              :disabled="!roomInfo.permission.addSong"
-            />
-            <button
-              class="btn"
-              @click="operateSong(1, Number(inputSongId))"
-              :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
-              style="margin-bottom: 0"
-            >
-              添加
-            </button>
-          </div>
-        </details>
+        <button class="btn btn-sm" @click="openSongDialog('add')">
+          打开添加歌曲
+        </button>
         <div
           class="control-buttons"
           style="
@@ -578,6 +533,72 @@
         </div>
       </div>
 
+      </div>
+      <div v-if="songOpen" class="song-overlay" @click.self="closeSongDialog">
+        <div class="song-dialog" role="dialog" aria-modal="true" aria-label="添加歌曲">
+          <div class="song-dialog-head">
+            <strong>添加歌曲</strong>
+            <button class="chat-close" @click="closeSongDialog" aria-label="关闭">×</button>
+          </div>
+          <div class="song-dialog-body">
+            <div class="song-smart-input">
+              <input
+                v-model="songInput"
+                type="text"
+                placeholder="粘贴歌曲链接，或输入歌名/歌手"
+                @input="onSongInput"
+                @keyup.enter="resolveSongInput"
+              />
+              <button
+                class="btn"
+                :disabled="songSearching"
+                @click="resolveSongInput"
+                style="margin-bottom: 0"
+              >
+                {{ songSearching ? '解析中…' : '解析 / 搜索' }}
+              </button>
+            </div>
+            <p class="hint" style="margin: 6px 0 0">
+              支持网易云歌曲链接、163cn.tv 短链接；解析不到会自动按关键词搜索。
+            </p>
+            <div v-if="songResults.length" class="song-results">
+              <button
+                v-for="song in songResults"
+                :key="'dialog-song-' + song.id"
+                type="button"
+                class="song-result"
+                @click="selectSong(song)"
+              >
+                <img v-if="song.cover" :src="song.cover" alt="" />
+                <span>
+                  <b>{{ song.name }}</b>
+                  <small>{{ song.artist }}</small>
+                </span>
+              </button>
+            </div>
+            <div v-if="selectedSong" class="selected-song">
+              <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+              <button
+                v-if="songDialogMode === 'add'"
+                class="btn btn-sm btn-primary"
+                :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+                @click="addSelectedSong"
+              >
+                {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` : '添加' }}
+              </button>
+              <button v-else class="btn btn-sm btn-primary" @click="closeSongDialog">
+                使用这首歌
+              </button>
+            </div>
+            <p v-if="songSearching" class="hint">正在解析 / 搜索…</p>
+            <p
+              v-if="!songSearching && !songResults.length && !selectedSong"
+              class="empty-hint"
+            >
+              粘贴歌曲链接或输入歌名，结果会显示在这里。
+            </p>
+          </div>
+        </div>
       </div>
       <button
         v-if="roomInfo.roomId"
@@ -854,16 +875,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=5"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=5"></script>
-    <script src="/listen_together_multi/js/state.js?v=5"></script>
-    <script src="/listen_together_multi/js/computed.js?v=5"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=5"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=5"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=5"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=5"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=5"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=5"></script>
-    <script src="/listen_together_multi/app.js?v=5"></script>
+    <script src="/listen_together_multi/js/core.js?v=6"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=6"></script>
+    <script src="/listen_together_multi/js/state.js?v=6"></script>
+    <script src="/listen_together_multi/js/computed.js?v=6"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=6"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=6"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=6"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=6"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=6"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=6"></script>
+    <script src="/listen_together_multi/app.js?v=6"></script>
   </body>
 </html>
