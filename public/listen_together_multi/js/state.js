@@ -55,6 +55,10 @@ function createState() {
             chatInput: '',
             chatHistory: [],
             chatSending: false,
+            chatOpen: false,
+            chatTab: 'chat',
+            chatUnread: 0,
+            logEntries: [],
 
             emojiPickerOpen: false,
             emojiTab: 'builtin',

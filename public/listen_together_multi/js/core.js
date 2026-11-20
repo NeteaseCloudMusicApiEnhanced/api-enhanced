@@ -1,10 +1,32 @@
 (function () {
 'use strict'
-const log = (tag, msg, data = '') =>
-        console.log(
-          `[${new Date().toLocaleTimeString()}] [${tag}] ${msg}`,
-          data,
-        )
+window.LT = window.LT || {}
+const logs = (window.LT.logs = window.LT.logs || [])
+const logData = (data) => {
+  if (data === undefined || data === null) return ''
+  if (typeof data === 'string') return data.slice(0, 2000)
+  try {
+    return JSON.stringify(data).slice(0, 2000)
+  } catch (e) {
+    return String(data).slice(0, 2000)
+  }
+}
+const log = (tag, msg, data = '') => {
+  console.log(
+    `[${new Date().toLocaleTimeString()}] [${tag}] ${msg}`,
+    data,
+  )
+  const entry = {
+    time: Date.now(),
+    tag: String(tag || 'log'),
+    msg: String(msg || ''),
+    data: logData(data),
+  }
+  logs.push(entry)
+  if (logs.length > 300) logs.splice(0, logs.length - 300)
+  if (typeof CustomEvent !== 'undefined')
+    window.dispatchEvent(new CustomEvent('lt-log', { detail: entry }))
+}
 
 const HEARTBEAT_INTERVAL = 5000
 
@@ -78,5 +100,5 @@ const AUDIO_LEVELS = [
 const DEFAULT_AUDIO_LEVEL = 'higher'
 
 
-window.LT = Object.assign(window.LT || {}, { log, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, api, safeStorage, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL })
+window.LT = Object.assign(window.LT, { log, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, api, safeStorage, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL })
 })()

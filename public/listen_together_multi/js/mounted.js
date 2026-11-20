@@ -1,5 +1,12 @@
 (function () {
 function mounted() {
+          this.logEntries = (window.LT.logs || []).slice(-300)
+          window.addEventListener('lt-log', this.onLogEvent)
+          window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.chatOpen) this.closeChat()
+          })
+          this.$watch('message', (value) => this.pushLog('status', value))
+          this.pushLog('app', '控制台已加载')
           this.init()
           const audio = document.getElementById('player')
           if (audio) {

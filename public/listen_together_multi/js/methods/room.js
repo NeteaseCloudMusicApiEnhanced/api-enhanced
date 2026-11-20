@@ -867,6 +867,7 @@ const roomMethods = {
                   this.chatHistory = list
 
                   if (lastOldMsg !== lastNewMsg) {
+                    if (!this.chatOpen) this.chatUnread++
                     setTimeout(() => {
                       const el = document.getElementById('chatList')
                       if (el) el.scrollTop = el.scrollHeight

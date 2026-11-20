@@ -99,6 +99,13 @@ const stickersMethods = {
               await this.ensureCloudStickers(false, true)
             },
 
+  onEmojiScroll(event) {
+    const el = event && event.currentTarget
+    if (!el || !this.cloudMore || this.cloudLoading) return
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48)
+      this.loadMoreCloud()
+  },
+
   normalizeSticker(item) {
               const url = String(item?.emojiImgUrl || item?.url || '')
               if (!/^https?:\/\//.test(url)) return null

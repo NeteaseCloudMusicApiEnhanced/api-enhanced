@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=2" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=3" />
 
   </head>
   <body>
@@ -37,6 +37,13 @@
         <span v-if="roomInfo.roomId" class="status-chip">
           {{ roomInfo.roomUsers.length }} 人
         </span>
+        <button
+          v-if="roomInfo.roomId"
+          class="btn btn-sm"
+          @click="openChat"
+        >
+          聊天<span v-if="chatUnread"> ({{ chatUnread }})</span>
+        </button>
         <span class="status-spacer"></span>
         <button
           v-if="roomInfo.roomId"
@@ -560,8 +567,30 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section room-side room-chat">
-        <h3>房间聊天</h3>
+      </div>
+      <div v-if="chatOpen" class="chat-overlay" @click.self="closeChat">
+        <div class="chat-dialog" role="dialog" aria-modal="true" aria-label="房间聊天">
+          <div class="chat-dialog-head">
+            <div class="chat-tabs">
+              <button
+                class="chat-tab"
+                :class="{ active: chatTab === 'chat' }"
+                @click="setChatTab('chat')"
+              >
+                聊天
+                <span v-if="chatUnread" class="chat-unread">{{ chatUnread }}</span>
+              </button>
+              <button
+                class="chat-tab"
+                :class="{ active: chatTab === 'logs' }"
+                @click="setChatTab('logs')"
+              >
+                工作日志
+              </button>
+            </div>
+            <button class="chat-close" @click="closeChat" aria-label="关闭聊天">×</button>
+          </div>
+          <div v-show="chatTab === 'chat'" class="chat-panel">
         <ul class="chat-list" id="chatList">
           <li
             v-for="(msg, mi) in chatHistory"
@@ -696,7 +725,11 @@
                 重试
               </button>
             </p>
-            <div v-if="myStickers.length" class="emoji-grid">
+            <div
+              v-if="myStickers.length"
+              class="emoji-grid"
+              @scroll="onEmojiScroll"
+            >
               <div
                 v-for="emoji in myStickers"
                 :key="emoji.emojiImgUrl"
@@ -750,20 +783,42 @@
             点击表情发送；收到图片表情后可点“存表情”收藏到本地/网易云。
           </p>
         </div>
+          </div>
+          <div v-show="chatTab === 'logs'" class="log-panel">
+            <div id="logList" class="log-list">
+              <div
+                v-for="(entry, index) in logEntries"
+                :key="'log-' + index"
+                class="log-entry"
+              >
+                <span class="log-time">{{ logTime(entry.time) }}</span>
+                <span class="log-tag">{{ entry.tag }}</span>
+                <span class="log-msg">
+                  {{ entry.msg }}
+                  <span v-if="entry.data" class="log-data">{{ entry.data }}</span>
+                </span>
+              </div>
+              <p v-if="!logEntries.length" class="empty-hint">暂无工作日志</p>
+            </div>
+            <div class="log-actions">
+              <button class="btn btn-sm" @click="clearLogs">清空日志</button>
+            </div>
+          </div>
+        </div>
       </div>
-      </div>
+
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=2"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=2"></script>
-    <script src="/listen_together_multi/js/state.js?v=2"></script>
-    <script src="/listen_together_multi/js/computed.js?v=2"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=2"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=2"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=2"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=2"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=2"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=2"></script>
-    <script src="/listen_together_multi/app.js?v=2"></script>
+    <script src="/listen_together_multi/js/core.js?v=3"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=3"></script>
+    <script src="/listen_together_multi/js/state.js?v=3"></script>
+    <script src="/listen_together_multi/js/computed.js?v=3"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=3"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=3"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=3"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=3"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=3"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=3"></script>
+    <script src="/listen_together_multi/app.js?v=3"></script>
   </body>
 </html>

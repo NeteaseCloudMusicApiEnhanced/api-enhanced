@@ -625,7 +625,7 @@
 
       .room-dashboard {
         display: grid;
-        grid-template-columns: 260px minmax(0, 1fr) 340px;
+        grid-template-columns: 280px minmax(0, 1fr);
         gap: 16px;
         align-items: start;
       }
@@ -638,163 +638,181 @@
         grid-column: 1 / -1;
       }
 
-      .room-main {
-        grid-column: 1;
-      }
-
-      .room-side {
-        grid-column: 2;
-      }
-
-      .room-members {
-        grid-row: 2;
-      }
-
-      .room-queue {
-        grid-row: 2;
-      }
-
-      .room-controls {
-        grid-row: 3;
-      }
-
-      .room-chat {
-        grid-row: 3 / span 2;
-      }
-
-      /* ================= 应用外壳 ================= */
-      body {
-        background: #eef2f7;
-      }
-
-      .container.app-shell {
-        max-width: 1280px;
-        padding: 28px;
-        border-radius: 14px;
-      }
-
-      .app-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin: -28px -28px 20px;
-        padding: 16px 24px;
-        color: #f9fafb;
-        background:
-          linear-gradient(135deg, #111827 0%, #182233 60%, #0f172a 100%);
-        border-bottom: 3px solid #c20c0c;
-        border-radius: 14px 14px 0 0;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 0;
-      }
-
-      .brand-mark {
-        width: 10px;
-        height: 38px;
-        background: #c20c0c;
-        box-shadow: 0 0 18px rgba(194, 12, 12, 0.45);
-        flex: 0 0 auto;
-      }
-
-      .brand-name {
-        margin: 0;
-        color: #fff;
-        font-size: 20px;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        line-height: 1.15;
-      }
-
-      .brand-sub {
-        margin-top: 3px;
-        color: #9ca3af;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 10px;
-        letter-spacing: 0.14em;
-      }
-
-      .app-header .status-strip {
-        position: static;
-        flex: 1;
-        justify-content: flex-end;
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        border: 0;
-        box-shadow: none;
-        backdrop-filter: none;
-        color: #e5e7eb;
-      }
-
-      .app-header .status-chip {
-        background: #1f2937;
-        color: #d1d5db;
-      }
-
-      .app-header .status-strip .btn {
-        background: #f9fafb;
-        color: #111827;
-      }
-
-      .app-header .status-strip a.btn {
-        text-decoration: none;
-      }
-
-      /* 三栏工作区：成员 / 播放控制 / 聊天 */
       .room-members {
         grid-column: 1;
-        grid-row: 2;
-      }
-
-      .room-queue {
-        grid-column: 2;
-        grid-row: 2;
-      }
-
-      .room-controls {
-        grid-column: 2;
-        grid-row: 3;
-      }
-
-      .room-chat {
-        grid-column: 3;
         grid-row: 2 / span 2;
       }
 
-      /* ================= 响应式媒体查询 ================= */
-      @media (max-width: 1100px) {
-        .room-dashboard {
-          grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
-        }
-
-        .room-members {
-          grid-column: 2;
-          grid-row: 2;
-        }
-
-        .room-queue {
-          grid-column: 1;
-          grid-row: 2;
-        }
-
-        .room-controls {
-          grid-column: 1;
-          grid-row: 3;
-        }
-
-        .room-chat {
-          grid-column: 2;
-          grid-row: 3 / span 2;
-        }
+      .room-queue {
+        grid-column: 2;
+        grid-row: 2;
       }
 
+      .room-controls {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      /* ================= 聊天 / 工作日志弹窗 ================= */
+      .chat-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: flex-end;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+      }
+
+      .chat-dialog {
+        width: min(440px, 100%);
+        height: calc(100vh - 32px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+      }
+
+      .chat-dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px 8px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid #e5e7eb;
+        flex: 0 0 auto;
+      }
+
+      .chat-tabs {
+        display: flex;
+        gap: 4px;
+      }
+
+      .chat-tab {
+        border: 0;
+        background: transparent;
+        color: #4b5563;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .chat-tab.active {
+        background: #c20c0c;
+        color: #fff;
+      }
+
+      .chat-unread {
+        display: inline-block;
+        min-width: 16px;
+        padding: 0 4px;
+        margin-left: 4px;
+        border-radius: 999px;
+        background: #fff;
+        color: #c20c0c;
+        font-size: 11px;
+        line-height: 16px;
+        text-align: center;
+      }
+
+      .chat-close {
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #6b7280;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .chat-close:hover {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
+      .chat-panel,
+      .log-panel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+      }
+
+      .chat-panel .chat-list {
+        flex: 1;
+        max-height: none;
+        min-height: 0;
+        margin-bottom: 8px;
+      }
+
+      .chat-panel .emoji-picker {
+        max-height: 45%;
+        overflow-y: auto;
+        flex: 0 0 auto;
+      }
+
+      .log-list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 10px;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #d1d5db;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .log-entry {
+        display: grid;
+        grid-template-columns: 64px 74px minmax(0, 1fr);
+        gap: 6px;
+        padding: 3px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .log-time {
+        color: #94a3b8;
+      }
+
+      .log-tag {
+        color: #fca5a5;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .log-msg {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .log-data {
+        display: block;
+        margin-top: 2px;
+        color: #93c5fd;
+        font-size: 11px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .log-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 8px;
+        flex: 0 0 auto;
+      }
+
+      /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
           padding: 10px;
@@ -902,5 +920,15 @@
 
         .room-dashboard > .section {
           margin-bottom: 24px;
+        }
+
+        .chat-overlay {
+          padding: 0;
+        }
+
+        .chat-dialog {
+          width: 100%;
+          height: 100%;
+          border-radius: 0;
         }
       }
