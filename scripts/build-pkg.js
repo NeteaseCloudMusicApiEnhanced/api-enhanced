@@ -1,10 +1,10 @@
 /**
  * Invoke the pkg packager (cross-platform, independent of node_modules layout).
  *
- * Background: on Windows, pnpm links node_modules/pkg to
- * node_modules/.pnpm/pkg@<ver>/node_modules/pkg via a junction. Some CI
- * environments (pnpm 11 + Windows runner) may fail to create that link,
- * so executing node_modules/pkg/lib-es5/bin.js directly throws
+ * Background: on Windows, pnpm links node_modules/@yao-pkg/pkg to
+ * node_modules/.pnpm/@yao-pkg+pkg@<ver>/node_modules/@yao-pkg/pkg via a junction.
+ * Some CI environments (pnpm 11 + Windows runner) may fail to create that link,
+ * so executing node_modules/@yao-pkg/pkg/lib-es5/bin.js directly throws
  * MODULE_NOT_FOUND.
  *
  * This script first resolves pkg via require.resolve and falls back to
@@ -17,16 +17,24 @@ const path = require('path')
 
 function resolvePkgBin() {
   try {
-    return require.resolve('pkg/lib-es5/bin.js')
+    return require.resolve('@yao-pkg/pkg/lib-es5/bin.js')
   } catch (err) {
-    // require.resolve failed (e.g. missing node_modules/pkg link): scan .pnpm
+    // require.resolve failed (e.g. missing node_modules/@yao-pkg/pkg link): scan .pnpm
     const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm')
     if (fs.existsSync(pnpmDir)) {
       const candidates = fs
         .readdirSync(pnpmDir)
-        .filter((dir) => dir.startsWith('pkg@'))
+        .filter((dir) => dir.startsWith('@yao-pkg+pkg@'))
         .map((dir) =>
-          path.join(pnpmDir, dir, 'node_modules', 'pkg', 'lib-es5', 'bin.js'),
+          path.join(
+            pnpmDir,
+            dir,
+            'node_modules',
+            '@yao-pkg',
+            'pkg',
+            'lib-es5',
+            'bin.js',
+          ),
         )
         .filter((file) => fs.existsSync(file))
       if (candidates.length) {

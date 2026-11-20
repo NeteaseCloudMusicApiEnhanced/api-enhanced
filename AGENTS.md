@@ -2,7 +2,7 @@
 
 ## 快速开始
 - **包管理器**：开发与 CI 使用 `pnpm`，`Dockerfile` 也用 pnpm（`pnpm@9 --frozen-lockfile`，匹配 `pnpm-lock.yaml`）。仓库没有 `yarn.lock`，不要引入 yarn。
-- **Node 版本**：README 推荐 Node 22+；`package.json` 的 `engines` 声明 `>=12`；CI/打包在 Node 18–24 上运行。现代 Node 均可。
+- **Node 版本**：`package.json` 的 `engines` 声明 `>=22`；CI/打包在 Node 22–24 上运行。现代 Node 均可。
 - **环境变量**：`server.js` 调用了 `dotenv.config()`，本地 `.env` 会被自动加载；所有支持的变量见 `.env.prod.example`。
 
 ## 常用命令
@@ -11,7 +11,7 @@
 - 跑测试：`pnpm test`（Mocha，超时 60s）
 - Lint：`pnpm lint`；自动修复：`pnpm lint-fix`
 - 文档格式化检查/修复：`pnpm docs:check` / `pnpm docs:format`
-- 打包独立二进制：`pnpm pkgwin` / `pkglinux` / `pkgmacos`
+- 打包独立二进制：`pnpm pkgwin` / `pkglinux` / `pkgmacos`（@yao-pkg/pkg，node22 目标，`--no-bytecode` + `--public` 规避 node22 bytecode 回归）
 
 ## 目录内非路由文件
 - `plugins/`——内部上传辅助（`upload.js`、`songUpload.js`），被 `module/*` require，本身不是路由。
