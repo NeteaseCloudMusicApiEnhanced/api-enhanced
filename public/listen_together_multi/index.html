@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="zh-CN" translate="no">
+  <head>
+
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="google" content="notranslate" />
+    <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+
+  </head>
+  <body>
+
+    <div id="app" class="container app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <h1 class="brand-name">LISTEN TOGETHER</h1>
+            <div class="brand-sub">API-ENHANCED · MULTI ROOM CONSOLE</div>
+          </div>
+        </div>
+<div class="status-strip">
+        <span
+          :class="['status-dot', account.login ? (isMatching ? 'busy' : 'online') : '']"
+        ></span>
+        <strong>{{ account.login ? account.nickname : '未登录' }}</strong>
+        <span class="status-chip">{{ roomStatusText }}</span>
+        <span v-if="roomInfo.roomId" class="status-chip">
+          {{ roomTypeInfo.label }}
+        </span>
+        <span v-if="roomInfo.roomId" class="status-chip">
+          {{ roomInfo.roomUsers.length }} 人
+        </span>
+        <span class="status-spacer"></span>
+        <button
+          v-if="roomInfo.roomId"
+          class="btn btn-sm"
+          :disabled="refreshing"
+          @click="refreshRoom"
+        >
+          {{ refreshing ? '刷新中…' : '刷新房间' }}
+        </button>
+        <a
+          v-if="!account.login"
+          href="/qrlogin.html"
+          class="btn btn-sm"
+          style="text-decoration: none"
+          >登录</a
+        >
+      </div>
+      </header>
+      <div class="message" role="status" aria-live="polite">
+        状态: {{message}}
+      </div>
+
+      <div class="audio-player">
+        <audio id="player" controls style="width: 100%"></audio>
+        <div class="audio-control-bar">
+          <span>音质:</span>
+          <select v-model="audioLevel" @change="onLevelChange">
+            <option v-for="l in audioLevels" :key="l.key" :value="l.key">
+              {{ l.label }}
+            </option>
+          </select>
+          <span
+            v-if="playingInfo.actualLevel && playingInfo.actualLevel !== audioLevel"
+            class="hint"
+          >
+            （实际 {{ levelLabel(playingInfo.actualLevel) }}，已自动降级）
+          </span>
+          <span v-else-if="playingInfo.actualLevel" class="hint">
+            （实际 {{ levelLabel(playingInfo.actualLevel) }}）
+          </span>
+        </div>
+      </div>
+
+      <div class="section flex-between">
+        <div>
+          <div>当前账号: {{account.nickname}} (UID: {{account.userId}})</div>
+          <button
+            class="btn btn-primary"
+            @click="login(false)"
+            v-show="!account.login"
+            style="margin-top: 10px; padding: 6px 12px; font-size: 13px"
+          >
+            获取登录状态
+          </button>
+        </div>
+        <button
+          class="btn btn-danger"
+          @click="forceExitAndReset"
+          v-show="account.login"
+          style="padding: 6px 12px; font-size: 13px"
+        >
+          强制重置状态
+        </button>
+      </div>
+
+      <div v-show="account.login && !roomInfo.roomId" class="section">
+        <h3>发起一起听</h3>
+        <div class="input-group">
+          <label>初始歌曲:</label>
+          <input
+            v-model="songQuery"
+            type="text"
+            placeholder="搜索歌曲名或歌手"
+            @keyup.enter="searchSongs"
+          />
+          <button
+            class="btn"
+            :disabled="songSearching"
+            @click="searchSongs"
+            style="margin-bottom: 0"
+          >
+            {{ songSearching ? '搜索中…' : '搜索' }}
+          </button>
+        </div>
+        <div v-if="songResults.length" class="song-results">
+          <button
+            v-for="song in songResults"
+            :key="'create-song-' + song.id"
+            type="button"
+            class="song-result"
+            @click="selectSong(song)"
+          >
+            <img v-if="song.cover" :src="song.cover" alt="" />
+            <span>
+              <b>{{ song.name }}</b>
+              <small>{{ song.artist }}</small>
+            </span>
+          </button>
+        </div>
+        <div v-if="selectedSong" class="selected-song">
+          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+          <button class="btn btn-sm" @click="selectedSong = null">清除</button>
+        </div>
+        <details style="margin-bottom: 12px">
+          <summary style="cursor: pointer; color: #666; font-size: 13px">
+            手动输入歌曲 ID
+          </summary>
+          <div class="input-group" style="margin-top: 8px">
+            <input
+              v-model="inputSongId"
+              type="text"
+              placeholder="例如: 1372188635"
+            />
+          </div>
+        </details>
+        <div class="input-group" style="margin-bottom: 16px">
+          <label
+            style="
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            "
+          >
+            <input
+              type="checkbox"
+              v-model="allowStranger"
+              style="width: 18px; height: 18px"
+            />
+            允许陌生人加入 (进入匹配池 → 公房)
+          </label>
+        </div>
+        <div style="margin-bottom: 16px">
+          <button class="btn" @click="createRoom" :disabled="isMatching">
+            创建房间
+          </button>
+          <button
+            class="btn btn-primary"
+            @click="startMatch"
+            :disabled="isMatching"
+          >
+            {{ isMatching ? '正在匹配中...' : '随机匹配 (公房)' }}
+          </button>
+          <button
+            v-show="isMatching"
+            class="btn btn-danger"
+            @click="cancelMatch"
+          >
+            取消匹配
+          </button>
+        </div>
+        <div class="hint" v-if="!isMatching" style="margin-bottom: 16px">
+          匹配会先建立 SSE 通知通道，通常 5–30 秒；需要两名在线用户。
+        </div>
+
+        <details id="joinDetails">
+          <summary
+            style="
+              cursor: pointer;
+              font-weight: 500;
+              color: #333;
+              padding: 8px 0;
+            "
+          >
+            加入已有房间
+          </summary>
+          <div class="input-group" style="margin-top: 10px">
+            <input
+              v-model="shareLinkInput"
+              type="text"
+              placeholder="粘贴分享链接自动解析"
+              style="width: 100%"
+              @input="parseShareLink"
+            />
+          </div>
+          <div class="input-group">
+            <input
+              v-model="joinForm.roomId"
+              type="text"
+              placeholder="输入房间ID"
+              style="width: 100%"
+            />
+          </div>
+          <div class="input-group">
+            <input
+              v-model="joinForm.inviterId"
+              type="text"
+              placeholder="邀请者UID"
+              style="width: 100%"
+            />
+          </div>
+          <button class="btn" @click="joinRoom">确认加入</button>
+        </details>
+      </div>
+
+      <div class="room-dashboard" v-show="roomInfo.roomId">
+      <div v-show="roomInfo.roomId" class="section room-full">
+        <div style="word-break: break-all">
+          <div class="room-id-line">
+            <span><b>房间 ID:</b> {{roomInfo.roomId}}</span>
+            <button
+              class="btn btn-sm"
+              @click="copyText(roomInfo.roomId, '房间 ID')"
+            >
+              复制
+            </button>
+          </div>
+          <div class="room-id-line">
+            <span><b>ChatRoom ID:</b> {{roomInfo.chatRoomId || '—'}}</span>
+            <button
+              v-if="roomInfo.chatRoomId"
+              class="btn btn-sm"
+              @click="copyText(roomInfo.chatRoomId, 'ChatRoom ID')"
+            >
+              复制
+            </button>
+          </div>
+          <!-- 房间类型区分（公房 / 私房 / 特殊房） -->
+          <div style="margin-top: 8px">
+            <span :class="['tag', roomTypeInfo.cls]" style="margin-left: 0">
+              {{ roomTypeInfo.label }}
+            </span>
+            <span
+              :class="['tag', nextAddSongDuration > 0 ? 'tag-other' : 'tag-mine']"
+              style="margin-left: 4px"
+            >
+              {{ nextAddSongDuration > 0 ? `加歌冷却 剩 ${nextAddSongDuration}s`
+              : '可加歌' }}
+            </span>
+            <span
+              v-for="(t, ti) in roomInfo.roomTags"
+              :key="'roomtag-' + ti"
+              class="tag tag-room"
+              >{{ t }}</span
+            >
+          </div>
+        </div>
+        <div class="hint" style="margin-top: 8px" v-if="roomInfo.hintText">
+          {{ roomInfo.hintText }}
+        </div>
+        <div class="hint" style="margin-top: 4px" v-if="roomInfo.nextRcmdText">
+          {{ roomInfo.nextRcmdText }}
+        </div>
+
+        <div class="share-link-box">
+          <button class="btn btn-sm" @click="copyShareLink">
+            复制分享链接
+          </button>
+          <input type="text" :value="shareUrl" readonly />
+        </div>
+
+        <div class="song-info">
+          <img
+            v-if="playingInfo.cover"
+            :src="playingInfo.cover"
+            class="song-cover"
+          />
+          <div v-else class="song-cover loading"></div>
+          <div class="song-meta">
+            <div>
+              <b>正在播放:</b> {{playingInfo.name || (playingInfo.songId ?
+              '加载中…' : '暂无')}}
+            </div>
+            <div>
+              <b>歌手:</b> {{playingInfo.artist || (playingInfo.songId ?
+              '加载中…' : '暂无')}}
+            </div>
+            <div style="font-size: 12px; color: #999; margin-top: 4px">
+              SongID: {{playingInfo.songId}} | BizID: {{playingInfo.bizId}}
+              <br class="mobile-only" />
+              进度: {{playingInfo.playedTime}}s / {{playingInfo.duration}}s
+            </div>
+            <div
+              style="
+                margin-top: 6px;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 4px;
+              "
+            >
+              <span
+                :class="['tag', currentSongSource.type === 'mine' ? 'tag-mine' : (currentSongSource.type === 'sys' ? 'tag-sys' : 'tag-other')]"
+                style="margin-left: 0"
+              >
+                {{ currentSongSource.label }}
+              </span>
+              <span class="tag tag-sys" style="margin-left: 0">
+                👍 {{ playingInfo.zanCnt }}
+              </span>
+              <span class="tag tag-up" style="margin-left: 0">
+                ↑ {{ playingInfo.upCnt || 0 }}<span v-if="playingInfo.uped"
+                  >（我顶过）</span
+                >
+              </span>
+            </div>
+          </div>
+          <div class="song-actions">
+            <button class="btn btn-sm btn-warn" @click="likeCurrentSong">
+              点赞 (👍 可连点)
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="likedMap[String(playingInfo.songId)] ? 'btn-danger' : ''"
+              @click="toggleLikeCurrentSong"
+            >
+              {{ likedMap[String(playingInfo.songId)] ? '已喜欢 ♥' : '喜欢 ♡' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="control-buttons" style="margin-top: 16px">
+          <button class="btn" @click="exitRoom">正常退出房间</button>
+        </div>
+      </div>
+
+      <div v-show="roomInfo.roomId" class="section room-side room-members">
+        <h3>在线成员 ({{ roomInfo.roomUsers.length }})</h3>
+        <div
+          class="hint"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+          "
+        >
+          <button class="btn btn-sm" @click="toggleImMembers">
+            {{ imConnected ? '断开 IM 实时成员' : '连接 IM 实时成员' }}
+          </button>
+          <span>{{ imStatus }}</span>
+        </div>
+        <ul class="user-list">
+          <li
+            v-for="(u, i) in roomInfo.roomUsers"
+            :key="'user-' + i"
+            class="user-item"
+          >
+            <img v-if="u.avatar" :src="u.avatar" class="user-avatar" />
+            <span>{{ u.nickname || '匿名' }}</span>
+            <span style="color: #999; font-size: 12px"
+              >(UID: {{ userUid(u) || '?' }})</span
+            >
+            <span v-if="isMe(u)" class="tag tag-mine" style="margin-left: 0"
+              >我</span
+            >
+          </li>
+        </ul>
+        <div v-if="roomInfo.roomUsers.length === 0" class="empty-hint">
+          暂无成员信息
+        </div>
+      </div>
+
+      <div v-show="roomInfo.roomId" class="section room-main room-queue">
+        <h3>待播列表 ({{ playingInfo.nextSongs.length }} 首)</h3>
+        <ul class="queue-list">
+          <li
+            v-for="(song, idx) in playingInfo.nextSongs"
+            :key="'song-' + song.songId + '-' + song.bizId + '-' + idx"
+            class="queue-item"
+          >
+            <img v-if="song.cover" :src="song.cover" class="queue-cover" />
+            <div class="queue-info">
+              <div style="font-weight: 500">
+                <span
+                  v-if="idx === 0"
+                  class="tag tag-next"
+                  style="margin-left: 0; margin-right: 6px"
+                  >下一首</span
+                >
+                {{ song.name }}
+              </div>
+              <div style="font-size: 12px; color: #999; margin-top: 2px">
+                {{ song.artist }}
+              </div>
+              <div
+                style="
+                  margin-top: 4px;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 4px;
+                "
+              >
+                <span class="tag tag-up" style="margin-left: 0; font-size: 11px"
+                  >↑ {{ (upCntMap[String(song.bizId)] &&
+                  upCntMap[String(song.bizId)].upCnt) || 0 }}</span
+                >
+                <span
+                  v-if="upCntMap[String(song.bizId)] && upCntMap[String(song.bizId)].uped"
+                  class="tag tag-uped"
+                  style="margin-left: 0; font-size: 11px"
+                  >我顶过</span
+                >
+                <span
+                  :class="['tag', song.isMine ? 'tag-mine' : (song.songRcmdUid ? 'tag-other' : 'tag-sys')]"
+                  style="margin-left: 0; font-size: 11px"
+                >
+                  {{ songSource(song).label }}
+                </span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button
+                class="btn btn-sm"
+                @click.stop="operateSong(2, song.songId, song.bizId)"
+              >
+                顶歌
+              </button>
+              <button
+                v-if="song.isMine"
+                class="btn btn-sm btn-danger"
+                style="margin-right: 0"
+                @click.stop="operateSong(7, song.songId, song.bizId)"
+              >
+                删除
+              </button>
+            </div>
+          </li>
+        </ul>
+        <div v-if="playingInfo.nextSongs.length === 0" class="empty-hint">
+          暂无待播歌曲
+        </div>
+      </div>
+
+      <div v-show="roomInfo.roomId" class="section room-main room-controls">
+        <h3>播放控制</h3>
+        <div class="input-group">
+          <label>添加歌曲:</label>
+          <input
+            v-model="songQuery"
+            type="text"
+            placeholder="搜索歌曲名或歌手"
+            :disabled="!roomInfo.permission.addSong"
+            @keyup.enter="searchSongs"
+          />
+          <button
+            class="btn"
+            :disabled="songSearching || !roomInfo.permission.addSong"
+            @click="searchSongs"
+            style="margin-bottom: 0"
+          >
+            {{ songSearching ? '搜索中…' : '搜索' }}
+          </button>
+        </div>
+        <div v-if="songResults.length" class="song-results">
+          <button
+            v-for="song in songResults"
+            :key="'room-song-' + song.id"
+            type="button"
+            class="song-result"
+            @click="selectSong(song)"
+          >
+            <img v-if="song.cover" :src="song.cover" alt="" />
+            <span>
+              <b>{{ song.name }}</b>
+              <small>{{ song.artist }}</small>
+            </span>
+          </button>
+        </div>
+        <div v-if="selectedSong" class="selected-song">
+          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+          <button
+            class="btn btn-sm btn-primary"
+            :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+            @click="addSelectedSong"
+          >
+            {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` :
+            '添加所选' }}
+          </button>
+          <button class="btn btn-sm" @click="selectedSong = null">取消</button>
+        </div>
+        <details style="margin: 8px 0 12px">
+          <summary style="cursor: pointer; color: #666; font-size: 13px">
+            手动输入歌曲 ID
+          </summary>
+          <div class="input-group" style="margin-top: 8px">
+            <input
+              v-model="inputSongId"
+              type="text"
+              placeholder="粘贴歌曲ID"
+              :disabled="!roomInfo.permission.addSong"
+            />
+            <button
+              class="btn"
+              @click="operateSong(1, Number(inputSongId))"
+              :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+              style="margin-bottom: 0"
+            >
+              添加
+            </button>
+          </div>
+        </details>
+        <div
+          class="control-buttons"
+          style="
+            margin-top: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          "
+        >
+          <button
+            class="btn"
+            @click="nextSong"
+            :disabled="!roomInfo.permission.switchSong"
+            style="margin-bottom: 0"
+          >
+            切歌 (Next)
+          </button>
+          <button class="btn" @click="togglePlay" style="margin-bottom: 0">
+            播放/暂停
+          </button>
+        </div>
+        <div style="font-size: 12px; color: #999; margin-top: 8px">
+          权限: 加歌 {{roomInfo.permission.addSong ? '✅' : '❌'}} | 切歌
+          {{roomInfo.permission.switchSong ? '✅' : '❌'}} | 顶歌
+          {{roomInfo.permission.topSong ? '✅' : '❌'}}
+        </div>
+      </div>
+
+      <div v-show="roomInfo.roomId" class="section room-side room-chat">
+        <h3>房间聊天</h3>
+        <ul class="chat-list" id="chatList">
+          <li
+            v-for="(msg, mi) in chatHistory"
+            :key="'chat-' + (msg.id || mi)"
+            :class="['chat-item', msg.isSystem ? 'system' : '']"
+          >
+            <img
+              v-if="msg.avatarUrl"
+              :src="msg.avatarUrl"
+              class="chat-avatar"
+            />
+            <div class="chat-body">
+              <template v-if="msg.emojiUrl">
+                <b v-if="msg.nickname">{{ msg.nickname }}:</b>
+                <div class="chat-emoji-wrap">
+                  <img :src="msg.emojiUrl" class="chat-emoji" />
+                  <div class="chat-emoji-actions">
+                    <button
+                      class="btn btn-sm"
+                      :disabled="emojiSaving"
+                      @click.stop="saveSticker(msg.emoji)"
+                    >
+                      {{ isStickerSaved(msg.emoji) ? '已存' : '存表情' }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <b v-if="msg.nickname">{{ msg.nickname }}:</b> {{ msg.text }}
+              </template>
+              <div v-if="msg.cover" class="chat-card">
+                <img :src="msg.cover" />
+                <span>{{ msg.songName }} - {{ msg.artistName }}</span>
+                <button
+                  v-if="msg.suggestSongId && roomInfo.permission.addSong"
+                  class="btn btn-sm btn-primary"
+                  style="margin: 0"
+                  @click.stop="operateSong(1, msg.suggestSongId)"
+                >
+                  加歌
+                </button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <div v-if="chatHistory.length === 0" class="empty-hint">
+          暂无聊天消息
+        </div>
+        <div class="input-group" style="margin-bottom: 0">
+          <input
+            v-model="chatInput"
+            type="text"
+            placeholder="输入消息..."
+            style="flex: 1; max-width: none"
+            :disabled="chatSending || !roomInfo.chatRoomId"
+            @keyup.enter="sendChat"
+          />
+          <button
+            class="btn"
+            :disabled="!roomInfo.chatRoomId"
+            @click="emojiPickerOpen = !emojiPickerOpen"
+            style="margin: 0"
+          >
+            {{ emojiPickerOpen ? '收起表情' : '表情' }}
+          </button>
+          <button
+            class="btn"
+            :disabled="chatSending || !chatInput.trim() || !roomInfo.chatRoomId"
+            @click="sendChat"
+            style="margin: 0"
+          >
+            {{ chatSending ? '发送中…' : '发送' }}
+          </button>
+        </div>
+
+        <div v-if="emojiPickerOpen" class="emoji-picker">
+          <div class="emoji-tabs">
+            <button
+              class="btn btn-sm"
+              :class="{ active: emojiTab === 'builtin' }"
+              @click="emojiTab = 'builtin'"
+            >
+              一起听表情
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="{ active: emojiTab === 'saved' }"
+              @click="openMyStickers"
+            >
+              我的表情 ({{ myStickers.length }})
+            </button>
+          </div>
+
+          <div v-if="emojiTab === 'builtin'" class="emoji-grid">
+            <button
+              v-for="emoji in builtinStickers"
+              :key="emoji.emojiId"
+              type="button"
+              :title="emoji.emojiName"
+              :disabled="chatSending"
+              @click="sendSticker(emoji)"
+            >
+              <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
+            </button>
+          </div>
+
+          <div v-else>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-bottom: 8px;
+              "
+            >
+              <span class="hint">
+                {{ cloudGroups.length ? cloudGroups[0].name : '网易云自定义表情' }}
+              </span>
+              <button
+                class="btn btn-sm"
+                :disabled="cloudLoading"
+                @click="refreshCloudStickers"
+              >
+                {{ cloudLoading ? '读取中…' : '刷新' }}
+              </button>
+            </div>
+            <p v-if="cloudLoading" class="hint">正在读取网易云自定义表情…</p>
+            <p v-if="cloudError" class="hint">
+              {{ cloudError }}
+              <button class="btn btn-sm" @click="refreshCloudStickers">
+                重试
+              </button>
+            </p>
+            <div v-if="myStickers.length" class="emoji-grid">
+              <div
+                v-for="emoji in myStickers"
+                :key="emoji.emojiImgUrl"
+                class="emoji-cell"
+              >
+                <button
+                  type="button"
+                  :title="emoji.emojiName"
+                  :disabled="chatSending"
+                  @click="sendSticker(emoji)"
+                >
+                  <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
+                </button>
+                <button
+                  v-if="isLocalSticker(emoji)"
+                  type="button"
+                  class="emoji-remove"
+                  title="从本地移除"
+                  @click.stop="removeSavedSticker(emoji)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <p v-else-if="!cloudLoading && !cloudError" class="empty-hint">
+              网易云账号里还没有自定义表情，收到图片表情后点“存表情”即可。
+            </p>
+            <button
+              v-if="cloudMore"
+              class="btn btn-sm"
+              :disabled="cloudLoading"
+              @click="loadMoreCloud"
+              style="margin-top: 8px"
+            >
+              加载更多
+            </button>
+            <div class="input-group" style="margin: 8px 0 0">
+              <input
+                v-model="emojiUrlInput"
+                type="text"
+                placeholder="粘贴表情图片 URL"
+                style="flex: 1; max-width: none"
+                @keyup.enter="addStickerUrl"
+              />
+              <button class="btn btn-sm" @click="addStickerUrl">
+                存到本地
+              </button>
+            </div>
+          </div>
+          <p class="hint" style="margin-top: 8px">
+            点击表情发送；收到图片表情后可点“存表情”收藏到本地/网易云。
+          </p>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

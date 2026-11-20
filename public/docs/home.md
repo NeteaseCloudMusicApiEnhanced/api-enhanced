@@ -3763,7 +3763,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 
 ### 多人一起听相关
 
-[在线 demo](/listen_together_multi.html)
+[在线 demo](/listen_together_multi/)
 
 > **Cookie 读取**：demo 只把 `os=android`、`appver` 等伪装字段放在请求 body 的 `cookie` 中，并传 `mergeCookie: 'body'`；服务端会把请求头里的完整 Cookie（含 HttpOnly 的 `MUSIC_U`）合并进来，同名条目以 body 为准。因此用 Cookie-Editor 导入时只需要把 Cookie 的 Domain 改成当前站点，**不需要取消 HttpOnly 勾选**。
 
