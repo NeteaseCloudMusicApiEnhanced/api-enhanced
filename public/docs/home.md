@@ -89,33 +89,6 @@ v4.29.9 加入了生成随机中国 IP 功能, 在请求时加上 `randomCNIP=tr
 6. `PROJECT NAME`自己填,`FRAMEWORK PRESET` 选 `Other` 然后直接点 `Deploy` 接着等部署完成即可
 
 
-## 腾讯云 serverless 部署
-
-因 `Vercel` 在国内访问太慢(不绑定自己的域名的情况下),在此提供腾讯云 serverless 部署方法
-
-### 操作方法
-
-1. [fork](https://github.com/neteasecloudmusicapienhanced/api-enhanced/fork) 此项目
-2. 在腾讯云 serverless 应用管理页面( https://console.cloud.tencent.com/sls ),点击`新建应用`
-3. 顶部`创建方式`选择 `Web 应用`
-4. 选择 `Express框架`,点击底部`下一步按钮`
-5. 输入`应用名`,上传方式选择`代码仓库`,进行 GitHub 授权(如已授权可跳过这一步),代码仓库选择刚刚 fork 的项目
-6. 启动文件填入:
-
-
-```
-#!/bin/bash
-export PORT=9000
-/var/lang/node16/bin/node app.js
-```
-
-7. 点击`完成`,等待部署完成,点击`资源列表`的 `API网关` 里的 `URL`,正常情况会打开文档地址,点击文档`例子`可查看接口调用效果
-
-- 注意
-  - 腾讯云 serverless 并不是免费的,前三个月有免费额度,之后收费
-  - 当前(2024-08-24), 用此法创建的话, 会`默认`关联一个"日志服务-日志主题"(创建过程中没有提醒), 此服务是计量收费的
-
-
 ## 可以使用代理
 
 在 query 参数中加上 proxy=your-proxy 即可让这一次的请求使用 proxy
@@ -1794,30 +1767,6 @@ tags: 歌单标签
 
 **调用例子 :** `/comment/info/list?type=0&ids=186016,347230`
 
-**返回数据 :**
-
-```json
-{
-  "data": [
-    {
-      "latestLikedUsers": null,
-      "liked": false,
-      "comments": null,
-      "resourceType": 4,
-      "resourceId": 186016,
-      "commentUpgraded": false,
-      "musicianSaidCount": 0,
-      "commentCountDesc": "100w+",
-      "likedCount": 347,
-      "commentCount": 1970844,
-      "shareCount": 109721,
-      "threadId": "R_SO_4_186016"
-    }
-  ],
-  "code": 200
-}
-```
-
 ### 热门评论
 
 说明 : 调用此接口 , 传入 type, 资源 id 可获得对应资源热门评论 ( 不需要登录 )
@@ -2400,6 +2349,29 @@ privilege:权限相关信息
 **接口地址 :** `/recommend/songs/v1`
 
 **调用例子 :** `/recommend/songs/v1`
+
+### 获取不感兴趣歌曲列表
+
+说明 : 登录后调用此接口 , 可获取用户标记为不感兴趣的歌曲、歌手与播客 id 列表
+
+**接口地址 :** `/dislike/list`
+
+**调用例子 :** `/dislike/list`
+
+返回数据 :
+
+```json
+{
+  "code": 200,
+  "data": {
+    "songIdList": ["431791474"],
+    "artistIdList": [],
+    "podcastIds": [],
+    "checkPoint": 1794300200342
+  },
+  "message": ""
+}
+```
 
 ### 每日推荐歌曲-不感兴趣
 
@@ -3236,6 +3208,14 @@ type : 地区
 
 **调用例子 :** `/dj/catelist`
 
+### 电台 - 分类列表(新版)
+
+说明 : 调用此接口 , 可获得新版客户端的播客分类树 , 返回一级分类及其下全部子分类 , 无需登录
+
+**接口地址 :** `/dj/category/list`
+
+**调用例子 :** `/dj/category/list`
+
 ### 电台 - 分类推荐
 
 说明 : 登录后调用此接口 , 传入分类,可获得对应类型电台列表
@@ -3807,6 +3787,20 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 **接口地址 :** `/song/purchased`
 
 **调用例子 :** `/song/purchased?limit=10`
+
+### 我收藏的播客(按时间分页)
+
+说明 : 登录后调用此接口 , 可获取当前用户收藏的播客(Mlog)动态列表
+
+**可选参数 :** `time`: 分页游标 , 默认为 -1 表示从最新一条开始 , 下一页传上次响应中的 `data.time`
+
+`limit`: 取出条数 , 默认为 30
+
+`type`: 动态类型 , 默认为 3
+
+**接口地址 :** `/mlog/mycollect`
+
+**调用例子 :** `/mlog/mycollect` `/mlog/mycollect?limit=10`
 
 ### 获取 mlog 播放地址
 
