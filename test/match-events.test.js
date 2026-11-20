@@ -11,14 +11,18 @@ const envelope = (subType, data) =>
 describe('multi-listen match notification parser', () => {
   it('parses STRANGER_MULTI_MATCH_WAIT_ACK', () => {
     assert.deepStrictEqual(
-      parseMatch(envelope('STRANGER_MULTI_MATCH_WAIT_ACK', { roomId: 'abc_1' })),
+      parseMatch(
+        envelope('STRANGER_MULTI_MATCH_WAIT_ACK', { roomId: 'abc_1' }),
+      ),
       { type: 'ready', roomId: 'abc_1' },
     )
   })
 
   it('parses STRANGER_MULTI_MATCH_FAILED', () => {
     assert.deepStrictEqual(
-      parseMatch(envelope('STRANGER_MULTI_MATCH_FAILED', { failedType: 'NO_USER' })),
+      parseMatch(
+        envelope('STRANGER_MULTI_MATCH_FAILED', { failedType: 'NO_USER' }),
+      ),
       { type: 'failed', reason: 'NO_USER' },
     )
   })
