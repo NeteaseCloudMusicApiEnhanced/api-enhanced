@@ -46,22 +46,58 @@ const roomMethods = {
               } catch (e) {}
             },
 
-  parseShareLink() {
-              const urlStr = this.shareLinkInput.trim()
-              if (!urlStr) return
-              try {
-                const urlParams = new URLSearchParams(new URL(urlStr).search)
-                if (urlParams.get('roomId'))
-                  this.joinForm.roomId = urlParams.get('roomId')
-                if (urlParams.get('inviterUid'))
-                  this.joinForm.inviterId = Number(urlParams.get('inviterUid'))
-                if (this.joinForm.roomId && this.joinForm.inviterId) {
-                  this.message = '已自动解析分享链接，请点击“确认加入”'
-                  const detailsEl = document.getElementById('joinDetails')
-                  if (detailsEl) detailsEl.open = true
-                }
-              } catch (e) {}
-            },
+  onShareInput() {
+    if (this._shareTimer) clearTimeout(this._shareTimer)
+    this._shareTimer = setTimeout(() => this.parseShareLink(), 350)
+  },
+
+  async parseShareLink() {
+    const raw = this.shareLinkInput.trim()
+    if (!raw || this.shareResolving) return
+    this.shareResolving = true
+    try {
+      let fields = {}
+      try {
+        const match = raw.match(/https?:\/\/[^\s]+/i)
+        const link = match ? match[0] : raw
+        const url = new URL(/^https?:\/\//i.test(link) ? link : `https://${link}`)
+        const query = new URLSearchParams(url.search)
+        fields = {
+          roomId: query.get('roomId') || '',
+          inviterUid:
+            query.get('inviterUid') || query.get('inviterId') || '',
+        }
+      } catch (e) {}
+      if (!fields.roomId) {
+        const res = await api({
+          url: '/share/resolve',
+          method: 'post',
+          data: { url: raw },
+        })
+        if (res.data.code !== 200)
+          throw new Error(res.data.message || '分享链接解析失败')
+        fields = res.data.data || {}
+      }
+      if (fields.roomId) this.joinForm.roomId = String(fields.roomId)
+      if (fields.inviterUid)
+        this.joinForm.inviterId = String(fields.inviterUid)
+      if (this.joinForm.roomId) {
+        this.message = this.joinForm.inviterId
+          ? '已自动解析分享链接，请点击“确认加入”'
+          : '已解析房间 ID，请补充邀请者 UID'
+        const detailsEl = document.getElementById('joinDetails')
+        if (detailsEl) detailsEl.open = true
+      } else {
+        this.message = '没有从链接中解析到房间信息'
+      }
+    } catch (e) {
+      this.message =
+        '链接解析失败: ' +
+        (e.response?.data?.message || e.message || '未知错误')
+    } finally {
+      this.shareResolving = false
+    }
+  },
 
   async createRoom() {
               this.message = '创建房间中...'

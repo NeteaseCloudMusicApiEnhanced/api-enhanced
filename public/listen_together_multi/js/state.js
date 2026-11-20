@@ -76,6 +76,7 @@ function createState() {
             inputSongId: '1372188635',
             allowStranger: false,
             shareLinkInput: '',
+            shareResolving: false,
             joinForm: { roomId: '', inviterId: '' },
             isMatching: false,
             nextAddSongDuration: 0,

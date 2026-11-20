@@ -7,6 +7,11 @@ const computed = {
               this.account.userId || this.roomInfo.creatorId || 0
             return `https://st.music.163.com/listen-together/multishare/index.html?roomId=${encodeURIComponent(this.roomInfo.roomId)}&inviterUid=${encodeURIComponent(inviterUid)}`
           },
+          currentSongUrl() {
+            return this.playingInfo.songId
+              ? `https://music.163.com/song?id=${encodeURIComponent(this.playingInfo.songId)}`
+              : ''
+          },
           roomStatusText() {
             if (this.isMatching) return '匹配中'
             return this.roomInfo.roomId ? '房间中' : '未加入'

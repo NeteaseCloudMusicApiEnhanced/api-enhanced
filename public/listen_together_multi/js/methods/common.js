@@ -146,7 +146,10 @@ const commonMethods = {
       this.chatButtonPos.y,
     )
     this.saveChatButtonPos()
-    if (!drag.moved) this.openChat()
+    if (!drag.moved) {
+      if (this.chatOpen) this.closeChat()
+      else this.openChat()
+    }
   },
 
   cancelChatDrag() {

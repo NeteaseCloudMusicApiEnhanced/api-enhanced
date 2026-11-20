@@ -542,18 +542,29 @@
 
       .share-link-box {
         display: flex;
+        flex-direction: column;
         gap: 8px;
-        align-items: center;
+        align-items: stretch;
         margin-top: 12px;
-        flex-wrap: wrap;
       }
 
       .share-link-box input {
-        flex: 1;
-        min-width: 200px;
-        width: auto;
+        flex: 1 0 100%;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
         font-size: 12px;
         color: #666;
+      }
+
+      .share-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .share-actions .btn {
+        margin: 0;
       }
 
       .subtitle {
@@ -697,11 +708,21 @@
         font-weight: 800;
       }
 
-      .chat-fab-count {
+      .chat-fab.active {
+        background: #7f0a0a;
+      }
+
+      .chat-fab-count,
+      .chat-fab-close {
         font-size: 20px;
         font-weight: 800;
         line-height: 1;
         pointer-events: none;
+      }
+
+      .chat-fab-close {
+        font-size: 30px;
+        font-weight: 400;
       }
 
       /* ================= 聊天 / 工作日志弹窗 ================= */

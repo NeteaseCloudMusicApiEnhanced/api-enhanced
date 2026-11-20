@@ -6,6 +6,7 @@ const mutual = require('../module/listentogether_mutual_follows_get_v2')
 const collect = require('../module/social_emoji_collect')
 const groups = require('../module/social_emoji_groups')
 const groupPage = require('../module/social_emoji_groups_detail_page')
+const share = require('../module/share_resolve')
 
 const capture = (module, query) => {
   let result
@@ -56,6 +57,20 @@ describe('multi-listen endpoints used by music-party', () => {
     const call = capture(groups, { resourceType: 3 })
     assert.strictEqual(call.uri, '/api/social/emoji/groups')
     assert.deepStrictEqual(call.data, { resourceType: 3 })
+  })
+
+  it('parses roomId and inviterId from a share URL', () => {
+    const fields = share.parseFields(
+      new URL(
+        'https://st.music.163.com/listen-together/share/?roomId=abc_1&inviterId=42',
+      ),
+    )
+    assert.deepStrictEqual(fields, {
+      url: 'https://st.music.163.com/listen-together/share/?roomId=abc_1&inviterId=42',
+      roomId: 'abc_1',
+      inviterUid: '42',
+      songId: '',
+    })
   })
 
   it('builds the sticker group page request', () => {

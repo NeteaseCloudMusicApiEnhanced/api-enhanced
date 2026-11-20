@@ -4323,6 +4323,16 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 **返回 :** `data.emojis[]`（`emojiId`、`emojiGroupId`、`emojiImgUrl`、`picId`、`width`、`height`、`format`），`data.page{size,cursor,more}`。
 
+### 分享链接解析
+
+说明 : 解析网易云分享链接，支持 `163cn.tv` 短链接跳转。只允许网易云相关域名。
+
+**接口地址 :** `/share/resolve`
+
+**必选参数 :** `url` : 分享链接
+
+**返回 :** `data.url`（最终地址）、`data.roomId`、`data.inviterUid`（兼容短链接里的 `inviterId`）、`data.songId`。
+
 
 ### batch 批量请求接口
 

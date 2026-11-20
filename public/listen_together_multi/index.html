@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=4" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=5" />
 
   </head>
   <body>
@@ -207,10 +207,19 @@
             <input
               v-model="shareLinkInput"
               type="text"
-              placeholder="粘贴分享链接自动解析"
-              style="width: 100%"
-              @input="parseShareLink"
+              placeholder="粘贴分享链接 / 163cn.tv 短链接后自动解析"
+              style="width: 100%; max-width: none"
+              @input="onShareInput"
+              @keyup.enter="parseShareLink"
             />
+            <button
+              class="btn btn-sm"
+              :disabled="shareResolving"
+              @click="parseShareLink"
+              style="margin-bottom: 0"
+            >
+              {{ shareResolving ? '解析中…' : '解析链接' }}
+            </button>
           </div>
           <div class="input-group">
             <input
@@ -282,10 +291,19 @@
         </div>
 
         <div class="share-link-box">
-          <button class="btn btn-sm" @click="copyShareLink">
-            复制分享链接
-          </button>
           <input type="text" :value="shareUrl" readonly />
+          <div class="share-actions">
+            <button class="btn btn-sm" @click="copyShareLink">
+              复制分享链接
+            </button>
+            <button
+              class="btn btn-sm"
+              :disabled="!currentSongUrl"
+              @click="copyText(currentSongUrl, '歌曲链接')"
+            >
+              复制歌曲链接
+            </button>
+          </div>
         </div>
 
         <div class="song-info">
@@ -562,9 +580,9 @@
 
       </div>
       <button
-        v-if="roomInfo.roomId && !chatOpen"
+        v-if="roomInfo.roomId"
         class="chat-fab"
-        :class="{ dragging: chatDragging, 'has-unread': chatUnread > 0 }"
+        :class="{ dragging: chatDragging, active: chatOpen, 'has-unread': chatUnread > 0 }"
         :style="{ left: chatButtonPos.x + 'px', top: chatButtonPos.y + 'px' }"
         :aria-label="chatUnread ? `打开聊天，${chatUnread} 条未读` : '打开聊天'"
         @pointerdown="startChatDrag"
@@ -572,7 +590,8 @@
         @pointerup="endChatDrag"
         @pointercancel="cancelChatDrag"
       >
-        <span v-if="chatUnread" class="chat-fab-count">
+        <span v-if="chatOpen" class="chat-fab-close">×</span>
+        <span v-else-if="chatUnread" class="chat-fab-count">
           {{ chatUnread > 99 ? '99+' : chatUnread }}
         </span>
         <svg
@@ -835,16 +854,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=4"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=4"></script>
-    <script src="/listen_together_multi/js/state.js?v=4"></script>
-    <script src="/listen_together_multi/js/computed.js?v=4"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=4"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=4"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=4"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=4"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=4"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=4"></script>
-    <script src="/listen_together_multi/app.js?v=4"></script>
+    <script src="/listen_together_multi/js/core.js?v=5"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=5"></script>
+    <script src="/listen_together_multi/js/state.js?v=5"></script>
+    <script src="/listen_together_multi/js/computed.js?v=5"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=5"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=5"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=5"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=5"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=5"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=5"></script>
+    <script src="/listen_together_multi/app.js?v=5"></script>
   </body>
 </html>
