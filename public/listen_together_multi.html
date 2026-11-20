@@ -231,10 +231,165 @@
         color: #888;
       }
 
+      .chat-emoji-wrap {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin-top: 4px;
+      }
+
       .chat-emoji {
-        height: 2rem;
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 180px;
+        max-height: 160px;
+        object-fit: contain;
+        border-radius: 6px;
         vertical-align: middle;
-        max-width: 100%;
+      }
+
+      .chat-emoji-actions .btn {
+        margin: 0;
+      }
+
+      .emoji-picker {
+        margin-top: 8px;
+        padding: 10px;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .emoji-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+
+      .emoji-tabs .btn {
+        margin: 0;
+      }
+
+      .emoji-tabs .btn.active {
+        background: #1db954;
+      }
+
+      .emoji-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+        gap: 6px;
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 2px;
+      }
+
+      .emoji-cell {
+        position: relative;
+      }
+
+      .emoji-grid > button,
+      .emoji-cell > button:first-child {
+        width: 100%;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 4px;
+        background: #fafafa;
+        cursor: pointer;
+      }
+
+      .emoji-grid > button:disabled,
+      .emoji-cell > button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .emoji-grid > button img,
+      .emoji-cell img {
+        display: block;
+        width: 100%;
+        height: 56px;
+        object-fit: contain;
+      }
+
+      .emoji-remove {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        border-radius: 50%;
+        background: #d9534f;
+        color: #fff;
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 20px;
+        padding: 0;
+      }
+
+      .song-results {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 260px;
+        overflow-y: auto;
+        margin: 8px 0;
+      }
+
+      .song-result {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .song-result:hover {
+        background: #f2fff6;
+        border-color: #1db954;
+      }
+
+      .song-result img {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+        flex: 0 0 auto;
+      }
+
+      .song-result span {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .song-result small {
+        color: #999;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .selected-song {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 8px 10px;
+        margin: 8px 0;
+        border-radius: 6px;
+        background: #f2fff6;
+        border: 1px solid #bfe8cc;
+        font-size: 13px;
       }
 
       .chat-card {
@@ -481,6 +636,45 @@
         margin: 0;
       }
 
+      .room-dashboard {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.9fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .room-dashboard > .section {
+        margin-bottom: 0;
+      }
+
+      .room-full {
+        grid-column: 1 / -1;
+      }
+
+      .room-main {
+        grid-column: 1;
+      }
+
+      .room-side {
+        grid-column: 2;
+      }
+
+      .room-members {
+        grid-row: 2;
+      }
+
+      .room-queue {
+        grid-row: 2;
+      }
+
+      .room-controls {
+        grid-row: 3;
+      }
+
+      .room-chat {
+        grid-row: 3 / span 2;
+      }
+
       /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
@@ -559,6 +753,14 @@
 
         .status-strip .btn {
           padding: 4px 8px;
+        }
+
+        .room-dashboard {
+          display: block;
+        }
+
+        .room-dashboard > .section {
+          margin-bottom: 24px;
         }
       }
     </style>
@@ -649,13 +851,53 @@
       <div v-show="account.login && !roomInfo.roomId" class="section">
         <h3>发起一起听</h3>
         <div class="input-group">
-          <label>初始歌曲 ID:</label>
+          <label>初始歌曲:</label>
           <input
-            v-model="inputSongId"
+            v-model="songQuery"
             type="text"
-            placeholder="例如: 1372188635"
+            placeholder="搜索歌曲名或歌手"
+            @keyup.enter="searchSongs"
           />
+          <button
+            class="btn"
+            :disabled="songSearching"
+            @click="searchSongs"
+            style="margin-bottom: 0"
+          >
+            {{ songSearching ? '搜索中…' : '搜索' }}
+          </button>
         </div>
+        <div v-if="songResults.length" class="song-results">
+          <button
+            v-for="song in songResults"
+            :key="'create-song-' + song.id"
+            type="button"
+            class="song-result"
+            @click="selectSong(song)"
+          >
+            <img v-if="song.cover" :src="song.cover" alt="" />
+            <span>
+              <b>{{ song.name }}</b>
+              <small>{{ song.artist }}</small>
+            </span>
+          </button>
+        </div>
+        <div v-if="selectedSong" class="selected-song">
+          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+          <button class="btn btn-sm" @click="selectedSong = null">清除</button>
+        </div>
+        <details style="margin-bottom: 12px">
+          <summary style="cursor: pointer; color: #666; font-size: 13px">
+            手动输入歌曲 ID
+          </summary>
+          <div class="input-group" style="margin-top: 8px">
+            <input
+              v-model="inputSongId"
+              type="text"
+              placeholder="例如: 1372188635"
+            />
+          </div>
+        </details>
         <div class="input-group" style="margin-bottom: 16px">
           <label
             style="
@@ -736,7 +978,8 @@
         </details>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section">
+      <div class="room-dashboard" v-show="roomInfo.roomId">
+      <div v-show="roomInfo.roomId" class="section room-full">
         <div style="word-break: break-all">
           <div class="room-id-line">
             <span><b>房间 ID:</b> {{roomInfo.roomId}}</span>
@@ -856,7 +1099,7 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section">
+      <div v-show="roomInfo.roomId" class="section room-side room-members">
         <h3>在线成员 ({{ roomInfo.roomUsers.length }})</h3>
         <div
           class="hint"
@@ -894,7 +1137,7 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section">
+      <div v-show="roomInfo.roomId" class="section room-main room-queue">
         <h3>待播列表 ({{ playingInfo.nextSongs.length }} 首)</h3>
         <ul class="queue-list">
           <li
@@ -965,26 +1208,74 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section">
+      <div v-show="roomInfo.roomId" class="section room-main room-controls">
         <h3>播放控制</h3>
         <div class="input-group">
-          <label>歌曲 ID:</label>
+          <label>添加歌曲:</label>
           <input
-            v-model="inputSongId"
+            v-model="songQuery"
             type="text"
-            placeholder="粘贴歌曲ID"
+            placeholder="搜索歌曲名或歌手"
             :disabled="!roomInfo.permission.addSong"
+            @keyup.enter="searchSongs"
           />
           <button
             class="btn"
-            @click="operateSong(1, Number(inputSongId))"
-            :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+            :disabled="songSearching || !roomInfo.permission.addSong"
+            @click="searchSongs"
             style="margin-bottom: 0"
           >
-            {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` :
-            '添加歌曲' }}
+            {{ songSearching ? '搜索中…' : '搜索' }}
           </button>
         </div>
+        <div v-if="songResults.length" class="song-results">
+          <button
+            v-for="song in songResults"
+            :key="'room-song-' + song.id"
+            type="button"
+            class="song-result"
+            @click="selectSong(song)"
+          >
+            <img v-if="song.cover" :src="song.cover" alt="" />
+            <span>
+              <b>{{ song.name }}</b>
+              <small>{{ song.artist }}</small>
+            </span>
+          </button>
+        </div>
+        <div v-if="selectedSong" class="selected-song">
+          <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
+          <button
+            class="btn btn-sm btn-primary"
+            :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+            @click="addSelectedSong"
+          >
+            {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` :
+            '添加所选' }}
+          </button>
+          <button class="btn btn-sm" @click="selectedSong = null">取消</button>
+        </div>
+        <details style="margin: 8px 0 12px">
+          <summary style="cursor: pointer; color: #666; font-size: 13px">
+            手动输入歌曲 ID
+          </summary>
+          <div class="input-group" style="margin-top: 8px">
+            <input
+              v-model="inputSongId"
+              type="text"
+              placeholder="粘贴歌曲ID"
+              :disabled="!roomInfo.permission.addSong"
+            />
+            <button
+              class="btn"
+              @click="operateSong(1, Number(inputSongId))"
+              :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
+              style="margin-bottom: 0"
+            >
+              添加
+            </button>
+          </div>
+        </details>
         <div
           class="control-buttons"
           style="
@@ -1015,7 +1306,7 @@
         </div>
       </div>
 
-      <div v-show="roomInfo.roomId" class="section">
+      <div v-show="roomInfo.roomId" class="section room-side room-chat">
         <h3>房间聊天</h3>
         <ul class="chat-list" id="chatList">
           <li
@@ -1031,7 +1322,18 @@
             <div class="chat-body">
               <template v-if="msg.emojiUrl">
                 <b v-if="msg.nickname">{{ msg.nickname }}:</b>
-                <img :src="msg.emojiUrl" class="chat-emoji" />
+                <div class="chat-emoji-wrap">
+                  <img :src="msg.emojiUrl" class="chat-emoji" />
+                  <div class="chat-emoji-actions">
+                    <button
+                      class="btn btn-sm"
+                      :disabled="emojiSaving"
+                      @click.stop="saveSticker(msg.emoji)"
+                    >
+                      {{ isStickerSaved(msg.emoji) ? '已存' : '存表情' }}
+                    </button>
+                  </div>
+                </div>
               </template>
               <template v-else>
                 <b v-if="msg.nickname">{{ msg.nickname }}:</b> {{ msg.text }}
@@ -1065,6 +1367,14 @@
           />
           <button
             class="btn"
+            :disabled="!roomInfo.chatRoomId"
+            @click="emojiPickerOpen = !emojiPickerOpen"
+            style="margin: 0"
+          >
+            {{ emojiPickerOpen ? '收起表情' : '表情' }}
+          </button>
+          <button
+            class="btn"
             :disabled="chatSending || !chatInput.trim() || !roomInfo.chatRoomId"
             @click="sendChat"
             style="margin: 0"
@@ -1072,6 +1382,84 @@
             {{ chatSending ? '发送中…' : '发送' }}
           </button>
         </div>
+
+        <div v-if="emojiPickerOpen" class="emoji-picker">
+          <div class="emoji-tabs">
+            <button
+              class="btn btn-sm"
+              :class="{ active: emojiTab === 'builtin' }"
+              @click="emojiTab = 'builtin'"
+            >
+              一起听表情
+            </button>
+            <button
+              class="btn btn-sm"
+              :class="{ active: emojiTab === 'saved' }"
+              @click="emojiTab = 'saved'"
+            >
+              我的表情 ({{ savedStickers.length }})
+            </button>
+          </div>
+
+          <div v-if="emojiTab === 'builtin'" class="emoji-grid">
+            <button
+              v-for="emoji in builtinStickers"
+              :key="emoji.emojiId"
+              type="button"
+              :title="emoji.emojiName"
+              :disabled="chatSending"
+              @click="sendSticker(emoji)"
+            >
+              <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
+            </button>
+          </div>
+
+          <div v-else>
+            <div v-if="savedStickers.length" class="emoji-grid">
+              <div
+                v-for="emoji in savedStickers"
+                :key="emoji.emojiImgUrl"
+                class="emoji-cell"
+              >
+                <button
+                  type="button"
+                  :title="emoji.emojiName"
+                  :disabled="chatSending"
+                  @click="sendSticker(emoji)"
+                >
+                  <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
+                </button>
+                <button
+                  type="button"
+                  class="emoji-remove"
+                  title="从本地移除"
+                  @click.stop="removeSavedSticker(emoji)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <p v-else class="empty-hint">
+              还没有保存的表情，收到图片表情后点“存表情”即可。
+            </p>
+            <div class="input-group" style="margin: 8px 0 0">
+              <input
+                v-model="emojiUrlInput"
+                type="text"
+                placeholder="粘贴表情图片 URL"
+                style="flex: 1; max-width: none"
+                @keyup.enter="addStickerUrl"
+              />
+              <button class="btn btn-sm" @click="addStickerUrl">
+                存到本地
+              </button>
+            </div>
+          </div>
+          <p class="hint" style="margin-top: 8px">
+            点击表情发送；收到图片表情后可点“存表情”收藏到本地/网易云。
+          </p>
+        </div>
+      </div>
       </div>
     </div>
 
@@ -1146,6 +1534,30 @@
       ]
       const DEFAULT_AUDIO_LEVEL = 'higher'
 
+      const LISTEN_STICKERS = [
+        { emojiId: '3009', emojiGroupId: '3001', emojiName: '求UP', emojiImgUrl: 'https://p1.music.126.net/Rr8cgtWOBggaR70rrmIzHA==/109951167690335323.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3006', emojiGroupId: '3001', emojiName: '击掌', emojiImgUrl: 'https://p1.music.126.net/lxA285-v8jSvcJxD1YDjsg==/109951166368227986.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3010', emojiGroupId: '3001', emojiName: '摇摆', emojiImgUrl: 'https://p1.music.126.net/a8nAAW02-K7TC5nWwyYPgg==/109951166368203819.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '2731016', emojiGroupId: '3001', emojiName: '想切歌', emojiImgUrl: 'https://p1.music.126.net/yASanNjqIbz3-JMUW9zAag==/109951167690335088.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3002', emojiGroupId: '3001', emojiName: 'hi', emojiImgUrl: 'https://p1.music.126.net/Tz0brSYCab9atwwkOQgcPg==/109951166368242023.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3003', emojiGroupId: '3001', emojiName: '棒', emojiImgUrl: 'https://p1.music.126.net/wwYG_FKFjXOuR9gdXtEnnQ==/109951166368242005.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3005', emojiGroupId: '3001', emojiName: '蹦迪', emojiImgUrl: 'https://p1.music.126.net/CkOFk0uhAAjd5lsLPf5lJQ==/109951166368234783.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3007', emojiGroupId: '3001', emojiName: '陶醉', emojiImgUrl: 'https://p1.music.126.net/zxS5ekJuRrWPiGuv-1-7QA==/109951166368233763.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3001', emojiGroupId: '3001', emojiName: 'bye', emojiImgUrl: 'https://p1.music.126.net/uNb_18IqV2XYfC8Lcji21Q==/109951166371461723.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3004', emojiGroupId: '3001', emojiName: '抱抱', emojiImgUrl: 'https://p1.music.126.net/zFNse1bJtWlyBeQ4yQWFlQ==/109951166368226495.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '3008', emojiGroupId: '3001', emojiName: '哇哦', emojiImgUrl: 'https://p1.music.126.net/ck02pd_xipp_SgHnnLCDyw==/109951166368236137.gif', width: 300, height: 300, format: 'gif' },
+        { emojiId: '6004', emojiGroupId: '3001', emojiName: '害羞', emojiImgUrl: 'https://p1.music.126.net/0HYKllm6UcQASj4GUikPJg==/109951166371262409.gif', width: 300, height: 300, format: 'gif' },
+      ]
+
+      const loadSavedStickers = () => {
+        try {
+          const value = JSON.parse(safeStorage.get('saved_stickers') || '[]')
+          return Array.isArray(value) ? value.filter((item) => item && item.emojiImgUrl).slice(0, 60) : []
+        } catch (e) {
+          return []
+        }
+      }
+
       const { createApp } = Vue
 
       createApp({
@@ -1205,6 +1617,17 @@
             chatHistory: [],
             chatSending: false,
 
+            emojiPickerOpen: false,
+            emojiTab: 'builtin',
+            emojiUrlInput: '',
+            emojiSaving: false,
+            savedStickers: loadSavedStickers(),
+
+            songQuery: '',
+            songResults: [],
+            songSearching: false,
+            selectedSong: null,
+
             imConnected: false,
             imStatus: '',
 
@@ -1239,6 +1662,12 @@
           roomStatusText() {
             if (this.isMatching) return '匹配中'
             return this.roomInfo.roomId ? '房间中' : '未加入'
+          },
+          builtinStickers() {
+            return LISTEN_STICKERS
+          },
+          selectedSongId() {
+            return Number(this.selectedSong?.id || this.inputSongId) || 0
           },
           currentSongSource() {
             return this.songSource({
@@ -1503,7 +1932,7 @@
 
           async createRoom() {
             this.message = '创建房间中...'
-            const songId = Number(this.inputSongId) || 1372188635
+            const songId = this.selectedSongId || 1372188635
             const roomType = this.allowStranger ? 2 : 1
             try {
               const res = await api({
@@ -1548,7 +1977,7 @@
 
           async startMatch() {
             this.message = '正在连接匹配通知...'
-            const songId = Number(this.inputSongId) || 1372188635
+            const songId = this.selectedSongId || 1372188635
             this.closeMatchEvents()
             this._matchSongId = songId
             this._matchRequested = false
@@ -2619,7 +3048,14 @@
           mapChatRecord(item, index) {
             const body = item.imChatRoomMsgBody || {}
             const rich = body.msgRichText
-            const emoji = item.emoji || item.clientExt?.emoji || null
+            let emoji = item.emoji || item.clientExt?.emoji || null
+            if (typeof emoji === 'string') {
+              try {
+                emoji = JSON.parse(emoji)
+              } catch (e) {
+                emoji = null
+              }
+            }
             const serverExt = item.serverExt || {}
             const stableId = String(
               serverExt.msgId || item.sendTime || `idx-${index}`,
@@ -2656,6 +3092,7 @@
               avatarUrl,
               isSystem,
               emojiUrl,
+              emoji: isEmoji ? emoji : null,
               text: body.mainStateText || body.text || '',
               cover: ri?.coverUrl || '',
               songName: ri?.title || '',
@@ -2831,6 +3268,209 @@
               this.imStatus = /clientip|414/.test(message)
                 ? 'IM 连接失败：API 出口 IP 被云信判定为内网/代理（yunxinCode 414），请在公网出口运行 api-enhanced 后重试'
                 : 'IM 连接失败: ' + message
+            }
+          },
+
+          normalizeSticker(item) {
+            const url = String(item?.emojiImgUrl || item?.url || '')
+            if (!/^https?:\/\//.test(url)) return null
+            const format =
+              item?.format ||
+              (url.match(/\.([a-z0-9]+)(?:\?|$)/i) || [])[1] ||
+              'png'
+            return {
+              emojiId: String(item?.emojiId ?? 0),
+              emojiGroupId: String(item?.emojiGroupId ?? 0),
+              emojiName: String(item?.emojiName || item?.name || '表情').slice(
+                0,
+                80,
+              ),
+              emojiImgUrl: url,
+              width: Math.min(4096, Math.max(1, Number(item?.width) || 160)),
+              height: Math.min(4096, Math.max(1, Number(item?.height) || 160)),
+              format: String(format).slice(0, 16),
+            }
+          },
+
+          isStickerSaved(item) {
+            const emoji = this.normalizeSticker(item)
+            return !!(
+              emoji &&
+              this.savedStickers.some(
+                (saved) => saved.emojiImgUrl === emoji.emojiImgUrl,
+              )
+            )
+          },
+
+          persistStickers() {
+            safeStorage.set(
+              'saved_stickers',
+              JSON.stringify(this.savedStickers.slice(0, 60)),
+            )
+          },
+
+          async saveSticker(item) {
+            const emoji = this.normalizeSticker(item)
+            if (!emoji) return (this.message = '表情信息无效，无法保存')
+            if (this.emojiSaving) return
+            this.emojiSaving = true
+            try {
+              if (!this.isStickerSaved(emoji)) {
+                this.savedStickers = [emoji, ...this.savedStickers].slice(0, 60)
+                this.persistStickers()
+              }
+              let cloudError = ''
+              let cloudSaved = false
+              if (
+                Number(emoji.emojiId) > 0 &&
+                emoji.emojiGroupId !== '3001'
+              ) {
+                try {
+                  const res = await api({
+                    url: '/social/emoji/collect',
+                    method: 'post',
+                    data: {
+                      emojiId: emoji.emojiId,
+                      emojiGroupId: emoji.emojiGroupId,
+                      cookie: this.getFakeAndroidCookie(),
+                    },
+                  })
+                  cloudSaved = res.data.code === 200
+                  if (!cloudSaved)
+                    cloudError = res.data.message || '云端保存失败'
+                } catch (e) {
+                  cloudError =
+                    e.response?.data?.message || e.message || '云端保存失败'
+                }
+              }
+              this.message = cloudSaved
+                ? '表情已保存到网易云自定义表情'
+                : cloudError
+                  ? '已保存到本地；' + cloudError
+                  : '表情已保存到本地'
+            } finally {
+              this.emojiSaving = false
+            }
+          },
+
+          removeSavedSticker(item) {
+            const emoji = this.normalizeSticker(item)
+            if (!emoji) return
+            this.savedStickers = this.savedStickers.filter(
+              (saved) => saved.emojiImgUrl !== emoji.emojiImgUrl,
+            )
+            this.persistStickers()
+            this.message = '已从本地表情移除'
+          },
+
+          addStickerUrl() {
+            const url = this.emojiUrlInput.trim()
+            if (!/^https?:\/\//.test(url))
+              return (this.message = '请输入 http(s) 图片地址')
+            const emoji = this.normalizeSticker({
+              emojiImgUrl: url,
+              emojiName: '自定义表情',
+              width: 160,
+              height: 160,
+            })
+            if (!emoji) return (this.message = '图片地址无效')
+            if (!this.isStickerSaved(emoji)) {
+              this.savedStickers = [emoji, ...this.savedStickers].slice(0, 60)
+              this.persistStickers()
+            }
+            this.emojiUrlInput = ''
+            this.emojiTab = 'saved'
+            this.message = '表情已保存到本地'
+          },
+
+          async sendSticker(item) {
+            const emoji = this.normalizeSticker(item)
+            if (!emoji || !this.roomInfo.chatRoomId || this.chatSending)
+              return
+            this.chatSending = true
+            try {
+              const res = await api({
+                url: '/listentogether/multi/chat/send',
+                method: 'post',
+                data: {
+                  roomId: this.roomInfo.roomId,
+                  chatRoomId: this.roomInfo.chatRoomId,
+                  text: `[${emoji.emojiName}]`,
+                  emoji,
+                  cookie: this.getFakeAndroidCookie(),
+                },
+              })
+              if (res.data.code === 200) {
+                this.emojiPickerOpen = false
+                await this.fetchChat()
+                this.message = '表情已发送'
+              } else {
+                this.message =
+                  '表情发送失败: ' + (res.data.message || '未知错误')
+              }
+            } catch (e) {
+              this.message =
+                '表情发送异常: ' +
+                (e.response?.data?.message || e.message || '未知错误')
+            } finally {
+              this.chatSending = false
+            }
+          },
+
+          async searchSongs() {
+            const keywords = this.songQuery.trim()
+            if (!keywords) return (this.message = '请输入歌曲名或歌手')
+            if (this.songSearching) return
+            this.songSearching = true
+            this.songResults = []
+            try {
+              const res = await api({
+                url: '/cloudsearch',
+                method: 'get',
+                params: { keywords, type: 1, limit: 8 },
+              })
+              const raw = res.data?.result?.songs || []
+              this.songResults = raw.map((song) => ({
+                id: String(song.id),
+                name: song.name,
+                artist: (song.ar || [])
+                  .map((artist) => artist.name)
+                  .filter(Boolean)
+                  .join(' / '),
+                cover: song.al?.picUrl || '',
+                duration: song.dt || 0,
+              }))
+              this.message = this.songResults.length
+                ? `找到 ${this.songResults.length} 首歌曲`
+                : '没有找到匹配的歌曲'
+            } catch (e) {
+              this.message =
+                '搜索失败: ' +
+                (e.response?.data?.message || e.message || '未知错误')
+            } finally {
+              this.songSearching = false
+            }
+          },
+
+          selectSong(song) {
+            if (!song?.id) return
+            this.selectedSong = song
+            this.inputSongId = String(song.id)
+            this.songResults = []
+            this.message = `已选择: ${song.name}`
+          },
+
+          async addSelectedSong() {
+            const songId = this.selectedSongId
+            if (!songId) return (this.message = '请先搜索并选择歌曲')
+            if (!this.roomInfo.permission.addSong)
+              return (this.message = '当前没有加歌权限')
+            if (this.nextAddSongDuration > 0)
+              return (this.message = `加歌冷却中，剩 ${this.nextAddSongDuration}s`)
+            const ok = await this.operateSong(1, songId)
+            if (ok) {
+              this.selectedSong = null
+              this.songQuery = ''
             }
           },
 

@@ -4287,6 +4287,20 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 参数 : `roomId`。返回 `data` 为布尔值，表示是否成功发出"开始一起听"消息。
 
+#### 20. 社交 - 收藏表情
+
+说明 : 把聊天里收到的表情加入当前账号的网易云自定义表情。
+
+**接口地址 :** `/social/emoji/collect`
+
+**必选参数 :**
+- `emojiId` : 表情 id，纯数字
+- `emojiGroupId` : 表情分组 id，可为负数
+
+**返回 :** `code=200` 表示收藏成功；失败看 `message`。
+
+> 表情消息本身通过 `/listentogether/multi/chat/send` 发送，`clientExt.emoji` 里带 `emojiId`、`emojiGroupId`、`emojiImgUrl`、`width`、`height`、`format`、`emojiName` 即可。
+
 
 ### batch 批量请求接口
 
