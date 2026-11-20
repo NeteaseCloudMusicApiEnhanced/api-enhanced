@@ -21,6 +21,9 @@ function mounted() {
             else if (this.chatOpen) this.closeChat()
           })
           this.$watch('message', (value) => this.pushLog('status', value))
+          this.$watch('roomInfo.chatRoomId', (id) => {
+            if (id && this.roomInfo.roomId) this.autoConnectIm()
+          })
           this.pushLog('app', '控制台已加载')
           this.init()
           const audio = document.getElementById('player')

@@ -208,6 +208,41 @@ const roomMethods = {
               }
             },
 
+  async rematch() {
+    if (this.isMatching || this.rematching) return
+    this.rematching = true
+    if (!this.roomInfo.roomId) {
+      try {
+        await this.startMatch()
+      } finally {
+        this.rematching = false
+      }
+      return
+    }
+    const songId = Number(this.playingInfo.songId) || this.selectedSongId
+    this.message = '正在退出当前房间，准备重新匹配...'
+    try {
+      await api({
+        url: '/listentogether/multi/match/exit',
+        method: 'post',
+        data: {
+          roomId: this.roomInfo.roomId,
+          exitType: 'CHANGE_ROOM',
+          cookie: this.getFakeAndroidCookie(),
+        },
+      })
+    } catch (e) {}
+    this.resetLocalState()
+    this.selectedSong = null
+    if (songId) this.inputSongId = String(songId)
+    this.message = '正在重新匹配...'
+    try {
+      await this.startMatch()
+    } finally {
+      this.rematching = false
+    }
+  },
+
   async forceExitAndReset() {
               this.message = '正在清理服务端残留状态...'
               let targetRoomId = this.roomInfo.roomId || this.joinForm.roomId
@@ -243,6 +278,7 @@ const roomMethods = {
   resetLocalState() {
               this.stopPolling()
               this.closeMatchEvents()
+              if (this._imChatroom) this.disconnectImMembers()
               this.isMatching = false
               this.nextAddSongDuration = 0
               this.roomInfo = {

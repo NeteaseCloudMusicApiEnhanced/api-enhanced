@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=13" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=15" />
 
   </head>
   <body>
@@ -428,6 +428,13 @@
         </div>
         <div class="control-buttons" style="margin-top: 16px">
           <button class="btn" @click="exitRoom">正常退出房间</button>
+          <button
+            class="btn btn-primary"
+            :disabled="isMatching || rematching"
+            @click="rematch"
+          >
+            {{ isMatching || rematching ? '正在匹配…' : '重新匹配' }}
+          </button>
         </div>
       </div>
 
@@ -443,8 +450,12 @@
             margin-bottom: 8px;
           "
         >
-          <button class="btn btn-sm" @click="toggleImMembers">
-            {{ imConnected ? '断开 IM 实时成员' : '连接 IM 实时成员' }}
+          <button
+            class="btn btn-sm"
+            :disabled="imConnecting"
+            @click="toggleImMembers"
+          >
+            {{ imConnected ? '断开 IM 实时成员' : imConnecting ? 'IM 连接中…' : '连接 IM 实时成员' }}
           </button>
           <span>{{ imStatus }}</span>
         </div>
@@ -892,16 +903,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=13"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=13"></script>
-    <script src="/listen_together_multi/js/state.js?v=13"></script>
-    <script src="/listen_together_multi/js/computed.js?v=13"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=13"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=13"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=13"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=13"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=13"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=13"></script>
-    <script src="/listen_together_multi/app.js?v=13"></script>
+    <script src="/listen_together_multi/js/core.js?v=15"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=15"></script>
+    <script src="/listen_together_multi/js/state.js?v=15"></script>
+    <script src="/listen_together_multi/js/computed.js?v=15"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=15"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=15"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=15"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=15"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=15"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=15"></script>
+    <script src="/listen_together_multi/app.js?v=15"></script>
   </body>
 </html>

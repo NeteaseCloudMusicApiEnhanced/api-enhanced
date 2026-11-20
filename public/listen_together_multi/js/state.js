@@ -79,6 +79,7 @@ function createState() {
             shareResolving: false,
             joinForm: { roomId: '', inviterId: '' },
             isMatching: false,
+            rematching: false,
             nextAddSongDuration: 0,
 
             chatInput: '',
@@ -115,6 +116,7 @@ function createState() {
             songDialogMode: 'add',
 
             imConnected: false,
+            imConnecting: false,
             imStatus: '',
 
             refreshing: false,
