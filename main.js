@@ -1,9 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const tmpPath = require('os').tmpdir()
-const { cookieToJson } = require('./util')
+const { cookieToJson, getUserDir } = require('./util')
 
-const anonymousTokenPath = path.resolve(tmpPath, 'anonymous_token')
+const anonymousTokenPath = path.resolve(getUserDir(), 'anonymous_token')
 if (!fs.existsSync(anonymousTokenPath)) {
   fs.writeFileSync(anonymousTokenPath, '', 'utf-8')
 }

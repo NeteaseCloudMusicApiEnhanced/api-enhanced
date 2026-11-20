@@ -9,7 +9,6 @@ const https = require('https')
 const tunnel = require('tunnel')
 const fs = require('fs')
 const path = require('path')
-const tmpPath = require('os').tmpdir()
 const {
   cookieToJson,
   cookieObjToString,
@@ -17,7 +16,9 @@ const {
   hasCookie,
   toBoolean,
   generateRandomChineseIP,
+  getUserDir,
 } = require('./index')
+const homePath = getUserDir()
 const { URLSearchParams, URL } = require('url')
 const { APP_CONF } = require('./config.json')
 const { loadNeapiKey } = require('./neapiKey')
@@ -31,10 +32,10 @@ const registerNeapikey = require('../module/register_neapikey')
 
 // 预先读取匿名token并缓存
 const anonymous_token = fs.readFileSync(
-  path.resolve(tmpPath, './anonymous_token'),
+  path.resolve(homePath, './anonymous_token'),
   'utf-8',
 )
-const xeapiPublicKeyPath = path.resolve(tmpPath, './xeapi_public_key')
+const xeapiPublicKeyPath = path.resolve(homePath, './xeapi_public_key')
 let xeapi_public_key = null
 const loadXeapiPublicKey = () => {
   if (!xeapi_public_key && fs.existsSync(xeapiPublicKeyPath)) {

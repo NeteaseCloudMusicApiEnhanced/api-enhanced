@@ -5,7 +5,7 @@ const { cookieToJson, generateRandomChineseIP } = require('./util/index')
 const { getXeapiPublicKey } = require('./util/xeapiKey')
 const { loadNeapiKey } = require('./util/neapiKey')
 const registerNeapikey = require('./module/register_neapikey')
-const tmpPath = require('os').tmpdir()
+const homePath = require('./util').getUserDir()
 
 async function generateConfig() {
   global.cnIp = generateRandomChineseIP()
@@ -15,7 +15,7 @@ async function generateConfig() {
     if (cookie) {
       const cookieObj = cookieToJson(cookie)
       fs.writeFileSync(
-        path.resolve(tmpPath, 'anonymous_token'),
+        path.resolve(homePath, 'anonymous_token'),
         cookieObj.MUSIC_A,
         'utf-8',
       )
@@ -27,12 +27,12 @@ async function generateConfig() {
     let currentPublicKey = {}
     try {
       currentPublicKey = JSON.parse(
-        fs.readFileSync(path.resolve(tmpPath, 'xeapi_public_key'), 'utf-8'),
+        fs.readFileSync(path.resolve(homePath, 'xeapi_public_key'), 'utf-8'),
       )
     } catch (_) {}
     const publicKey = await getXeapiPublicKey(currentPublicKey, global.deviceId)
     fs.writeFileSync(
-      path.resolve(tmpPath, 'xeapi_public_key'),
+      path.resolve(homePath, 'xeapi_public_key'),
       JSON.stringify(publicKey),
       'utf-8',
     )
