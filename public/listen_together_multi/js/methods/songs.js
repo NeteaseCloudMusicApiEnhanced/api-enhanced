@@ -82,6 +82,19 @@ const songsMethods = {
     return {}
   },
 
+  rememberSelectedSong(song) {
+    if (!song?.id) return
+    const normalized = {
+      id: String(song.id),
+      name: String(song.name || '').slice(0, 200),
+      artist: String(song.artist || '').slice(0, 200),
+      cover: String(song.cover || '').slice(0, 1000),
+      duration: Number(song.duration) || 0,
+    }
+    this.lastSelectedSong = normalized
+    safeStorage.set('last_selected_song', JSON.stringify(normalized))
+  },
+
   async loadSongById(id) {
     const res = await api({
       url: '/song/detail',
@@ -103,6 +116,7 @@ const songsMethods = {
     this.selectedSong = mapped
     this.inputSongId = mapped.id
     this.songInput = mapped.name
+    this.rememberSelectedSong(mapped)
     this.songResults = []
     this.message = `已解析歌曲: ${mapped.name}`
     return mapped
@@ -148,6 +162,7 @@ const songsMethods = {
     this.selectedSong = song
     this.inputSongId = String(song.id)
     this.songInput = song.name
+    this.rememberSelectedSong(song)
     this.songResults = []
     this.message = `已选择: ${song.name}`
   },

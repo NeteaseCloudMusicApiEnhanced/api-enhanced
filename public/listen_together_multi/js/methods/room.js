@@ -219,8 +219,12 @@ const roomMethods = {
       }
       return
     }
-    const songId = Number(this.playingInfo.songId) || this.selectedSongId
-    this.message = '正在退出当前房间，准备重新匹配...'
+    const last = this.lastSelectedSong
+    const songId = Number(last?.id) || this.selectedSongId
+    const songName = last?.name || this.selectedSong?.name || ''
+    this.message = songName
+      ? `正在退出当前房间，准备用《${songName}》重新匹配...`
+      : '正在退出当前房间，准备重新匹配...'
     try {
       await api({
         url: '/listentogether/multi/match/exit',

@@ -28,6 +28,21 @@ function loadChatButtonPos() {
   } catch (e) {}
   return fallback
 }
+function loadLastSelectedSong() {
+  try {
+    const saved = JSON.parse(safeStorage.get('last_selected_song') || 'null')
+    if (!saved || !/^\d{1,24}$/.test(String(saved.id || ''))) return null
+    return {
+      id: String(saved.id),
+      name: String(saved.name || '').slice(0, 200),
+      artist: String(saved.artist || '').slice(0, 200),
+      cover: String(saved.cover || '').slice(0, 1000),
+      duration: Number(saved.duration) || 0,
+    }
+  } catch (e) {
+    return null
+  }
+}
 function createState() {
           return {
             message: '请先登录',
@@ -112,6 +127,7 @@ function createState() {
             songResults: [],
             songSearching: false,
             selectedSong: null,
+            lastSelectedSong: loadLastSelectedSong(),
             songOpen: false,
             songDialogMode: 'add',
 
