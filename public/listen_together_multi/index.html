@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=11" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=12" />
 
   </head>
   <body>
@@ -669,16 +669,27 @@
           <li
             v-for="(msg, mi) in chatHistory"
             :key="'chat-' + (msg.id || mi)"
-            :class="['chat-item', msg.isSystem ? 'system' : '']"
+            :class="[
+              'chat-item',
+              msg.isSystem ? 'system' : '',
+              { 'no-avatar': !msg.avatarUrl },
+            ]"
           >
-            <img
-              v-if="msg.avatarUrl"
-              :src="msg.avatarUrl"
-              class="chat-avatar"
-            />
+            <div
+              v-if="msg.avatarUrl || msg.nickname"
+              class="chat-header"
+            >
+              <img
+                v-if="msg.avatarUrl"
+                :src="msg.avatarUrl"
+                class="chat-avatar"
+              />
+              <span v-if="msg.nickname" class="chat-nickname">
+                {{ msg.nickname }}
+              </span>
+            </div>
             <div class="chat-body">
               <template v-if="msg.emojiUrl">
-                <b v-if="msg.nickname">{{ msg.nickname }}:</b>
                 <div class="chat-emoji-wrap">
                   <img :src="msg.emojiUrl" class="chat-emoji" />
                   <div class="chat-emoji-actions">
@@ -692,9 +703,7 @@
                   </div>
                 </div>
               </template>
-              <template v-else>
-                <b v-if="msg.nickname">{{ msg.nickname }}:</b> {{ msg.text }}
-              </template>
+              <template v-else>{{ msg.text }}</template>
               <div v-if="msg.cover" class="chat-card">
                 <img :src="msg.cover" />
                 <span>{{ msg.songName }} - {{ msg.artistName }}</span>
@@ -883,16 +892,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=11"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=11"></script>
-    <script src="/listen_together_multi/js/state.js?v=11"></script>
-    <script src="/listen_together_multi/js/computed.js?v=11"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=11"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=11"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=11"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=11"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=11"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=11"></script>
-    <script src="/listen_together_multi/app.js?v=11"></script>
+    <script src="/listen_together_multi/js/core.js?v=12"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=12"></script>
+    <script src="/listen_together_multi/js/state.js?v=12"></script>
+    <script src="/listen_together_multi/js/computed.js?v=12"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=12"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=12"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=12"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=12"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=12"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=12"></script>
+    <script src="/listen_together_multi/app.js?v=12"></script>
   </body>
 </html>

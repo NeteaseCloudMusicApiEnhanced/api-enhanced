@@ -189,7 +189,25 @@
         font-size: 13px;
         padding: 6px 0;
         display: flex;
-        gap: 8px;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .chat-nickname {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #666;
+        font-size: 12px;
+        font-weight: 500;
       }
 
       .chat-item.system {
@@ -205,9 +223,15 @@
       }
 
       .chat-body {
-        flex: 1;
+        width: 100%;
         min-width: 0;
+        padding-left: 32px;
         word-break: break-word;
+      }
+
+      .chat-item.system .chat-body,
+      .chat-item.no-avatar .chat-body {
+        padding-left: 0;
       }
 
       .chat-body b {
