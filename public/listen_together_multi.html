@@ -1395,9 +1395,9 @@
             <button
               class="btn btn-sm"
               :class="{ active: emojiTab === 'saved' }"
-              @click="emojiTab = 'saved'"
+              @click="openMyStickers"
             >
-              我的表情 ({{ savedStickers.length }})
+              我的表情 ({{ myStickers.length }})
             </button>
           </div>
 
@@ -1415,9 +1415,36 @@
           </div>
 
           <div v-else>
-            <div v-if="savedStickers.length" class="emoji-grid">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-bottom: 8px;
+              "
+            >
+              <span class="hint">
+                {{ cloudGroups.length ? cloudGroups[0].name : '网易云自定义表情' }}
+              </span>
+              <button
+                class="btn btn-sm"
+                :disabled="cloudLoading"
+                @click="refreshCloudStickers"
+              >
+                {{ cloudLoading ? '读取中…' : '刷新' }}
+              </button>
+            </div>
+            <p v-if="cloudLoading" class="hint">正在读取网易云自定义表情…</p>
+            <p v-if="cloudError" class="hint">
+              {{ cloudError }}
+              <button class="btn btn-sm" @click="refreshCloudStickers">
+                重试
+              </button>
+            </p>
+            <div v-if="myStickers.length" class="emoji-grid">
               <div
-                v-for="emoji in savedStickers"
+                v-for="emoji in myStickers"
                 :key="emoji.emojiImgUrl"
                 class="emoji-cell"
               >
@@ -1430,6 +1457,7 @@
                   <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
                 </button>
                 <button
+                  v-if="isLocalSticker(emoji)"
                   type="button"
                   class="emoji-remove"
                   title="从本地移除"
@@ -1439,9 +1467,18 @@
                 </button>
               </div>
             </div>
-            <p v-else class="empty-hint">
-              还没有保存的表情，收到图片表情后点“存表情”即可。
+            <p v-else-if="!cloudLoading && !cloudError" class="empty-hint">
+              网易云账号里还没有自定义表情，收到图片表情后点“存表情”即可。
             </p>
+            <button
+              v-if="cloudMore"
+              class="btn btn-sm"
+              :disabled="cloudLoading"
+              @click="loadMoreCloud"
+              style="margin-top: 8px"
+            >
+              加载更多
+            </button>
             <div class="input-group" style="margin: 8px 0 0">
               <input
                 v-model="emojiUrlInput"
@@ -1622,6 +1659,14 @@
             emojiUrlInput: '',
             emojiSaving: false,
             savedStickers: loadSavedStickers(),
+            cloudStickers: [],
+            cloudGroups: [],
+            cloudGroupId: '',
+            cloudCursor: '',
+            cloudMore: false,
+            cloudLoading: false,
+            cloudLoaded: false,
+            cloudError: '',
 
             songQuery: '',
             songResults: [],
@@ -1665,6 +1710,17 @@
           },
           builtinStickers() {
             return LISTEN_STICKERS
+          },
+          myStickers() {
+            const result = []
+            const seen = new Set()
+            for (const item of [...this.cloudStickers, ...this.savedStickers]) {
+              const emoji = this.normalizeSticker(item)
+              if (!emoji || seen.has(emoji.emojiImgUrl)) continue
+              seen.add(emoji.emojiImgUrl)
+              result.push(emoji)
+            }
+            return result
           },
           selectedSongId() {
             return Number(this.selectedSong?.id || this.inputSongId) || 0
@@ -3271,6 +3327,104 @@
             }
           },
 
+          isLocalSticker(item) {
+            const emoji = this.normalizeSticker(item)
+            return !!(
+              emoji &&
+              this.savedStickers.some(
+                (saved) => saved.emojiImgUrl === emoji.emojiImgUrl,
+              )
+            )
+          },
+
+          async ensureCloudStickers(force = false, append = false) {
+            if (this.cloudLoading) return
+            if (!this.account.login) {
+              this.cloudError = '请先登录网易云账号'
+              return
+            }
+            if (!force && !append && this.cloudLoaded) return
+            this.cloudLoading = true
+            if (!append) this.cloudError = ''
+            try {
+              if (!this.cloudGroups.length || force) {
+                const groupRes = await api({
+                  url: '/social/emoji/groups',
+                  method: 'get',
+                  params: { resourceType: 3 },
+                })
+                const groups = (groupRes.data?.data?.emojiGroups || [])
+                  .filter((group) => group && group.edit === true)
+                  .map((group) => ({
+                    id: String(group.id),
+                    name: group.name || '自定义表情',
+                  }))
+                this.cloudGroups = groups
+                if (!groups.some((group) => group.id === this.cloudGroupId))
+                  this.cloudGroupId = groups[0]?.id || ''
+              }
+              if (!this.cloudGroupId) {
+                this.cloudStickers = []
+                this.cloudMore = false
+                this.cloudLoaded = true
+                return
+              }
+              const pageRes = await api({
+                url: '/social/emoji/groups/detail/page',
+                method: 'get',
+                params: {
+                  emojiGroupId: this.cloudGroupId,
+                  cursor: append ? this.cloudCursor : '',
+                  size: 20,
+                },
+              })
+              const raw = pageRes.data?.data?.emojis || []
+              const incoming = raw
+                .map((item) =>
+                  this.normalizeSticker({
+                    ...item,
+                    emojiGroupId: item.emojiGroupId ?? this.cloudGroupId,
+                  }),
+                )
+                .filter(Boolean)
+              if (append) {
+                const seen = new Set(
+                  this.cloudStickers.map((item) => item.emojiImgUrl),
+                )
+                this.cloudStickers = [
+                  ...this.cloudStickers,
+                  ...incoming.filter((item) => !seen.has(item.emojiImgUrl)),
+                ]
+              } else {
+                this.cloudStickers = incoming
+              }
+              this.cloudCursor = pageRes.data?.data?.page?.cursor || ''
+              this.cloudMore = pageRes.data?.data?.page?.more === true
+              this.cloudLoaded = true
+            } catch (e) {
+              this.cloudError =
+                e.response?.data?.message || e.message || '读取自定义表情失败'
+            } finally {
+              this.cloudLoading = false
+            }
+          },
+
+          async openMyStickers() {
+            this.emojiTab = 'saved'
+            await this.ensureCloudStickers()
+          },
+
+          async refreshCloudStickers() {
+            this.cloudLoaded = false
+            this.cloudCursor = ''
+            await this.ensureCloudStickers(true)
+          },
+
+          async loadMoreCloud() {
+            if (!this.cloudMore || this.cloudLoading) return
+            await this.ensureCloudStickers(false, true)
+          },
+
           normalizeSticker(item) {
             const url = String(item?.emojiImgUrl || item?.url || '')
             if (!/^https?:\/\//.test(url)) return null
@@ -3296,7 +3450,7 @@
             const emoji = this.normalizeSticker(item)
             return !!(
               emoji &&
-              this.savedStickers.some(
+              [...this.cloudStickers, ...this.savedStickers].some(
                 (saved) => saved.emojiImgUrl === emoji.emojiImgUrl,
               )
             )
@@ -3348,6 +3502,10 @@
                 : cloudError
                   ? '已保存到本地；' + cloudError
                   : '表情已保存到本地'
+              if (cloudSaved) {
+                this.cloudLoaded = false
+                this.ensureCloudStickers(true).catch(() => {})
+              }
             } finally {
               this.emojiSaving = false
             }

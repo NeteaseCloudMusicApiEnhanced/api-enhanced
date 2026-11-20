@@ -4301,6 +4301,28 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 > 表情消息本身通过 `/listentogether/multi/chat/send` 发送，`clientExt.emoji` 里带 `emojiId`、`emojiGroupId`、`emojiImgUrl`、`width`、`height`、`format`、`emojiName` 即可。
 
+#### 21. 社交 - 表情分组
+
+说明 : 获取当前账号的自定义表情分组。
+
+**接口地址 :** `/social/emoji/groups`
+
+**可选参数 :** `resourceType` : `3` = 一起听房间（默认），`2` = 私信。
+
+**返回 :** `data.emojiGroups[]`，其中 `edit=true` 的通常是当前账号可编辑的「自定义表情」分组。
+
+#### 22. 社交 - 表情分组详情
+
+说明 : 分页读取某个表情分组里的表情。
+
+**接口地址 :** `/social/emoji/groups/detail/page`
+
+**必选参数 :** `emojiGroupId`
+
+**可选参数 :** `cursor` : 上一页返回的 `page.cursor`；`size` : 默认 20，最大 50。
+
+**返回 :** `data.emojis[]`（`emojiId`、`emojiGroupId`、`emojiImgUrl`、`picId`、`width`、`height`、`format`），`data.page{size,cursor,more}`。
+
 
 ### batch 批量请求接口
 

@@ -4,6 +4,8 @@ const played = require('../module/listentogether_multi_match_played_song_list')
 const songInfo = require('../module/listentogether_multi_played_song_info')
 const mutual = require('../module/listentogether_mutual_follows_get_v2')
 const collect = require('../module/social_emoji_collect')
+const groups = require('../module/social_emoji_groups')
+const groupPage = require('../module/social_emoji_groups_detail_page')
 
 const capture = (module, query) => {
   let result
@@ -48,5 +50,25 @@ describe('multi-listen endpoints used by music-party', () => {
     const call = capture(collect, { emojiId: '3002', emojiGroupId: '3001' })
     assert.strictEqual(call.uri, '/api/social/emoji/collect')
     assert.deepStrictEqual(call.data, { emojiId: '3002', emojiGroupId: '3001' })
+  })
+
+  it('builds the sticker group list request', () => {
+    const call = capture(groups, { resourceType: 3 })
+    assert.strictEqual(call.uri, '/api/social/emoji/groups')
+    assert.deepStrictEqual(call.data, { resourceType: 3 })
+  })
+
+  it('builds the sticker group page request', () => {
+    const call = capture(groupPage, {
+      emojiGroupId: '1',
+      cursor: 'next',
+      size: 20,
+    })
+    assert.strictEqual(call.uri, '/api/social/emoji/groups/detail/page')
+    assert.deepStrictEqual(call.data, {
+      emojiGroupId: '1',
+      cursor: 'next',
+      size: 20,
+    })
   })
 })
