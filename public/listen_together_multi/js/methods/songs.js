@@ -375,6 +375,31 @@ const songsMethods = {
               }
             },
 
+  formatAudioTime(value) {
+    const seconds = Math.max(0, Math.floor(Number(value) || 0))
+    return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(
+      seconds % 60,
+    ).padStart(2, '0')}`
+  },
+
+  onSeek(event) {
+    const value = Math.max(0, Number(event.target.value) || 0)
+    const audio = document.getElementById('player')
+    this.audioCurrentTime = value
+    if (!audio) return
+    try {
+      audio.currentTime = value
+    } catch (e) {}
+  },
+
+  onVolumeInput(event) {
+    const value = Math.min(1, Math.max(0, Number(event.target.value) || 0))
+    this.audioVolume = value
+    safeStorage.set('audio_volume', String(value))
+    const audio = document.getElementById('player')
+    if (audio) audio.volume = value
+  },
+
   togglePlay() {
               const audio = document.getElementById('player')
               if (!audio.src) return (this.message = '当前无播放音频')
@@ -383,6 +408,7 @@ const songsMethods = {
                   .play()
                   .then(() => {
                     this.playingInfo.status = 'PLAY'
+                    this.audioPlaying = true
                   })
                   .catch(() => {
                     this.message = '播放被浏览器拦截，请再点一次'
@@ -390,6 +416,7 @@ const songsMethods = {
               } else {
                 audio.pause()
                 this.playingInfo.status = 'PAUSE'
+                this.audioPlaying = false
               }
             },
 
@@ -467,6 +494,7 @@ const songsMethods = {
               audio.onloadedmetadata = () => {
                 try {
                   audio.currentTime = Math.max(0, seekTo)
+                  this.audioCurrentTime = Math.max(0, seekTo)
                 } catch (e) {}
                 audio
                   .play()
@@ -518,6 +546,7 @@ const songsMethods = {
               audio.onloadedmetadata = () => {
                 try {
                   audio.currentTime = Math.max(0, t)
+                  this.audioCurrentTime = Math.max(0, t)
                 } catch (e) {}
                 if (wasPlaying) audio.play().catch(() => {})
                 audio.onloadedmetadata = null

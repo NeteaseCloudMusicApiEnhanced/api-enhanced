@@ -25,17 +25,31 @@ function mounted() {
           this.init()
           const audio = document.getElementById('player')
           if (audio) {
+            audio.volume = this.audioVolume
+            const syncAudio = () => {
+              this.audioCurrentTime = Number(audio.currentTime) || 0
+              this.audioDuration =
+                Number.isFinite(audio.duration) && audio.duration > 0
+                  ? audio.duration
+                  : Number(this.playingInfo.duration) || 0
+              this.audioPlaying = !audio.paused && !audio.ended
+            }
+            ;['timeupdate', 'play', 'pause', 'loadedmetadata', 'volumechange'].forEach(
+              (event) => audio.addEventListener(event, syncAudio),
+            )
             audio.onerror = () => {
               if (audio.src) log('Audio', '加载失败', audio.src)
             }
 
             audio.onended = () => {
+              syncAudio()
               if (this.roomInfo.roomId) {
                 log('Audio', '播放结束，立即触发心跳同步下一首')
                 this.lastHeartbeatTime = Date.now()
                 this.heartbeat().catch(() => {})
               }
             }
+            syncAudio()
           }
 
           const unlockAudio = () => {

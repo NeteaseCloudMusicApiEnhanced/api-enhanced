@@ -1197,6 +1197,89 @@
         min-height: 0;
       }
 
+      /* ================= 自定义播放器 ================= */
+      .player-controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+      }
+
+      .player-play {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        background: #c20c0c;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(194, 12, 12, 0.25);
+      }
+
+      .player-play:hover {
+        background: #a50a0a;
+      }
+
+      .player-play svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .player-progress {
+        flex: 1 1 220px;
+        min-width: 140px;
+      }
+
+      .player-range {
+        width: 100%;
+        accent-color: #c20c0c;
+        cursor: pointer;
+      }
+
+      .player-time-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2px;
+        color: #999;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+      }
+
+      .player-volume,
+      .player-quality {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #666;
+        font-size: 12px;
+        flex: 0 0 auto;
+      }
+
+      .player-volume input {
+        width: 76px;
+        accent-color: #c20c0c;
+      }
+
+      .player-quality select {
+        padding: 4px 6px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background: #fff;
+        font-size: 12px;
+      }
+
+      .player-quality-note {
+        margin-top: 6px;
+        color: #999;
+        font-size: 11px;
+      }
+
       /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
@@ -1271,6 +1354,18 @@
           flex-wrap: wrap;
           gap: 8px;
           justify-content: flex-start;
+        }
+
+        .player-controls {
+          align-items: flex-start;
+        }
+
+        .player-progress {
+          flex: 1 1 calc(100% - 50px);
+        }
+
+        .player-volume {
+          display: none;
         }
 
         .queue-item {

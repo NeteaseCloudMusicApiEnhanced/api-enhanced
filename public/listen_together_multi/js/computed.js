@@ -7,6 +7,13 @@ const computed = {
               this.account.userId || this.roomInfo.creatorId || 0
             return `https://st.music.163.com/listen-together/multishare/index.html?roomId=${encodeURIComponent(this.roomInfo.roomId)}&inviterUid=${encodeURIComponent(inviterUid)}`
           },
+          progressMax() {
+            return Math.max(
+              1,
+              Number(this.audioDuration) || 0,
+              Number(this.playingInfo.duration) || 0,
+            )
+          },
           songName() {
             return (
               this.playingInfo.name ||

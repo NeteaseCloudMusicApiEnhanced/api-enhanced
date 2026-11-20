@@ -11,7 +11,7 @@
     <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=7" />
+    <link rel="stylesheet" href="/listen_together_multi/style.css?v=8" />
 
   </head>
   <body>
@@ -67,26 +67,7 @@
         状态: {{message}}
       </div>
 
-      <div class="audio-player">
-        <audio id="player" controls style="width: 100%"></audio>
-        <div class="audio-control-bar">
-          <span>音质:</span>
-          <select v-model="audioLevel" @change="onLevelChange">
-            <option v-for="l in audioLevels" :key="l.key" :value="l.key">
-              {{ l.label }}
-            </option>
-          </select>
-          <span
-            v-if="playingInfo.actualLevel && playingInfo.actualLevel !== audioLevel"
-            class="hint"
-          >
-            （实际 {{ levelLabel(playingInfo.actualLevel) }}，已自动降级）
-          </span>
-          <span v-else-if="playingInfo.actualLevel" class="hint">
-            （实际 {{ levelLabel(playingInfo.actualLevel) }}）
-          </span>
-        </div>
-      </div>
+      <audio id="player" preload="metadata" style="display: none"></audio>
 
       <div class="section flex-between">
         <div>
@@ -370,6 +351,63 @@
               {{ roomInfo.permission.topSong ? '✅' : '❌' }}
             </div>
           </div>
+          <div class="player-controls">
+            <button
+              class="player-play"
+              type="button"
+              :aria-label="audioPlaying ? '暂停' : '播放'"
+              @click="togglePlay"
+            >
+              <svg v-if="audioPlaying" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+            <div class="player-progress">
+              <input
+                type="range"
+                class="player-range"
+                min="0"
+                :max="progressMax"
+                step="0.1"
+                :value="audioCurrentTime"
+                @input="onSeek"
+                @change="onSeek"
+                aria-label="播放进度"
+              />
+              <div class="player-time-row">
+                <span>{{ formatAudioTime(audioCurrentTime) }}</span>
+                <span>{{ formatAudioTime(progressMax) }}</span>
+              </div>
+            </div>
+            <label class="player-volume">
+              音量
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                :value="audioVolume"
+                @input="onVolumeInput"
+                aria-label="音量"
+              />
+            </label>
+            <label class="player-quality">
+              音质
+              <select v-model="audioLevel" @change="onLevelChange">
+                <option v-for="l in audioLevels" :key="l.key" :value="l.key">
+                  {{ l.label }}
+                </option>
+              </select>
+            </label>
+          </div>
+          <div class="player-quality-note" v-if="playingInfo.actualLevel">
+            实际音质: {{ levelLabel(playingInfo.actualLevel) }}
+            <span v-if="playingInfo.actualLevel !== audioLevel">（已自动降级）</span>
+          </div>
           <div class="song-actions">
             <button
               class="btn btn-sm"
@@ -378,7 +416,6 @@
             >
               切歌
             </button>
-            <button class="btn btn-sm" @click="togglePlay">播放/暂停</button>
             <button class="btn btn-sm btn-warn" @click="likeCurrentSong">
               点赞 (👍 可连点)
             </button>
@@ -849,16 +886,16 @@
 
     </div>
 
-    <script src="/listen_together_multi/js/core.js?v=7"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=7"></script>
-    <script src="/listen_together_multi/js/state.js?v=7"></script>
-    <script src="/listen_together_multi/js/computed.js?v=7"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=7"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=7"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=7"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=7"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=7"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=7"></script>
-    <script src="/listen_together_multi/app.js?v=7"></script>
+    <script src="/listen_together_multi/js/core.js?v=8"></script>
+    <script src="/listen_together_multi/js/stickers.js?v=8"></script>
+    <script src="/listen_together_multi/js/state.js?v=8"></script>
+    <script src="/listen_together_multi/js/computed.js?v=8"></script>
+    <script src="/listen_together_multi/js/methods/common.js?v=8"></script>
+    <script src="/listen_together_multi/js/methods/room.js?v=8"></script>
+    <script src="/listen_together_multi/js/methods/match.js?v=8"></script>
+    <script src="/listen_together_multi/js/methods/stickers.js?v=8"></script>
+    <script src="/listen_together_multi/js/methods/songs.js?v=8"></script>
+    <script src="/listen_together_multi/js/mounted.js?v=8"></script>
+    <script src="/listen_together_multi/app.js?v=8"></script>
   </body>
 </html>

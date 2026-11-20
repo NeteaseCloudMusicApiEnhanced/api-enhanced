@@ -132,6 +132,13 @@ function createState() {
             chatAllPagesLoaded: false,
             audioLevel: safeStorage.get('audio_level') || DEFAULT_AUDIO_LEVEL,
             audioLevels: AUDIO_LEVELS,
+            audioCurrentTime: 0,
+            audioDuration: 0,
+            audioPlaying: false,
+            audioVolume: Math.min(
+              1,
+              Math.max(0, Number(safeStorage.get('audio_volume')) || 1),
+            ),
             userNameCache: {},
             likedMap: {},
             lastQueueVersion: 0,
