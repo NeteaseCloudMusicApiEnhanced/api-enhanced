@@ -2,6 +2,14 @@
 const { api, log, safeStorage, HEARTBEAT_INTERVAL, STATUS_INTERVAL, MATCH_POLL_INTERVAL, CHAT_INTERVAL, TICK_INTERVAL, REQ_TIMEOUT, CHAT_PAGE_SIZE, AUDIO_LEVELS, DEFAULT_AUDIO_LEVEL, LISTEN_STICKERS, loadSavedStickers } = window.LT
 const matchMethods = {
   async startMatch() {
+              this.message = '正在重置匹配状态...'
+              try {
+                await api({
+                  url: `/listentogether/multi/match/cancel`,
+                  method: 'post',
+                  data: { cookie: this.getFakeAndroidCookie() },
+                })
+              } catch (e) {}
               this.message = '正在连接匹配通知...'
               const songId = this.selectedSongId || 1372188635
               this.closeMatchEvents()
@@ -23,6 +31,7 @@ const matchMethods = {
               }
               events.onopen = () => {
                 if (this._matchEvents !== events) return
+                if (!this.isMatching) this._matchRequested = false
                 this.message = '匹配通知已建立，等待 mini NIM 登录...'
               }
             },

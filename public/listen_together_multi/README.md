@@ -20,7 +20,7 @@ js/mounted.js              页面挂载后的初始化
 js/stickers.js             内置一起听表情、本地表情读取
 js/methods/common.js       通用工具、复制、刷新
 js/methods/room.js         登录/房间状态/轮询/聊天/播放同步
-js/methods/match.js        SSE 匹配、NIM 聊天室成员
+js/methods/match.js        SSE 匹配、NIM 聊天室成员、刷新后重新连接
 js/methods/stickers.js     表情发送、收藏、云表情分页
 js/methods/songs.js        歌曲搜索、加歌/切歌/点赞、音频加载
 ```

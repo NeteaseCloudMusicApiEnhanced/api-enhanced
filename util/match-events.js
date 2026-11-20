@@ -102,7 +102,6 @@ function ensureSession(key, session, cookie) {
         sessions.delete(key)
       })
       await mini.start({ accId: data.accId, token: data.token })
-      broadcast(session, { type: 'connected' })
     })().catch((error) => {
       session.closed = true
       sessions.delete(key)
@@ -119,13 +118,17 @@ function ensureSession(key, session, cookie) {
 async function subscribe(cookie, send) {
   const key = cookieKey(cookie)
   let session = sessions.get(key)
-  if (!session) {
+  if (!session || session.closed) {
     session = { subs: new Set(), client: null, ready: null, closed: false }
     sessions.set(key, session)
   }
   session.subs.add(send)
   try {
     await ensureSession(key, session, cookie)
+    if (session.closed) throw new Error('匹配通知连接已关闭')
+    // A late subscriber (for example after a page refresh) reused this
+    // session, so tell it explicitly that the mini NIM connection is ready.
+    send({ type: 'connected' })
   } catch (error) {
     session.subs.delete(send)
     throw error
@@ -138,7 +141,7 @@ async function subscribe(cookie, send) {
       session.closed = true
       session.client && session.client.close()
       sessions.delete(key)
-    }, 5000).unref()
+    }, 15000).unref()
   }
 }
 
