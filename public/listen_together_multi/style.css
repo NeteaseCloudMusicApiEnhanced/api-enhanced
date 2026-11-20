@@ -1280,6 +1280,127 @@
         font-size: 11px;
       }
 
+      /* ================= 播放条 ================= */
+      .player-bar {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr) minmax(300px, 1.25fr);
+        grid-template-rows: auto auto;
+        gap: 10px 14px;
+        align-items: center;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #c20c0c;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+      }
+
+      .player-cover-wrap {
+        grid-row: 1 / span 2;
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f0f0f0;
+        flex: 0 0 auto;
+      }
+
+      .player-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .player-info {
+        grid-row: 1 / span 2;
+        min-width: 0;
+      }
+
+      .player-title-row {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .player-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 16px;
+        color: #1f2937;
+      }
+
+      .player-artist-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 0;
+        margin-top: 2px;
+      }
+
+      .player-artist {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #666;
+        font-size: 13px;
+      }
+
+      .player-meta-line {
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+        overflow-x: auto;
+        white-space: nowrap;
+        color: #999;
+        font-size: 11px;
+        scrollbar-width: none;
+      }
+
+      .player-meta-line::-webkit-scrollbar {
+        display: none;
+      }
+
+      .player-transport {
+        grid-column: 3;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .player-tools {
+        grid-column: 3;
+        grid-row: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .player-tools .btn {
+        margin: 0;
+      }
+
+      .player-quality-note {
+        margin-top: 6px;
+        color: #999;
+        font-size: 11px;
+      }
+
+      .player-permissions {
+        margin-top: 4px;
+        color: #999;
+        font-size: 11px;
+      }
+
       /* ================= 响应式媒体查询 ================= */
       @media (max-width: 600px) {
         body {
@@ -1356,16 +1477,40 @@
           justify-content: flex-start;
         }
 
-        .player-controls {
-          align-items: flex-start;
+        .player-bar {
+          grid-template-columns: 56px minmax(0, 1fr);
+          grid-template-rows: auto auto auto;
+          gap: 8px 10px;
         }
 
-        .player-progress {
-          flex: 1 1 calc(100% - 50px);
+        .player-cover-wrap {
+          grid-row: 1;
+          width: 56px;
+          height: 56px;
+        }
+
+        .player-info {
+          grid-row: 1;
+          grid-column: 2;
+        }
+
+        .player-transport {
+          grid-column: 1 / -1;
+          grid-row: 2;
+        }
+
+        .player-tools {
+          grid-column: 1 / -1;
+          grid-row: 3;
+          justify-content: flex-start;
         }
 
         .player-volume {
           display: none;
+        }
+
+        .player-progress {
+          flex: 1;
         }
 
         .queue-item {
