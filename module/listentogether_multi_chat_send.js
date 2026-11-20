@@ -3,7 +3,7 @@ const createOption = require('../util/option.js')
 
 module.exports = (query, request) => {
   const data = {
-    chatroomId: query.chatRoomId,
+    chatroomId: query.chatRoomId || query.chatroomId,
     msgType: 0,
     clientExt: JSON.stringify({
       bizType: 'listenTogether',
@@ -16,7 +16,7 @@ module.exports = (query, request) => {
       msgType: 0,
     }),
   }
-  
+
   return request(
     `/api/middle/im/chatroom/send`,
     data,

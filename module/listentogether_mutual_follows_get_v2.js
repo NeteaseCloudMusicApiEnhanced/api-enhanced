@@ -1,4 +1,4 @@
-// 一起听 多人-获取互关/推荐
+// 一起听 多人-邀请面板：互关/推荐用户、群聊、AI 机器人、直播间推荐
 const createOption = require('../util/option.js')
 module.exports = (query, request) => {
   const data = {

@@ -3936,7 +3936,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 **接口地址 :** `/listentogether/multi/match/ack`
 
-**成功返回 :** 与 `status/get` 结构相同，可从 `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` 读取房间类型，从 `data.nextAddSongDuration` 读取当前剩余冷却。
+**成功返回 :** 与 `status/get` 结构相同。房型从 `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomType` 判断（`MULTI_MATCH_SONG` = 匹配房），公/私密看 `roomBizType`；`data.nextAddSongDuration` 是当前剩余冷却。
 
 #### 5. 多人一起听 - 获取匹配 / 房间状态
 
@@ -4155,6 +4155,137 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 - `reverse` : `false` 时正序，默认倒序
 - `queryMsgTypeList` : JSON 数组字符串，默认 `["text"]`
 - `uniqueBizId` : 一起听房间 ID，可留空
+
+
+#### 15. 多人一起听 - 分享落地页 / 邀请预览
+
+说明 : 打开多人一起听分享链接时，先取房间状态、邀请人、其他成员和当前歌曲，用于"是否加入"预览页。
+
+**接口地址 :** `/listentogether/multi/landing/info`
+
+**必选参数 :** `roomId` : 一起听房间 ID
+
+**可选参数 :** `inviterUid` : 分享链接里的邀请人 uid
+
+**返回关键字段 :**
+
+```js
+{
+  data: {
+    roomStatus: "AVAILABLE", // 房间是否还能加入
+    inviter: { uid, nickname, avatar },
+    others: [{ uid, nickname, avatar }], // 房间里已有的人
+    artistRoomInfo: null,
+    songData: { id, name, artists, album, duration }, // 当前歌曲
+    expire: 255982 // 秒
+  }
+}
+```
+
+#### 16. 多人一起听 - 已播放歌曲列表
+
+说明 : 获取房间已经播放过的歌曲历史，和 `wait/song/list`（待播队列）不同。
+
+**接口地址 :** `/listentogether/multi/match/played/song/list`
+
+**必选参数 :** `roomId` : 一起听房间 ID
+
+**可选参数 :**
+- `sort` : 默认 `1`
+- `size` : 默认 `20`
+- `cursor` : 上一页返回的 `page.cursor`
+- 也可以直接传 `page` : JSON 字符串，如 `{"size":20,"cursor":"0_1795145783000"}`
+
+**返回关键字段 :**
+
+```js
+{
+  data: {
+    roomTagList: ['电子', '流行'],
+    songLists: [{
+      songInfo: { resourceId, bizId, title, artistName, coverUrl, upCnt, zanCnt, uped },
+      rcmdUid, userSubjectId, nickname, rcmdType,
+      status, uped, liked, playing, playEnd, addTime, selfRcmd
+    }],
+    version: 367,
+    page: { size: 20, cursor: '0_1795145783000', more: false }
+  }
+}
+```
+
+#### 17. 多人一起听 - 已播放歌曲详情
+
+说明 : 用 `songBizId` 查单首歌在房间里的播放状态、点赞/顶歌状态和推荐人。
+
+**接口地址 :** `/listentogether/multi/played/song/info`
+
+**必选参数 :** `roomId`、`songBizId`
+
+**返回关键字段 :**
+
+```js
+{
+  data: {
+    songInfo: { resourceId, bizId, title, artistName, coverUrl, upCnt, zanCnt, uped },
+    rcmdUid, userSubjectId, nickname, rcmdType,
+    status, uped, liked, playing, playEnd, addTime, selfRcmd
+  }
+}
+```
+
+#### 18. 多人一起听 - 邀请面板（互关 / 推荐 / 群聊）
+
+说明 : **不是歌曲推荐**，而是"邀请谁一起听"的候选列表。返回互关/推荐用户、群聊、AI 机器人、直播间推荐等，前端按 `inRoom` / `online` 过滤后展示。
+
+**接口地址 :** `/listentogether/mutual/follows/get/v2`
+
+**必选参数 :** `roomId` : 一起听房间 ID
+
+**可选参数 :** `songId` : 当前歌曲 id，部分推荐会参考它
+
+**返回关键字段 :**
+
+```js
+{
+  data: {
+    mutualFollowLists: [{
+      userInfo: { userId, nickname, avatarUrl, ... },
+      relationType, snsType, snsNickname, // 互关/社交关系
+      online, inRoom, listenStatus, lastListen, lastTime,
+      recommendReasons: ['...'], description, tags,
+      customNickname, type, name, orpheus, // AI 机器人字段
+      streak: { currentDays, historyMaxDays, status }
+    }], // 实测约 50 个候选
+    multiGroupLists: [{
+      groupId, groupMemberNum,
+      groupMembers: [{ uid, nickname, avatar }],
+      artistRoomInfo: null
+    }],
+    aiRobots: [],
+    liveRoomRcmdLists: null,
+    followListenDTO: null,      // 关注一起听入口
+    fansListenEntryVo: null,    // 粉丝一起听入口
+    incentiveInfo: null,        // 邀请奖励
+    displayABGroups: { ... },
+    cancelLockIdentity: false,
+    matchButtonText: '隐身开始'
+  }
+}
+```
+
+> `inRoom=true` 的用户已经在房间里，邀请前应排除。`relationType`/`snsType` 可用于显示"互关/微信/QQ"等关系标签。
+
+#### 19. 多人一起听 - 邀请 / 开始消息
+
+**邀请 :** `/listentogether/multi/invite`
+
+参数 : `roomId`、`groupIds`（数组或 JSON 字符串）、`inviteUids`（数组或 JSON 字符串）。
+
+返回 : `data.result` 为布尔值，失败时看 `failedMessage`。
+
+**开始消息 :** `/listentogether/multi/start/msg`
+
+参数 : `roomId`。返回 `data` 为布尔值，表示是否成功发出"开始一起听"消息。
 
 
 ### batch 批量请求接口
