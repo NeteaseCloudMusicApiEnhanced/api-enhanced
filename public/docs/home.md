@@ -3809,7 +3809,7 @@ type='1009' 获取其 id, 如`/search?keywords= 代码时间 &type=1009`
 - **只看 `roomBizType` 不够**：
   - `roomBizType = 1` → 私密（好友房，`room/create` 时 `type=1`）；
   - `roomBizType = 2` → 公开（**既可能是好友房，也可能是匹配房**；实测匹配房仍返回 `2`）；
-  - `roomBizType = 3` 目前未确认稳定语义，**不要用它判断匹配房**。
+  - `roomBizType = 3` 也出现在匹配房（实测同一账号两个 `MULTI_MATCH_SONG` 房分别返回 `2` 和 `3`）；**2/3 都不能单独判断匹配房，必须看 `roomType`**。
 - **区分匹配房要看 `roomType`**：
   - `roomType = "MULTI_MATCH_SONG"` → 公开匹配房；
   - `roomType = "FOLLOW_LISTEN"` → 关注一起听；
@@ -3983,7 +3983,7 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 | 字段 | 语义与用法 |
 |---|---|
 | `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomType` | **匹配房判断字段**：`MULTI_MATCH_SONG` = 公开匹配房，`FOLLOW_LISTEN` = 关注一起听；好友房再结合 `roomBizType`。 |
-| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` | **公/私密区分字段**：`1` = 私密，`2` = 公开；**不能单独区分匹配房和好友房**（匹配房也常为 `2`）。**只有 `specialOperate === false` 时才有区分意义**。 |
+| `data.multiLtRoomSnapshot.multiRoomInfoDTO.roomBizType` | **公/私密区分字段**：`1` = 私密，`2`/`3` = 公开；**不能单独区分匹配房和好友房**（匹配房可能为 `2` 或 `3`）。**只有 `specialOperate === false` 时才有区分意义**。 |
 | `data.nextAddSongDuration` | **服务端算好的剩余加歌冷却秒数**。`0` = 可加歌；`> 0` = 冷却中。**客户端不做本地倒计时**，直接展示即可；加歌成功后服务端重置，客户端通过下次 `heartbeat`/`status/get` 拿到新值。 |
 | `multiRoomPermission.specialOperate` | 是否为特殊房。**每次轮询都要覆盖本地状态**，且优先级高于 `roomBizType`。 |
 | `roomPlaySongInfo.version` | 状态版本号。客户端收到小于本地当前版本的响应时应**丢弃**，防止乱序覆盖。 |
