@@ -47,6 +47,7 @@
 - **改 `package.json` 的 `version` 会触发自动发布**：`release-on-version-change.yml` 按 paths 过滤——只要 push 到 `main` 时 `package.json` 有改动且 version 变了，就自动打 tag + GitHub Release（`pkg` 三平台二进制）、推送 Docker 镜像（Docker Hub + GHCR 多架构）、`pnpm publish` 到 npm；tag 已存在则跳过。别顺手改版本号，也别往 `package.json` 里写无关改动凑提交。
 - **没有实际 git hooks**：`package.json` 里配了 `lint-staged` 和 husky，但 `.husky/` 下只有 `_` 脚手架目录、没有真正的 hook 文件，commit 时不会自动跑任何检查，自己记得 `pnpm lint-fix`。
 - **代理环境变量已失效**：README 里关于 `http_proxy`/`https_proxy` 的警告来自旧 `request` 库时代；现在 `util/request.js` 用 axios + 自定义 keep-alive agent，且显式 `proxy: false`，环境变量代理不会生效。按请求走 `query.proxy` 参数（支持 PAC 和 http 隧道）。
-- **运行时凭证在内存（runtimeState）**：`anonymous_token` 与 `xeapi_public_key` 存于 `util/runtimeState.js`，不做任何文件 I/O（历史上曾以文件形式放 `os.tmpdir()`，为可移植性已移除——只读 FS / Android / iOS / serverless 均可运行）。启动时 `generateConfig()` 先取 xeapi 公钥、再注册匿名令牌（顺序不能反，后者依赖前者）、最后注册 neapi 配置；运行中过期可再调 `generateConfig()` 或对应 `register_*` 接口，立即生效、无需重启。例外：neapi 配置（`util/neapiKey.js`，自 main 引入）暂仍缓存于 `os.tmpdir()/neapi_key`，行为与 main 保持一致。
+- **`pnpm-workspace.yaml` 是单包工作区**（`packages: ['.']`），并带 `allowBuilds`（core-js/es5-ext）与 `minimumReleaseAgeExclude` 白名单；改依赖安装行为时先看它。
+- **运行时凭证在内存（runtimeState）**：`anonymous_token`、`xeapi_public_key` 与 neapi 配置存于 `util/runtimeState.js`，不做任何文件 I/O；只读文件系统与 serverless 环境可运行。启动时 `generateConfig()` 先取 xeapi 公钥、再注册匿名令牌（后者依赖前者），最后注册 neapi 配置；运行中可再调 `generateConfig()` 刷新，无需重启。
 - **`docs:check` 校验的是 `public/docs/home.md`（docsify 站点）**，不是 README；脚本默认只处理该文件，换行会被统一为 `\n`、连续空行压缩到 2 行，PR 改动它后记得跑 `pnpm docs:format`。
 - **ESLint 9 flat config**：`eslint.config.js`，风格由 `eslint-plugin-prettier` 强制（2 空格缩进、单引号、分号、`endOfLine: auto`），并 `globalIgnores(['**/public/'])`——`public/` 下的前端页面不参与 lint。

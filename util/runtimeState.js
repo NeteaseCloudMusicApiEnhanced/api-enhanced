@@ -21,10 +21,14 @@ const runtimeState = {
    * 由 module/register_xeapikey.js 成功后写入
    */
   xeapiPublicKey: null,
+
+  /** neapi 配置，进程内缓存，避免依赖可写临时目录 */
+  neapiKey: null,
 }
 
 /** 进行中的按需刷新任务：并发调用共享同一次刷新，避免重复请求 */
 const refreshTasks = new Map()
+const refreshFailures = new Map()
 
 /**
  * 确保某项动态状态可用：已有值时直接返回；缺失时执行 refresh 刷新
@@ -33,16 +37,36 @@ const refreshTasks = new Map()
  *
  * @param {string} key runtimeState 上的字段名
  * @param {() => Promise} refresh 刷新函数
+ * @param {{ retryDelay?: number }} [options] 失败后的最短重试间隔
  * @returns {Promise<*>} 该状态当前的值（刷新失败时抛出错误）
  */
-runtimeState.ensure = async (key, refresh) => {
+runtimeState.ensure = async (key, refresh, options = {}) => {
   if (runtimeState[key]) return runtimeState[key]
+
+  const retryDelay = options.retryDelay || 0
+  const failure = refreshFailures.get(key)
+  if (failure && failure.until > Date.now()) {
+    throw failure.error
+  }
 
   if (!refreshTasks.has(key)) {
     refreshTasks.set(
       key,
       Promise.resolve()
         .then(refresh)
+        .then((value) => {
+          refreshFailures.delete(key)
+          return value
+        })
+        .catch((error) => {
+          if (retryDelay > 0) {
+            refreshFailures.set(key, {
+              error,
+              until: Date.now() + retryDelay,
+            })
+          }
+          throw error
+        })
         .finally(() => {
           refreshTasks.delete(key)
         }),

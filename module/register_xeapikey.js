@@ -3,6 +3,10 @@ const encrypt = require('../util/crypto')
 const { APP_CONF } = require('../util/config.json')
 const runtimeState = require('../util/runtimeState')
 
+const REQUEST_TIMEOUT = 15000
+const INTERNAL_STATE_TOKEN = Symbol('internal xeapi state update')
+const CURRENT_KEY_TOKEN = Symbol('trusted current xeapi key')
+
 const generateNonce = () => {
   let nonce = ''
   for (let i = 0; i < 16; i++) {
@@ -41,6 +45,7 @@ module.exports = async (query, request) => {
     },
     data: new URLSearchParams(data).toString(),
     proxy: false,
+    timeout: REQUEST_TIMEOUT,
   })
 
   if (
@@ -60,12 +65,21 @@ module.exports = async (query, request) => {
   }
 
   const publicKey = encrypt.xeapiDecryptPublicKey(res.data.data.encryptedData)
+  const previousKey =
+    query.currentPublicKeyToken === CURRENT_KEY_TOKEN
+      ? query.currentPublicKey || {}
+      : {}
+  if (!publicKey.sk && previousKey.sk) {
+    publicKey.sk = previousKey.sk
+  }
   if (!publicKey.sk) {
     throw new Error('xeapi public key response missing sk')
   }
 
   // 获取成功后立即写入运行时状态，供 util/request.js 的 xeapi 请求使用
-  runtimeState.xeapiPublicKey = { ...publicKey, deviceId }
+  if (query.updateRuntimeState === INTERNAL_STATE_TOKEN) {
+    runtimeState.xeapiPublicKey = { ...publicKey, deviceId }
+  }
 
   return {
     status: 200,
@@ -76,3 +90,6 @@ module.exports = async (query, request) => {
     cookie: [],
   }
 }
+
+module.exports.INTERNAL_STATE_TOKEN = INTERNAL_STATE_TOKEN
+module.exports.CURRENT_KEY_TOKEN = CURRENT_KEY_TOKEN

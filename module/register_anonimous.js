@@ -9,6 +9,7 @@ const logger = require('../util/logger.js')
 const createOption = require('../util/option.js')
 const { generateDeviceId, cookieToJson } = require('../util/index')
 const runtimeState = require('../util/runtimeState')
+const INTERNAL_STATE_TOKEN = Symbol('internal anonymous state update')
 
 // function getRandomFromList(list) {
 //   return list[Math.floor(Math.random() * list.length)]
@@ -47,7 +48,10 @@ module.exports = async (query, request) => {
   if (result.body.code === 200) {
     // 注册成功后立即写入运行时状态，后续请求直接使用新令牌（无需重启）
     const cookieObj = cookieToJson(result.cookie.join(';'))
-    if (cookieObj.MUSIC_A) {
+    if (!cookieObj.MUSIC_A) {
+      throw new Error('anonymous token response missing MUSIC_A')
+    }
+    if (query.updateRuntimeState === INTERNAL_STATE_TOKEN) {
       runtimeState.anonymousToken = cookieObj.MUSIC_A
     }
     result = {
@@ -61,3 +65,5 @@ module.exports = async (query, request) => {
   }
   return result
 }
+
+module.exports.INTERNAL_STATE_TOKEN = INTERNAL_STATE_TOKEN

@@ -201,12 +201,19 @@ const generateRequestId = () => {
 // 刷新自身的请求带 skipTokenEnsure 标记：跳过下方匿名令牌的按需引导，
 // 避免“刷新任务等待自己”的死锁（注册匿名账号本就不依赖旧令牌）
 const refreshTokenRequest = (uri, data, options = {}) =>
-  createRequest(uri, data, { ...options, skipTokenEnsure: true })
+  createRequest(uri, data, {
+    ...options,
+    timeout: options.timeout || 15000,
+    skipTokenEnsure: true,
+  })
 
 // 强制刷新匿名令牌（成功后由 register_anonimous 写入 runtimeState）
 const refreshAnonymousToken = async () => {
   const registerAnonimous = require('../module/register_anonimous')
-  await registerAnonimous({}, refreshTokenRequest)
+  await registerAnonimous(
+    { updateRuntimeState: registerAnonimous.INTERNAL_STATE_TOKEN },
+    refreshTokenRequest,
+  )
 }
 
 // 强制刷新 xeapi 公钥（register_xeapikey 直接走 axios，无重入问题；
@@ -216,6 +223,9 @@ const refreshXeapiPublicKey = async () => {
   await registerXeapikey(
     {
       currentKeyVersion: (runtimeState.xeapiPublicKey || {}).version || '',
+      currentPublicKey: runtimeState.xeapiPublicKey || {},
+      currentPublicKeyToken: registerXeapikey.CURRENT_KEY_TOKEN,
+      updateRuntimeState: registerXeapikey.INTERNAL_STATE_TOKEN,
     },
     null,
   )
@@ -238,9 +248,12 @@ const createRequest = async (uri, data, options) => {
   // 刷新自身的请求（skipTokenEnsure）跳过，避免任务等待自己造成死锁
   if (!runtimeState.anonymousToken && !options.skipTokenEnsure) {
     try {
-      await runtimeState.ensure('anonymousToken', refreshAnonymousToken)
+      await runtimeState.ensure('anonymousToken', refreshAnonymousToken, {
+        retryDelay: 5000,
+      })
     } catch (error) {
       console.log('[ERR]', error)
+      throw error
     }
   }
 
@@ -254,9 +267,12 @@ const createRequest = async (uri, data, options) => {
       : options.crypto
   if (pendingCrypto === 'xeapi' && !runtimeState.xeapiPublicKey) {
     try {
-      await runtimeState.ensure('xeapiPublicKey', refreshXeapiPublicKey)
+      await runtimeState.ensure('xeapiPublicKey', refreshXeapiPublicKey, {
+        retryDelay: 5000,
+      })
     } catch (error) {
       console.log('[ERR]', error)
+      throw error
     }
   }
 
