@@ -1,3 +1,4 @@
+// Compatibility shim for consumers importing this historical deep path.
 const registerXeapiKey = require('../module/register_xeapikey')
 
 const getXeapiPublicKey = async (currentPublicKey = {}, deviceId = '') => {
@@ -5,20 +6,12 @@ const getXeapiPublicKey = async (currentPublicKey = {}, deviceId = '') => {
     {
       deviceId,
       currentKeyVersion: currentPublicKey.version || '',
+      currentPublicKey,
+      currentPublicKeyToken: registerXeapiKey.CURRENT_KEY_TOKEN,
     },
     null,
   )
-
-  const publicKey = result.body
-  if (!publicKey.sk && currentPublicKey.sk) {
-    publicKey.sk = currentPublicKey.sk
-  }
-  if (!publicKey.sk) {
-    throw new Error('xeapi public key response missing sk')
-  }
-  return publicKey
+  return result.body
 }
 
-module.exports = {
-  getXeapiPublicKey,
-}
+module.exports = { getXeapiPublicKey }
