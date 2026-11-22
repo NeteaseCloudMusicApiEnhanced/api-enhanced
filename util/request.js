@@ -214,6 +214,15 @@ const refreshAnonymousToken = async () => {
     { updateRuntimeState: registerAnonimous.INTERNAL_STATE_TOKEN },
     refreshTokenRequest,
   )
+  // request 层会把 400/800/801/802/803 等特殊状态码包装成 status 200 正常返回，
+  // 此时 register_anonimous 不会写入令牌。这里必须复核令牌确实写入：
+  // 否则 ensure() 视为刷新成功、失败退避不生效，后续每个请求都会重新
+  // 触发一次 /register/anonimous，放大上游请求量并带来风控风险
+  if (!runtimeState.anonymousToken) {
+    throw new Error(
+      'anonymous token refresh failed: MUSIC_A missing in response',
+    )
+  }
 }
 
 // 强制刷新 xeapi 公钥（register_xeapikey 直接走 axios，无重入问题；
@@ -244,16 +253,34 @@ const createRequest = async (uri, data, options) => {
       break
   }
 
+  // 先解析请求自带 cookie（与下方 executor 内的处理一致），判断本请求是否
+  // 会用到进程级匿名令牌：processCookieObject 只在请求既没有 MUSIC_U（登录态）
+  // 也没有自带 MUSIC_A 时才回填 runtimeState.anonymousToken，其余请求
+  // （如已登录的接口调用）不需要等待匿名令牌引导
+  let cookie = hasCookie(options.cookie)
+    ? options.cookie
+    : getCookieHeader(options.headers)
+  if (!hasCookie(cookie)) cookie = {}
+  if (typeof cookie === 'string') {
+    cookie = cookieToJson(cookie)
+  }
+
   // 匿名令牌缺失时按需引导：并发请求共享同一次刷新任务；
-  // 刷新自身的请求（skipTokenEnsure）跳过，避免任务等待自己造成死锁
-  if (!runtimeState.anonymousToken && !options.skipTokenEnsure) {
+  // 刷新自身的请求（skipTokenEnsure）跳过，避免任务等待自己造成死锁。
+  // 引导失败只记录日志、继续发送请求——匿名令牌只是风控缓解，令牌为空时
+  // 请求照常发出（与旧实现行为一致），不把失败抛给携带有效登录态的请求
+  if (
+    !runtimeState.anonymousToken &&
+    !options.skipTokenEnsure &&
+    !cookie.MUSIC_U &&
+    !cookie.MUSIC_A
+  ) {
     try {
       await runtimeState.ensure('anonymousToken', refreshAnonymousToken, {
         retryDelay: 5000,
       })
     } catch (error) {
       console.log('[ERR]', error)
-      throw error
     }
   }
 
@@ -291,14 +318,6 @@ const createRequest = async (uri, data, options) => {
     if (ip) {
       headers['X-Real-IP'] = ip
       headers['X-Forwarded-For'] = ip
-    }
-
-    let cookie = hasCookie(options.cookie)
-      ? options.cookie
-      : getCookieHeader(options.headers)
-    if (!hasCookie(cookie)) cookie = {}
-    if (typeof cookie === 'string') {
-      cookie = cookieToJson(cookie)
     }
 
     if (typeof cookie === 'object') {

@@ -26,7 +26,7 @@
 - `module/*.js`——每个接口一个文件，标准写法：`module.exports = (query, request) => request(path, data, createOption(query))`。`createOption` 在 `util/option.js`，负责 crypto、cookie（回退到 `NETEASE_COOKIE`）、proxy、realIP/randomCNIP、headers、timeout。
 - `util/request.js`——唯一的对外 HTTP 层（axios）。按 `crypto`（`api`/`eapi`/`weapi`/`linuxapi`/`xeapi`/`neapi`）加密并设置 IP 头；匿名令牌与 xeapi 公钥每次请求实时读取 `util/runtimeState.js`，缺失时按需引导（并发共享同一刷新任务，刷新自身的请求带 `skipTokenEnsure` 防自等待死锁）。neapi 配置过期（`X-USER-STATUS` 为 777/999）时自动轮换重试一次。另导出 `refreshAnonymousToken` / `refreshXeapiPublicKey` 供 `generateConfig` 复用。
 - `util/runtimeState.js`——统一的进程内运行时动态状态（`anonymousToken` / `xeapiPublicKey`）。纯内存、零文件 I/O；`register_anonimous` / `register_xeapikey` 成功后写入，`util/request.js` 读取，`ensure()` 提供缺失时按需刷新。以后新增动态配置放这里，不要再往 `os.tmpdir()` 写文件。
-- `util/neapiKey.js` / `util/neapiConfig.js` / `module/register_neapikey.js`——neapi 容器加解密支持（chacha20-poly1305 + zstd，见 `util/crypto.js` 与 `util/zstd.js`）；密钥配置由 `register_neapikey` 拉取并经 `saveNeapiKey` 缓存（暂写 `os.tmpdir()/neapi_key`）。
+- `util/neapiKey.js` / `util/neapiConfig.js` / `module/register_neapikey.js`——neapi 容器加解密支持（chacha20-poly1305 + zstd，见 `util/crypto.js` 与 `util/zstd.js`）；密钥配置由 `register_neapikey` 拉取并经 `saveNeapiKey` 缓存（存于 `util/runtimeState.js`，纯内存）。
 - `util/config.json`——运行时配置：网易域名 + `APP_CONF.encrypt: true`（默认走 eapi 加密）。已被 git 跟踪，改动会改变全局默认行为。
 - `index.js` / `index.mjs`——`require('./app.js')` 的薄包装，供 Vercel（`vercel.json`）和 ESM 导入使用。
 - `server.js` 里有一段非显而易见的逻辑：环境变量 `ENABLE_GENERAL_UNBLOCK=true` 时，`/song/url/v1` 的响应会被自动解灰（走 `@neteasecloudmusicapienhanced/unblockmusic-utils`）；另外 `query.noCookie` 为真时不向响应写 `Set-Cookie`。
