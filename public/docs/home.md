@@ -4323,6 +4323,19 @@ data.nextAddSongDuration: 0   // 单位秒；创建成功时为 0（可加歌）
 
 **返回 :** `data.emojis[]`（`emojiId`、`emojiGroupId`、`emojiImgUrl`、`picId`、`width`、`height`、`format`），`data.page{size,cursor,more}`。
 
+#### 23. 社交 - 取消收藏表情
+
+说明 : 从当前账号的网易云自定义表情中移除已收藏的表情。
+
+**接口地址 :** `/social/emoji/cancel`
+
+**必选参数 :**
+- `emojiIds` : 要删除的表情 id，支持逗号分隔字符串或 JSON 数组字符串，例如 `"3002"`、`"3002,3003"`、`"[3002,3003]"`
+
+**返回 :** `code=200` 表示删除成功；失败看 `message`。
+
+> 一次可以删除多个表情；只移除当前账号自定义表情里的收藏，不会删除表情分组本身。
+
 ### 分享链接解析
 
 说明 : 解析网易云分享链接，支持 `163cn.tv` 短链接跳转。只允许网易云相关域名。
