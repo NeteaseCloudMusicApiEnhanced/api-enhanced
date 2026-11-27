@@ -1,0 +1,731 @@
+/* ==========================================================================
+   聊天 / 消息 / 表情 / 日志
+   ========================================================================== */
+
+.lt-chat__flow {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lt-chat__jump {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--lt-r-full);
+  border: 1px solid var(--lt-line-strong);
+  background: var(--lt-elev-2);
+  color: var(--lt-text);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--lt-shadow-2);
+}
+
+.lt-chat__jump .lt-icon {
+  width: auto;
+  font-size: 12px;
+}
+
+.lt-chat__jump:active {
+  transform: scale(0.96);
+}
+
+.lt-msgs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overscroll-behavior: contain;
+}
+
+.lt-msgs__spacer {
+  flex: 1 0 0;
+  min-height: 0;
+}
+
+.lt-msgs__more {
+  align-self: center;
+  min-height: 28px;
+  margin: 2px 0 6px;
+  padding: 0 12px;
+  border-radius: var(--lt-r-full);
+  border: 1px solid var(--lt-line);
+  background: var(--lt-surface);
+  color: var(--lt-text-3);
+  font-size: 11.5px;
+}
+
+.lt-msgs__more:hover {
+  color: var(--lt-text);
+}
+
+.lt-msgs__day {
+  align-self: center;
+  padding: 2px 10px;
+  border-radius: var(--lt-r-full);
+  background: var(--lt-surface);
+  color: var(--lt-text-3);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+
+.lt-msgs__new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lt-accent-2);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.lt-msgs__new::before,
+.lt-msgs__new::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--lt-accent-line);
+}
+
+/* ---------- 消息 ---------- */
+
+.lt-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.lt-msg.is-me {
+  flex-direction: row-reverse;
+}
+
+.lt-msg__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--lt-surface-3);
+  flex: 0 0 auto;
+  margin-top: 16px;
+}
+
+.lt-msg__avatar-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lt-text-2);
+}
+
+.lt-msg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: min(78%, 320px);
+}
+
+.lt-msg.is-me .lt-msg__body {
+  align-items: flex-end;
+}
+
+.lt-msg__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--lt-text-3);
+  max-width: 100%;
+}
+
+.lt-msg__name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-msg__bubble {
+  padding: 8px 11px;
+  border-radius: 4px var(--lt-r) var(--lt-r) var(--lt-r);
+  background: var(--lt-surface-2);
+  border: 1px solid var(--lt-line);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--lt-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.lt-msg.is-me .lt-msg__bubble {
+  border-radius: var(--lt-r) 4px var(--lt-r) var(--lt-r);
+  background: linear-gradient(135deg, var(--lt-accent), var(--lt-accent-2));
+  border-color: transparent;
+  color: #fff;
+}
+
+.lt-msg__mention {
+  color: var(--lt-accent-2);
+  font-weight: 600;
+  background: var(--lt-accent-soft);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.lt-msg.is-me .lt-msg__mention {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.lt-msg__bubble .lt-emoji-img {
+  width: clamp(140px, 40vw, 184px);
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* 纯贴纸消息：去掉气泡底，按 Discord / Ins 贴纸的方式直接展示 */
+.lt-msg__bubble.is-sticker {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.lt-msg__bubble.is-sticker .lt-emoji-img {
+  width: clamp(140px, 42vw, 192px);
+}
+
+.lt-msg__emoji-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.lt-msg__emoji-save {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lt-elev-2);
+  border: 1px solid var(--lt-line-strong);
+  color: var(--lt-text-2);
+  opacity: 0;
+  transition: opacity var(--lt-dur) var(--lt-ease);
+}
+
+.lt-msg:hover .lt-msg__emoji-save,
+.lt-msg__emoji-save:focus-visible {
+  opacity: 1;
+}
+
+.lt-msg__emoji-save .lt-icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* 系统消息 */
+.lt-msg.is-system {
+  justify-content: center;
+  max-width: 100%;
+}
+
+.lt-msg.is-system .lt-msg__body {
+  max-width: 100%;
+  align-items: center;
+}
+
+.lt-msg.is-system .lt-msg__bubble {
+  background: transparent;
+  border: 0;
+  padding: 2px 6px;
+  color: var(--lt-text-3);
+  font-size: 11.5px;
+  text-align: center;
+  border-radius: var(--lt-r-sm);
+}
+
+/* 歌曲卡片 */
+.lt-songcard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px;
+  border-radius: var(--lt-r-sm);
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 260px;
+}
+
+.lt-msg.is-me .lt-songcard {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.lt-songcard img {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--lt-r-xs);
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.lt-songcard__text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lt-songcard__name {
+  font-size: 11.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-songcard__artist {
+  font-size: 10.5px;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-songcard__add {
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: var(--lt-r-full);
+  background: rgba(255, 255, 255, 0.16);
+  color: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.lt-songcard__add:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* ==========================================================================
+   输入区
+   ========================================================================== */
+
+.lt-composer {
+  position: relative;
+  flex: 0 0 auto;
+  border-top: 1px solid var(--lt-line);
+  padding: 10px 12px calc(10px + var(--lt-safe-b));
+  background: rgba(0, 0, 0, 0.1);
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+[data-theme='light'] .lt-composer {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.lt-composer__input {
+  width: 100%;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 9px 12px;
+  border-radius: var(--lt-r);
+  border: 1px solid var(--lt-line);
+  background: var(--lt-surface);
+  color: var(--lt-text);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+}
+
+.lt-composer__input:focus {
+  outline: none;
+  border-color: var(--lt-accent-line);
+  background: var(--lt-surface-2);
+}
+
+.lt-composer__input::placeholder {
+  color: var(--lt-text-3);
+}
+
+.lt-composer__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.lt-composer__count {
+  margin-left: auto;
+  font-family: var(--lt-font-num);
+  font-size: 10.5px;
+  color: var(--lt-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.lt-composer__count.is-warn {
+  color: var(--lt-warn);
+}
+
+.lt-composer__count.is-over {
+  color: var(--lt-accent-2);
+}
+
+.lt-composer .lt-btn--primary {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 12.5px;
+}
+
+.lt-composer.is-disabled {
+  opacity: 0.6;
+}
+
+/* 提及候选 */
+.lt-mentions {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% - 4px);
+  z-index: 20;
+  max-height: 190px;
+  overflow-y: auto;
+  padding: 5px;
+  border-radius: var(--lt-r);
+  border: 1px solid var(--lt-line-strong);
+  background: var(--lt-elev-2);
+  box-shadow: var(--lt-shadow-2);
+  animation: lt-pop var(--lt-dur) var(--lt-ease);
+}
+
+.lt-mentions__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--lt-r-xs);
+  color: var(--lt-text);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.lt-mentions__item:hover,
+.lt-mentions__item.is-active {
+  background: var(--lt-surface-3);
+}
+
+.lt-mentions__item img,
+.lt-mentions__item .lt-avatar-fallback {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   表情面板
+   ========================================================================== */
+
+.lt-emoji {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 9px;
+  padding: 9px;
+  border-radius: var(--lt-r);
+  border: 1px solid var(--lt-line);
+  background: var(--lt-surface);
+  /* 矮屏（横屏手机）下限制面板高度，保证输入框和发送键仍在聊天区内 */
+  max-height: min(320px, 32dvh);
+  overflow-y: auto;
+}
+
+.lt-emoji__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lt-emoji__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.lt-emoji__tab {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--lt-r-full);
+  color: var(--lt-text-3);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.lt-emoji__tab.is-active {
+  background: var(--lt-surface-3);
+  color: var(--lt-text);
+}
+
+.lt-emoji__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 6px;
+  max-height: min(268px, 22dvh);
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.lt-emoji__cell {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 3px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--lt-r-sm);
+  transition: background var(--lt-dur) var(--lt-ease);
+}
+
+.lt-emoji__cell:hover {
+  background: var(--lt-surface-3);
+}
+
+.lt-emoji__cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lt-emoji__cell.is-char {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.lt-emoji__cell.is-kaomoji {
+  font-size: 11.5px;
+  color: var(--lt-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0 2px;
+}
+
+.lt-emoji__remove {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lt-elev-2);
+  border: 1px solid var(--lt-line-strong);
+  color: var(--lt-text-2);
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.55;
+  transition:
+    opacity var(--lt-dur) var(--lt-ease),
+    background var(--lt-dur) var(--lt-ease);
+}
+
+.lt-emoji__cell:hover .lt-emoji__remove,
+.lt-emoji__remove:focus-visible {
+  opacity: 1;
+  background: var(--lt-accent-soft);
+  color: var(--lt-accent-2);
+}
+
+.lt-emoji__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--lt-text-3);
+}
+
+.lt-emoji__url {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.lt-emoji__url .lt-input {
+  min-height: 30px;
+  font-size: 11.5px;
+}
+
+.lt-emoji__url .lt-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+/* ==========================================================================
+   工作日志
+   ========================================================================== */
+
+.lt-logs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px;
+  font-family: var(--lt-font-num);
+  font-size: 11px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lt-log {
+  display: grid;
+  grid-template-columns: 62px 62px minmax(0, 1fr);
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.lt-log__time {
+  color: var(--lt-text-3);
+}
+
+.lt-log__tag {
+  color: var(--lt-info);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-log__msg {
+  color: var(--lt-text-2);
+  word-break: break-word;
+}
+
+.lt-log__data {
+  display: block;
+  color: var(--lt-text-3);
+  word-break: break-all;
+}
+
+.lt-logs__foot {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px calc(8px + var(--lt-safe-b));
+  border-top: 1px solid var(--lt-line);
+}
+
+/* ==========================================================================
+   移动端
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  .lt-chat {
+    border-left: 0;
+  }
+
+  .lt-emoji__grid {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    max-height: 230px;
+  }
+
+  .lt-chat__flow {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lt-chat__jump {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: var(--lt-r-full);
+    border: 1px solid var(--lt-line-strong);
+    background: var(--lt-elev-2);
+    color: var(--lt-text);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--lt-shadow-2);
+  }
+
+  .lt-chat__jump .lt-icon {
+    width: auto;
+    font-size: 12px;
+  }
+
+  .lt-chat__jump:active {
+    transform: scale(0.96);
+  }
+
+  .lt-msgs {
+    padding: 8px 12px;
+  }
+
+  .lt-msg__body {
+    max-width: min(82%, 420px);
+  }
+}
+
+/* 歌单标题吸顶 */
+.lt-picker__plhead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--lt-elev);
+  padding-top: 4px;
+}
+
+/* 矮屏（横屏手机）表情面板：隐藏次要的收藏/URL 区域，把高度留给表情网格 */
+@media (max-height: 560px) {
+  .lt-composer {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* 横屏手机：表情面板浮在输入区上方，不再挤压输入框和发送键 */
+  .lt-emoji {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: calc(100% + 6px);
+    margin: 0;
+    max-height: min(320px, 34dvh);
+    overflow-y: auto;
+    z-index: 15;
+  }
+
+  .lt-emoji__grid {
+    max-height: min(268px, 24dvh);
+  }
+
+  .lt-emoji__foot,
+  .lt-emoji__url {
+    display: none;
+  }
+}

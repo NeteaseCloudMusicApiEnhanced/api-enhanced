@@ -1,918 +1,2701 @@
 <!doctype html>
 <html lang="zh-CN" translate="no">
   <head>
-
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="google" content="notranslate" />
-    <title>LISTEN TOGETHER · API-Enhanced Multi Room</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/axios@0.26.1/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/listen_together_multi/style.css?v=18" />
-
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b0c10" />
+    <title>一起听 · 多人一起听房间</title>
+    <link rel="stylesheet" href="/listen_together_multi/css/tokens.css?v=79" />
+    <link rel="stylesheet" href="/listen_together_multi/css/base.css?v=79" />
+    <link rel="stylesheet" href="/listen_together_multi/css/layout.css?v=79" />
+    <link rel="stylesheet" href="/listen_together_multi/css/player.css?v=79" />
+    <link rel="stylesheet" href="/listen_together_multi/css/queue.css?v=79" />
+    <link rel="stylesheet" href="/listen_together_multi/css/chat.css?v=79" />
   </head>
   <body>
+    <div id="app"></div>
 
-    <div id="app" class="container app-shell">
-      <header class="app-header">
-        <div class="brand">
-          <span class="brand-mark"></span>
-          <div>
-            <h1 class="brand-name">LISTEN TOGETHER</h1>
-            <div class="brand-sub">API-ENHANCED · MULTI ROOM CONSOLE</div>
+    <!-- ================= 根 ================= -->
+    <template id="tpl-app">
+      <div class="lt-app" :data-theme="resolvedTheme">
+
+        <div class="lt-ambient" v-if="view === 'room'">
+          <div class="lt-ambient__img" :style="ambientStyle"></div>
+          <div class="lt-ambient__veil"></div>
+        </div>
+
+        <lt-login v-if="view === 'login'"></lt-login>
+        <lt-lobby v-else-if="view === 'lobby'"></lt-lobby>
+
+        <div
+          v-else
+          class="lt-room"
+          :data-pane="pane"
+          :class="{ 'is-immersive': immersive, 'has-lyrics': lyricsOpen }"
+        >
+          <lt-topbar></lt-topbar>
+
+          <aside class="lt-members" aria-label="在线成员">
+            <lt-members></lt-members>
+          </aside>
+
+          <section class="lt-stage" aria-label="正在播放">
+            <lt-stage></lt-stage>
+          </section>
+
+          <aside class="lt-queue" aria-label="播放队列">
+            <lt-queue></lt-queue>
+          </aside>
+
+          <aside class="lt-chat" aria-label="房间聊天">
+            <lt-chat></lt-chat>
+          </aside>
+
+          <nav class="lt-tabbar" aria-label="房间分区">
+            <button
+              class="lt-tabbar__item"
+              :class="{ 'is-active': pane === 'stage' }"
+              @click="setPane('stage')"
+            >
+              <i class="lt-icon fa-solid fa-music" aria-hidden="true"></i>
+              <span>房间</span>
+            </button>
+            <button
+              class="lt-tabbar__item"
+              :class="{ 'is-active': pane === 'queue' }"
+              @click="setPane('queue')"
+            >
+              <i class="lt-icon fa-solid fa-list-ul" aria-hidden="true"></i>
+              <span>队列</span>
+            </button>
+            <button
+              class="lt-tabbar__item"
+              :class="{ 'is-active': pane === 'chat' }"
+              @click="setPane('chat')"
+            >
+              <i
+                class="lt-icon fa-solid fa-comment-dots"
+                aria-hidden="true"
+              ></i>
+              <span>聊天</span>
+              <span v-if="chatUnread" class="lt-tabbar__badge"
+                >{{ chatUnread > 99 ? '99+' : chatUnread }}</span
+              >
+            </button>
+          </nav>
+        </div>
+
+        <lt-members-drawer v-if="membersOpen"></lt-members-drawer>
+        <lt-song-picker v-if="songOpen"></lt-song-picker>
+        <lt-share-sheet v-if="shareOpen"></lt-share-sheet>
+        <lt-invite-sheet v-if="inviteOpen"></lt-invite-sheet>
+        <lt-collect-sheet v-if="collectOpen"></lt-collect-sheet>
+        <lt-settings v-if="settingsOpen"></lt-settings>
+        <lt-debug v-if="debugOpen"></lt-debug>
+        <lt-landing v-if="landingInfo"></lt-landing>
+        <lt-toasts></lt-toasts>
+
+        <div class="lt-sr" role="status" aria-live="polite">{{ message }}</div>
+        <audio id="player" preload="metadata"></audio>
+        <audio id="previewAudio" preload="metadata"></audio>
+      </div>
+    </template>
+
+    <!-- ================= 登录 ================= -->
+    <template id="tpl-login">
+      <div class="lt-login">
+        <div class="lt-login__inner">
+          <div class="lt-login__copy">
+            <div class="lt-brand">
+              <span class="lt-brand__mark"
+                ><i
+                  class="lt-icon lt-icon--lg fa-solid fa-headphones"
+                  aria-hidden="true"
+                ></i
+              ></span>
+              <div>
+                <div class="lt-brand__name">一起听</div>
+                <div class="lt-brand__sub">API-Enhanced · Multi Room</div>
+              </div>
+            </div>
+            <h1 class="lt-login__title">把耳机分他一半，<em>一起听</em>。</h1>
+            <p class="lt-login__lead">
+              多人一起听房间的网页控制台。扫码登录后即可创建房间、随机匹配、和朋友同步播放、排队推歌与聊天。
+            </p>
+            <ul class="lt-login__points">
+              <li>
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-music"
+                  aria-hidden="true"
+                ></i
+                >实时同步播放
+              </li>
+              <li>
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-list-ul"
+                  aria-hidden="true"
+                ></i
+                >多人排队推歌
+              </li>
+              <li>
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-comment-dots"
+                  aria-hidden="true"
+                ></i
+                >表情与歌曲卡片
+              </li>
+            </ul>
+          </div>
+
+          <div class="lt-login__card">
+            <div
+              class="lt-qr"
+              :class="{ 'is-masked': qr.status !== 'waiting' && qr.status !== 'scanned' }"
+            >
+              <img v-if="qr.img" :src="qr.img" alt="网易云音乐登录二维码" />
+              <div
+                v-else
+                class="lt-skeleton"
+                style="width: 100%; height: 100%"
+              ></div>
+              <div
+                v-if="qr.status === 'expired' || qr.status === 'error'"
+                class="lt-qr__overlay"
+              >
+                <strong
+                  >{{ qr.status === 'expired' ? '二维码已过期' : '二维码加载失败' }}</strong
+                >
+                <button
+                  class="lt-btn lt-btn--sm lt-btn--primary"
+                  @click="startQrLogin"
+                >
+                  重新获取
+                </button>
+              </div>
+            </div>
+
+            <div class="lt-login__state" :class="'is-' + qrTone">
+              <i></i><span>{{ qr.text }}</span>
+            </div>
+
+            <div class="lt-login__fallback">
+              <button
+                class="lt-btn lt-btn--soft lt-btn--block"
+                @click="login(false)"
+              >
+                我已登录，刷新状态
+              </button>
+            </div>
+
+            <div class="lt-login__links">
+              <a href="/qrlogin.html" target="_blank" rel="noopener"
+                >在新页面扫码</a
+              >
+              <span>·</span>
+              <a href="/docs/" target="_blank" rel="noopener">接口文档</a>
+            </div>
+            <p class="lt-hint">
+              登录态来自浏览器 Cookie，或服务端配置的 NETEASE_COOKIE。
+            </p>
           </div>
         </div>
-<div class="status-strip">
-        <span
-          :class="['status-dot', account.login ? (isMatching ? 'busy' : 'online') : '']"
-        ></span>
-        <strong>{{ account.login ? account.nickname : '未登录' }}</strong>
-        <span class="status-chip">{{ roomStatusText }}</span>
-        <span v-if="roomInfo.roomId" class="status-chip">
-          {{ roomTypeInfo.label }}
-        </span>
-        <span v-if="roomInfo.roomId" class="status-chip">
-          {{ roomInfo.roomUsers.length }} 人
-        </span>
-        <span class="status-spacer"></span>
-        <div class="header-actions">
-          <button
-            v-if="roomInfo.roomId"
-            class="btn btn-sm topbar-chat"
-            @click="toggleChat"
+      </div>
+    </template>
+
+    <!-- ================= 大厅 ================= -->
+    <template id="tpl-lobby">
+      <div class="lt-lobby">
+        <div class="lt-lobby__head">
+          <div class="lt-brand">
+            <span class="lt-brand__mark"
+              ><i
+                class="lt-icon lt-icon--lg fa-solid fa-headphones"
+                aria-hidden="true"
+              ></i
+            ></span>
+            <div>
+              <div class="lt-brand__name">一起听</div>
+              <div class="lt-brand__sub">API-Enhanced · Multi Room</div>
+            </div>
+          </div>
+          <div class="lt-lobby__account">
+            <img
+              v-if="account.avatar"
+              :src="img(account.avatar, 96)"
+              class="lt-avatar lt-avatar--sm"
+              alt=""
+            />
+            <span>{{ account.nickname || '未登录' }}</span>
+            <button
+              class="lt-icon-btn"
+              title="设置"
+              @click="settingsOpen = true"
+            >
+              <i class="lt-icon fa-solid fa-gear" aria-hidden="true"></i>
+            </button>
+            <button
+              class="lt-icon-btn"
+              :title="theme === 'dark' ? '切换到浅色' : theme === 'light' ? '跟随系统' : '切换到深色'"
+              @click="cycleTheme"
+            >
+              <i
+                class="lt-icon"
+                :class="resolvedTheme === 'dark' ? 'fa-solid fa-moon' : 'fa-regular fa-sun'"
+              ></i>
+            </button>
+          </div>
+        </div>
+
+        <section class="lt-hero">
+          <span class="lt-hero__eyebrow"
+            ><i
+              class="lt-icon lt-icon--sm fa-solid fa-tower-broadcast"
+              aria-hidden="true"
+            ></i
+            >ROOM CONSOLE · 网页版</span
           >
-            聊天<span v-if="chatUnread"> ({{ chatUnread > 99 ? '99+' : chatUnread }})</span>
+          <h1 class="lt-hero__title">和喜欢的人，<em>同步听同一首歌</em>。</h1>
+          <p class="lt-hero__desc">
+            创建房间、随机匹配陌生人，或加入朋友的邀请。播放进度由房间同步，谁都能往队列里推歌。
+          </p>
+        </section>
+
+        <div v-if="resumeRoom" class="lt-lobby__resume">
+          <div class="lt-lobby__resume-text">
+            你的账号还在房间里：<strong>{{ resumeRoom.roomId }}</strong>
+            <template v-if="resumeRoom.members">
+              · {{ resumeRoom.members }} 人</template
+            >
+          </div>
+          <button
+            class="lt-btn lt-btn--sm lt-btn--primary"
+            @click="resumeRoomJoin"
+          >
+            继续加入
           </button>
           <button
-            v-if="roomInfo.roomId"
-            class="btn btn-sm btn-primary topbar-add"
+            class="lt-btn lt-btn--sm lt-btn--ghost"
+            @click="resumeRoom = null"
+          >
+            忽略
+          </button>
+        </div>
+
+        <div class="lt-lobby__grid">
+          <!-- 随机匹配 -->
+          <section class="lt-panel lt-panel--primary">
+            <div class="lt-panel__head">
+              <div class="lt-panel__title">
+                <span class="lt-panel__icon"
+                  ><i
+                    class="lt-icon fa-solid fa-tower-broadcast"
+                    aria-hidden="true"
+                  ></i
+                ></span>
+                随机匹配
+              </div>
+              <span class="lt-chip is-info">公房</span>
+            </div>
+
+            <template v-if="isMatching">
+              <div class="lt-radar">
+                <span class="lt-radar__ring"></span>
+                <span class="lt-radar__ring"></span>
+                <span class="lt-radar__ring"></span>
+                <span class="lt-radar__core"
+                  ><i
+                    class="lt-icon lt-icon--lg fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                  ></i
+                ></span>
+              </div>
+              <p class="lt-hint" style="text-align: center">
+                正在寻找房间 · {{ matchSeconds }}s
+              </p>
+              <button
+                class="lt-btn lt-btn--danger lt-btn--block"
+                @click="cancelMatch"
+              >
+                取消匹配
+              </button>
+            </template>
+
+            <template v-else>
+              <div v-if="matchSong" class="lt-picked">
+                <img v-if="matchSong.cover" :src="img(matchSong.cover, 128)" alt="" />
+                <div class="lt-picked__text">
+                  <div class="lt-picked__name">{{ matchSong.name }}</div>
+                  <div class="lt-picked__artist">{{ matchSong.artist }}</div>
+                </div>
+                <button
+                  class="lt-btn lt-btn--sm"
+                  @click="openSongDialog('initial')"
+                >
+                  更换
+                </button>
+              </div>
+              <button
+                v-else
+                class="lt-picked is-empty"
+                @click="openSongDialog('initial')"
+              >
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-plus"
+                  aria-hidden="true"
+                ></i
+                >选择一首匹配用歌
+              </button>
+              <button
+                class="lt-btn lt-btn--primary lt-btn--block"
+                :disabled="!canMatch"
+                @click="startMatch"
+              >
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-magnifying-glass"
+                  aria-hidden="true"
+                ></i
+                >开始匹配
+              </button>
+              <p class="lt-lobby__hint">
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-clock"
+                  aria-hidden="true"
+                ></i>
+                先进匹配池再等通知，一般 5–30 秒；需要另一名在线用户。
+              </p>
+            </template>
+          </section>
+
+          <!-- 创建房间 -->
+          <section class="lt-panel">
+            <div class="lt-panel__head">
+              <div class="lt-panel__title">
+                <span class="lt-panel__icon"
+                  ><i class="lt-icon fa-solid fa-plus" aria-hidden="true"></i
+                ></span>
+                创建房间
+              </div>
+              <span class="lt-chip">{{ allowStranger ? '公房' : '私房' }}</span>
+            </div>
+
+            <div v-if="matchSong" class="lt-picked">
+              <img v-if="matchSong.cover" :src="img(matchSong.cover, 128)" alt="" />
+              <div class="lt-picked__text">
+                <div class="lt-picked__name">{{ matchSong.name }}</div>
+                <div class="lt-picked__artist">{{ matchSong.artist }}</div>
+              </div>
+              <button
+                class="lt-btn lt-btn--sm"
+                @click="openSongDialog('initial')"
+              >
+                更换
+              </button>
+            </div>
+            <button
+              v-else
+              class="lt-picked is-empty"
+              @click="openSongDialog('initial')"
+            >
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-plus"
+                aria-hidden="true"
+              ></i
+              >创建房间也需要先选歌
+            </button>
+
+            <label class="lt-join-toggle">
+              <span>允许陌生人加入（进入公房池）</span>
+              <span
+                class="lt-switch"
+                :class="{ 'is-on': allowStranger }"
+                role="switch"
+                :aria-checked="allowStranger"
+              >
+                <input
+                  v-model="allowStranger"
+                  type="checkbox"
+                  tabindex="-1"
+                />
+              </span>
+            </label>
+
+            <button
+              class="lt-btn lt-btn--block"
+              :disabled="!canMatch || creatingRoom"
+              @click="createRoom"
+            >
+              {{ creatingRoom ? '创建中…' : '创建' + (allowStranger ? '公开' : '私密') + '好友房' }}
+            </button>
+            <p class="lt-lobby__hint">
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-users"
+                aria-hidden="true"
+              ></i>
+              公房有 60s 加歌冷却，私房无冷却；创建后可复制链接邀请。
+            </p>
+          </section>
+
+          <!-- 加入房间 -->
+          <section class="lt-panel">
+            <div class="lt-panel__head">
+              <div class="lt-panel__title">
+                <span class="lt-panel__icon"
+                  ><i class="lt-icon fa-solid fa-link" aria-hidden="true"></i
+                ></span>
+                加入房间
+              </div>
+            </div>
+
+            <div class="lt-field">
+              <label class="lt-field__label">分享链接 / 房间号</label>
+              <div class="lt-input-row">
+                <input
+                  v-model="shareLinkInput"
+                  class="lt-input"
+                  type="text"
+                  placeholder="粘贴 163cn.tv 链接或房间 ID"
+                  @input="onShareInput"
+                  @keyup.enter="parseShareLink"
+                />
+                <button
+                  class="lt-btn lt-btn--sm"
+                  :disabled="shareResolving"
+                  @click="parseShareLink"
+                >
+                  {{ shareResolving ? '解析中' : '解析' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="lt-field">
+              <label class="lt-field__label">邀请者 UID</label>
+              <input
+                v-model="joinForm.inviterId"
+                class="lt-input"
+                type="text"
+                inputmode="numeric"
+                placeholder="通常可从分享链接自动带出"
+              />
+            </div>
+
+            <div v-if="joinForm.roomId" class="lt-picked">
+              <span class="lt-panel__icon"
+                ><i class="lt-icon fa-solid fa-music" aria-hidden="true"></i
+              ></span>
+              <div class="lt-picked__text">
+                <div class="lt-picked__name">房间 {{ joinForm.roomId }}</div>
+                <div class="lt-picked__artist">
+                  {{ joinForm.inviterId ? '邀请者 ' + joinForm.inviterId : '缺少邀请者 UID' }}
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="lt-btn lt-btn--primary lt-btn--block"
+              :disabled="!joinForm.roomId || !joinForm.inviterId || joiningRoom"
+              @click="joinRoom"
+            >
+              {{ joiningRoom ? '加入中…' : '确认加入' }}
+            </button>
+            <p class="lt-lobby__hint">
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-triangle-exclamation"
+                aria-hidden="true"
+              ></i>
+              解析只提取房间信息，不会执行链接里的其它内容。
+            </p>
+          </section>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 顶栏 ================= -->
+    <template id="tpl-topbar">
+      <header class="lt-topbar">
+        <div class="lt-topbar__lead">
+          <button
+            class="lt-icon-btn"
+            title="房间菜单"
+            aria-label="房间菜单"
+            @click="leaveMenuOpen = !leaveMenuOpen"
+          >
+            <i class="lt-icon fa-solid fa-arrow-left" aria-hidden="true"></i>
+          </button>
+          <div class="lt-topbar__title">
+            <span class="lt-chip" :class="'is-' + roomTypeInfo.cls"
+              >{{ roomTypeInfo.label }}</span
+            >
+            <span class="lt-topbar__meta"
+              >{{ memberCount }} 人在线</span
+            >
+            <span class="lt-sync" :class="'is-' + syncState">
+              <i></i>{{ syncLabel }}
+            </span>
+          </div>
+        </div>
+
+        <div class="lt-topbar__actions">
+          <button
+            class="lt-btn lt-btn--ghost lt-btn--sm lt-hide-before-wide lt-hide-sm"
+            @click="membersOpen = true"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-users"
+              aria-hidden="true"
+            ></i
+            >成员
+          </button>
+          <button
+            class="lt-btn lt-btn--ghost lt-btn--sm"
+            @click="shareOpen = true"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-share-nodes"
+              aria-hidden="true"
+            ></i
+            ><span class="lt-only-wide">分享</span>
+          </button>
+          <button
+            class="lt-btn lt-btn--ghost lt-btn--sm lt-only-wide"
+            @click="inviteOpen = true"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-user-plus"
+              aria-hidden="true"
+            ></i
+            >邀请
+          </button>
+          <button
+            class="lt-btn lt-btn--primary lt-btn--sm"
             @click="openSongDialog('add')"
           >
-            ＋ 添加歌曲
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-plus"
+              aria-hidden="true"
+            ></i
+            >添加歌曲
           </button>
-          <a
-            v-if="!account.login"
-            href="/qrlogin.html"
-            class="btn btn-sm"
-            style="text-decoration: none"
-            >登录</a
-          >
-        </div>
-      </div>
-      </header>
-      <div class="message" role="status" aria-live="polite">
-        状态: {{message}}
-      </div>
-
-      <audio id="player" preload="metadata" style="display: none"></audio>
-
-      <div class="section flex-between">
-        <div>
-          <div>当前账号: {{account.nickname}} (UID: {{account.userId}})</div>
           <button
-            class="btn btn-primary"
-            @click="login(false)"
-            v-show="!account.login"
-            style="margin-top: 10px; padding: 6px 12px; font-size: 13px"
+            class="lt-icon-btn lt-only-touch"
+            title="聊天"
+            @click="goChat()"
           >
-            获取登录状态
+            <i class="lt-icon fa-solid fa-comment-dots" aria-hidden="true"></i>
+          </button>
+          <button class="lt-icon-btn" title="设置" @click="settingsOpen = true">
+            <i class="lt-icon fa-solid fa-gear" aria-hidden="true"></i>
           </button>
         </div>
-        <button
-          class="btn btn-danger"
-          @click="forceExitAndReset"
-          v-show="account.login"
-          style="padding: 6px 12px; font-size: 13px"
+
+        <div
+          v-if="leaveMenuOpen"
+          class="lt-menu lt-topbar__menu"
+          @mouseleave="leaveMenuOpen = false"
         >
-          强制重置状态
+          <button
+            class="lt-menu__item"
+            @click="shareOpen = true; leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-share-nodes"
+              aria-hidden="true"
+            ></i
+            >分享房间
+          </button>
+          <button
+            class="lt-menu__item"
+            @click="inviteOpen = true; leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-user-plus"
+              aria-hidden="true"
+            ></i
+            >邀请好友
+          </button>
+          <button
+            class="lt-menu__item"
+            @click="membersOpen = true; leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-users"
+              aria-hidden="true"
+            ></i
+            >在线成员
+          </button>
+          <button class="lt-menu__item" @click="toggleImmersive">
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-expand"
+              aria-hidden="true"
+            ></i
+            >{{ immersive ? '退出沉浸' : '沉浸模式' }}
+          </button>
+          <button
+            class="lt-menu__item"
+            @click="refreshRoom(); leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-rotate-right"
+              aria-hidden="true"
+            ></i
+            >刷新房间状态
+          </button>
+          <div class="lt-menu__sep"></div>
+          <button
+            class="lt-menu__item"
+            :disabled="isMatching || rematching"
+            @click="rematch(); leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-magnifying-glass"
+              aria-hidden="true"
+            ></i
+            >重新匹配
+          </button>
+          <button
+            class="lt-menu__item is-danger"
+            @click="exitRoom(); leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-arrow-right-from-bracket"
+              aria-hidden="true"
+            ></i
+            >退出房间
+          </button>
+          <button
+            class="lt-menu__item is-danger"
+            @click="debugOpen = true; leaveMenuOpen = false"
+          >
+            <i
+              class="lt-icon lt-icon--sm fa-solid fa-triangle-exclamation"
+              aria-hidden="true"
+            ></i
+            >调试与诊断
+          </button>
+        </div>
+      </header>
+    </template>
+
+    <!-- ================= 成员 ================= -->
+    <template id="tpl-members">
+      <div v-if="!flat" class="lt-colhead">
+        <div class="lt-colhead__title">
+          在线成员
+          <small>
+            {{ roomInfo.roomUsers.length }}<template
+              v-if="memberCount > roomInfo.roomUsers.length"
+              > / {{ memberCount }}</template
+            >
+          </small>
+        </div>
+        <span class="lt-chip" :class="imConnected ? 'is-ok' : 'is-warn'">
+          {{ imConnected ? 'IM 实时' : 'HTTP 快照' }}
+        </span>
+      </div>
+
+      <ul class="lt-people">
+        <li
+          v-for="(u, i) in roomInfo.roomUsers"
+          :key="'user-' + i"
+          class="lt-person"
+        >
+          <img v-if="u.avatar" :src="img(u.avatar, 96)" class="lt-avatar" alt="" />
+          <span v-else class="lt-avatar lt-avatar-fallback"
+            >{{ initialOf(u.nickname) }}</span
+          >
+          <span class="lt-person__text">
+            <span class="lt-person__name">{{ u.nickname || '匿名听友' }}</span>
+            <span class="lt-person__uid">UID {{ userUid(u) || '?' }}</span>
+          </span>
+          <span
+            v-if="String(userUid(u)) === String(roomInfo.creatorId)"
+            class="lt-chip is-accent"
+            >房主</span
+          >
+          <span v-else-if="isMe(u)" class="lt-chip">我</span>
+          <span v-else class="lt-person__dot" title="在线"></span>
+        </li>
+      </ul>
+
+      <div v-if="!roomInfo.roomUsers.length" class="lt-empty">
+        <div class="lt-empty__art">
+          <i class="lt-icon fa-solid fa-users" aria-hidden="true"></i>
+        </div>
+        <div class="lt-empty__title">暂无成员信息</div>
+        <div>房间状态还没有返回成员列表</div>
+      </div>
+
+      <div v-if="memberCount > roomInfo.roomUsers.length" class="lt-members__truncated">
+        服务端只下发部分成员（官方客户端也只是「前几个头像 + 人数」），房间内另有
+        {{ memberCount - roomInfo.roomUsers.length }} 人未公开
+      </div>
+
+      <div class="lt-members__foot">
+        <button
+          class="lt-btn lt-btn--soft lt-btn--block"
+          @click="inviteOpen = true"
+        >
+          <i
+            class="lt-icon lt-icon--sm fa-solid fa-user-plus"
+            aria-hidden="true"
+          ></i
+          >邀请好友
         </button>
-      </div>
-
-      <div v-show="account.login && !roomInfo.roomId" class="section">
-        <h3>发起一起听</h3>
-        <div class="song-smart">
-          <div class="song-smart-input">
-            <input
-              v-model="songInput"
-              type="text"
-              placeholder="粘贴歌曲链接，或输入歌名/歌手"
-              @input="onSongInput"
-              @keyup.enter="resolveSongInput"
-            />
-            <button
-              class="btn"
-              :disabled="songSearching"
-              @click="resolveSongInput"
-              style="margin-bottom: 0"
-            >
-              {{ songSearching ? '解析中…' : '解析 / 搜索' }}
-            </button>
-          </div>
-          <p class="hint" style="margin: 6px 0 0">
-            支持网易云歌曲链接、163cn.tv 短链接；解析不到会自动按关键词搜索。
-          </p>
-          <div v-if="songResults.length" class="song-results">
-            <button
-              v-for="song in songResults"
-              :key="'create-song-' + song.id"
-              type="button"
-              class="song-result"
-              @click="selectSong(song)"
-            >
-              <img v-if="song.cover" :src="song.cover" alt="" />
-              <span>
-                <b>{{ song.name }}</b>
-                <small>{{ song.artist }}</small>
-              </span>
-            </button>
-          </div>
-          <div v-if="selectedSong" class="selected-song">
-            <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
-            <button
-              class="btn btn-sm"
-              @click="
-                selectedSong = null;
-                songInput = '';
-              "
-            >
-              清除
-            </button>
-          </div>
-        </div>
-        <div class="input-group" style="margin-bottom: 16px">
-          <label
-            style="
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            "
-          >
-            <input
-              type="checkbox"
-              v-model="allowStranger"
-              style="width: 18px; height: 18px"
-            />
-            允许陌生人加入 (进入匹配池 → 公房)
-          </label>
-        </div>
-        <div style="margin-bottom: 16px">
-          <button class="btn" @click="createRoom" :disabled="isMatching">
-            创建房间
-          </button>
+        <div class="lt-members__im">
           <button
-            class="btn btn-primary"
-            @click="startMatch"
-            :disabled="isMatching"
+            class="lt-btn"
+            :disabled="imConnecting"
+            @click="toggleImMembers"
           >
-            {{ isMatching ? '正在匹配中...' : '随机匹配 (公房)' }}
+            {{ imConnected ? '断开 IM' : imConnecting ? '连接中…' : '连接 IM 实时成员' }}
           </button>
-          <button
-            v-show="isMatching"
-            class="btn btn-danger"
-            @click="cancelMatch"
+          <span class="lt-members__im-text" :title="imStatus"
+            >{{ imStatus || '未连接' }}</span
           >
-            取消匹配
-          </button>
         </div>
-        <div class="hint" v-if="!isMatching" style="margin-bottom: 16px">
-          匹配会先建立 SSE 通知通道，通常 5–30 秒；需要两名在线用户。
-        </div>
-
-        <details id="joinDetails">
-          <summary
-            style="
-              cursor: pointer;
-              font-weight: 500;
-              color: #333;
-              padding: 8px 0;
-            "
-          >
-            加入已有房间
-          </summary>
-          <div class="input-group" style="margin-top: 10px">
-            <input
-              v-model="shareLinkInput"
-              type="text"
-              placeholder="粘贴分享链接 / 163cn.tv 短链接后自动解析"
-              style="width: 100%; max-width: none"
-              @input="onShareInput"
-              @keyup.enter="parseShareLink"
-            />
-            <button
-              class="btn btn-sm"
-              :disabled="shareResolving"
-              @click="parseShareLink"
-              style="margin-bottom: 0"
-            >
-              {{ shareResolving ? '解析中…' : '解析链接' }}
-            </button>
-          </div>
-          <div class="input-group">
-            <input
-              v-model="joinForm.roomId"
-              type="text"
-              placeholder="输入房间ID"
-              style="width: 100%"
-            />
-          </div>
-          <div class="input-group">
-            <input
-              v-model="joinForm.inviterId"
-              type="text"
-              placeholder="邀请者UID"
-              style="width: 100%"
-            />
-          </div>
-          <button class="btn" @click="joinRoom">确认加入</button>
-        </details>
       </div>
+    </template>
 
-      <div class="room-dashboard" v-show="roomInfo.roomId">
-      <div v-show="roomInfo.roomId" class="section room-full">
-        <div style="word-break: break-all">
-          <div class="room-id-line">
-            <span><b>房间 ID:</b> {{roomInfo.roomId}}</span>
-            <button
-              class="btn btn-sm"
-              @click="copyText(roomInfo.roomId, '房间 ID')"
-            >
-              复制
-            </button>
-          </div>
-          <div class="room-id-line">
-            <span><b>ChatRoom ID:</b> {{roomInfo.chatRoomId || '—'}}</span>
-            <button
-              v-if="roomInfo.chatRoomId"
-              class="btn btn-sm"
-              @click="copyText(roomInfo.chatRoomId, 'ChatRoom ID')"
-            >
-              复制
-            </button>
-          </div>
-          <!-- 房间类型区分（公房 / 私房 / 特殊房） -->
-          <div style="margin-top: 8px">
-            <span :class="['tag', roomTypeInfo.cls]" style="margin-left: 0">
-              {{ roomTypeInfo.label }}
-            </span>
-            <span
-              :class="['tag', nextAddSongDuration > 0 ? 'tag-other' : 'tag-mine']"
-              style="margin-left: 4px"
-            >
-              {{ nextAddSongDuration > 0 ? `加歌冷却 剩 ${nextAddSongDuration}s`
-              : '可加歌' }}
-            </span>
-            <span
-              v-for="(t, ti) in roomInfo.roomTags"
-              :key="'roomtag-' + ti"
-              class="tag tag-room"
-              >{{ t }}</span
-            >
-          </div>
-        </div>
-        <div class="hint" style="margin-top: 8px" v-if="roomInfo.hintText">
-          {{ roomInfo.hintText }}
-        </div>
-        <div class="hint" style="margin-top: 4px" v-if="roomInfo.nextRcmdText">
-          {{ roomInfo.nextRcmdText }}
-        </div>
-
-        <div class="share-link-box">
-          <input type="text" :value="shareUrl" readonly />
-          <div class="share-actions">
-            <button class="btn btn-sm" @click="copyShareLink">
-              复制分享链接
-            </button>
-            <button
-              class="btn btn-sm"
-              :disabled="!currentSongUrl"
-              @click="copyText(currentSongUrl, '歌曲链接')"
-            >
-              复制歌曲链接
-            </button>
+    <!-- ================= 主舞台 ================= -->
+    <template id="tpl-stage">
+      <div class="lt-player">
+        <div class="lt-player__art" :class="{ 'is-playing': audioPlaying }">
+          <img
+            v-if="playingInfo.cover"
+            :src="img(playingInfo.cover, 640)"
+            class="lt-player__cover"
+            :class="{ 'is-paused': !audioPlaying }"
+            alt=""
+          />
+          <div v-else class="lt-player__cover lt-skeleton"></div>
+          <div v-if="audioPlaying" class="lt-eq" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
           </div>
         </div>
 
-        <div class="player-bar">
-          <div class="player-cover-wrap">
-            <img
-              v-if="playingInfo.cover"
-              :src="playingInfo.cover"
-              class="player-cover"
-            />
-            <div v-else class="player-cover loading"></div>
+        <div class="lt-player__body">
+          <div class="lt-player__kicker">
+            <span class="lt-live"><i></i>正在一起听</span>
+            <span class="lt-chip" :class="'is-' + currentSongSource.type"
+              >{{ currentSongSource.label }}</span
+            >
+            <span v-if="cooldownLeft > 0" class="lt-chip is-warn"
+              >加歌冷却 {{ cooldownLeft }}s</span
+            >
+            <span v-else class="lt-chip is-ok">可加歌</span>
           </div>
-          <div class="player-info">
-            <div class="player-title-row">
-              <div v-if="songNameLong" class="marquee" :title="songName">
-                <div class="marquee-track">
-                  <span>{{ songName }}</span>
-                  <span aria-hidden="true">{{ songName }}</span>
-                </div>
-              </div>
-              <strong v-else class="player-title">{{ songName }}</strong>
-            </div>
-            <div class="player-artist-row">
-              <div v-if="songArtistLong" class="marquee" :title="songArtist">
-                <div class="marquee-track">
-                  <span>{{ songArtist }}</span>
-                  <span aria-hidden="true">{{ songArtist }}</span>
-                </div>
-              </div>
-              <span v-else class="player-artist">{{ songArtist }}</span>
-              <span
-                :class="['tag', currentSongSource.type === 'mine' ? 'tag-mine' : (currentSongSource.type === 'sys' ? 'tag-sys' : 'tag-other')]"
-                style="margin-left: 0"
+
+          <h2 class="lt-player__title" :title="songName">
+            <template v-if="!songNameLong">{{ songName }}</template>
+            <span v-else class="lt-marquee">
+              <span class="lt-marquee__inner"
+                ><span>{{ songName }}</span
+                ><span aria-hidden="true">{{ songName }}</span></span
               >
-                {{ currentSongSource.label }}
-              </span>
-              <span class="tag tag-sys" style="margin-left: 0">
-                👍 {{ playingInfo.zanCnt }}
-              </span>
-              <span class="tag tag-up" style="margin-left: 0">
-                ↑ {{ playingInfo.upCnt || 0 }}<span v-if="playingInfo.uped"
-                  >（我顶过）</span
-                >
-              </span>
-            </div>
-            <div class="player-meta-line">
-              <span>SongID: {{ playingInfo.songId }}</span>
-              <span>BizID: {{ playingInfo.bizId }}</span>
-              <span>进度: {{ playingInfo.playedTime }}s / {{ playingInfo.duration }}s</span>
+            </span>
+          </h2>
+
+          <div class="lt-player__artist">
+            <template v-if="!songArtistLong">{{ songArtist }}</template>
+            <span v-else class="lt-marquee">
+              <span class="lt-marquee__inner"
+                ><span>{{ songArtist }}</span
+                ><span aria-hidden="true">{{ songArtist }}</span></span
+              >
+            </span>
+          </div>
+
+          <div class="lt-player__progress">
+            <input
+              type="range"
+              class="lt-range"
+              min="0"
+              :max="progressMax"
+              step="0.1"
+              :value="audioCurrentTime"
+              :style="{ '--fill': progressPercent + '%' }"
+              aria-label="播放进度"
+              @input="onSeek"
+              @change="onSeek"
+            />
+            <div class="lt-player__times">
+              <span>{{ formatAudioTime(audioCurrentTime) }}</span>
+              <span class="lt-player__duration"
+                >SongID {{ playingInfo.songId || '—' }}</span
+              >
+              <span>{{ formatAudioTime(progressMax) }}</span>
             </div>
           </div>
-          <div class="player-transport">
+        </div>
+
+        <div class="lt-player__controls">
+          <button
+            class="lt-play"
+            :class="{ 'is-paused': !audioPlaying }"
+            :aria-label="audioPlaying ? '暂停' : '播放'"
+            @click="togglePlay"
+          >
+            <i
+              class="lt-icon"
+              :class="audioPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'"
+              aria-hidden="true"
+            ></i>
+          </button>
+
+          <button
+            class="lt-stat"
+            :class="{ 'is-on': playingInfo.uped }"
+            :disabled="!roomInfo.permission.topSong"
+            title="UP 顶歌"
+            @click="operateSong(2, playingInfo.songId, playingInfo.bizId)"
+          >
+            <i class="lt-icon fa-solid fa-arrow-up" aria-hidden="true"></i>
+            <span class="lt-stat__count">{{ playingInfo.upCnt || 0 }}</span>
+          </button>
+
+          <button class="lt-stat" title="一起听点赞" @click="likeCurrentSong">
+            <i class="lt-icon fa-solid fa-thumbs-up" aria-hidden="true"></i>
+            <span class="lt-stat__count">{{ playingInfo.zanCnt || 0 }}</span>
+          </button>
+
+          <button
+            class="lt-stat"
+            :class="{ 'is-on': likedMap[String(playingInfo.songId)] }"
+            :aria-pressed="!!likedMap[String(playingInfo.songId)]"
+            title="喜欢这首歌（长按收藏到歌单）"
+            @pointerdown="startLikeLongPress"
+            @pointerup="endLikeLongPress"
+            @pointerleave="cancelLikeLongPress"
+            @pointercancel="cancelLikeLongPress"
+            @contextmenu="openCollectMenu"
+            @click="onLikeClick"
+          >
+            <i
+              class="lt-icon"
+              :class="likedMap[String(playingInfo.songId)] ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"
+              aria-hidden="true"
+            ></i>
+          </button>
+
+          <button
+            class="lt-stat"
+            :disabled="!roomInfo.permission.switchSong"
+            title="请求下一首"
+            @click="nextSong"
+          >
+            <i class="lt-icon fa-solid fa-forward-step" aria-hidden="true"></i>
+            <span class="lt-stat__label">下一首</span>
+          </button>
+        </div>
+
+        <div class="lt-player__tools">
+          <div class="lt-volume">
             <button
-              class="player-play"
-              type="button"
-              :aria-label="audioPlaying ? '暂停' : '播放'"
-              @click="togglePlay"
+              class="lt-icon-btn"
+              :title="audioVolume > 0 ? '静音' : '取消静音'"
+              @click="toggleMute"
             >
-              <svg v-if="audioPlaying" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <rect x="6" y="5" width="4" height="14" rx="1" />
-                <rect x="14" y="5" width="4" height="14" rx="1" />
-              </svg>
-              <svg v-else viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <i
+                class="lt-icon"
+                :class="audioVolume > 0 ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark'"
+                aria-hidden="true"
+              ></i>
             </button>
-            <div class="player-progress">
+            <div class="lt-volume__track">
               <input
-                type="range"
-                class="player-range"
-                min="0"
-                :max="progressMax"
-                step="0.1"
-                :value="audioCurrentTime"
-                @input="onSeek"
-                @change="onSeek"
-                aria-label="播放进度"
-              />
-              <div class="player-time-row">
-                <span>{{ formatAudioTime(audioCurrentTime) }}</span>
-                <span>{{ formatAudioTime(progressMax) }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="player-tools">
-            <label class="player-volume">
-              音量
-              <input
+                class="lt-range"
                 type="range"
                 min="0"
                 max="1"
                 step="0.01"
                 :value="audioVolume"
-                @input="onVolumeInput"
+                :style="{ '--fill': Math.round(audioVolume * 100) + '%' }"
                 aria-label="音量"
+                @input="onVolumeInput"
+                @wheel.prevent="onVolumeWheel"
               />
-            </label>
-            <label class="player-quality">
-              音质
-              <select v-model="audioLevel" @change="onLevelChange">
+            </div>
+            <span class="lt-volume__pct"
+              >{{ Math.round(audioVolume * 100) }}%</span
+            >
+          </div>
+
+          <div class="lt-quality">
+            <button
+              class="lt-quality__btn"
+              :class="{ 'is-open': qualityMenuOpen }"
+              :aria-expanded="qualityMenuOpen"
+              aria-haspopup="listbox"
+              title="音质"
+              @click="qualityMenuOpen = !qualityMenuOpen"
+            >
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-sliders"
+                aria-hidden="true"
+              ></i>
+              <span>{{ levelLabel(audioLevel) }}</span>
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-chevron-down"
+                aria-hidden="true"
+              ></i>
+            </button>
+            <div v-if="qualityMenuOpen" class="lt-menu lt-quality__menu" role="listbox">
+              <button
+                v-for="l in audioLevels"
+                :key="l.key"
+                class="lt-menu__item"
+                :class="{ 'is-active': l.key === audioLevel }"
+                role="option"
+                :aria-selected="l.key === audioLevel"
+                @click="onQualitySelect(l.key)"
+              >
+                <span>{{ l.label }}</span>
+                <i
+                  v-if="l.key === audioLevel"
+                  class="lt-icon fa-solid fa-check"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="lt-player__tools-spacer"></div>
+
+          <button
+            class="lt-icon-btn"
+            :class="{ 'is-active': lyricsOpen }"
+            title="歌词（L）"
+            @click="toggleLyrics"
+          >
+            <i class="lt-icon fa-solid fa-align-left" aria-hidden="true"></i>
+          </button>
+          <button class="lt-icon-btn" title="沉浸模式" @click="toggleImmersive">
+            <i class="lt-icon fa-solid fa-expand" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <p
+          v-if="playingInfo.actualLevel && playingInfo.actualLevel !== audioLevel"
+          class="lt-player__note"
+        >
+          当前实际音质 {{ levelLabel(playingInfo.actualLevel) }}（已自动降级）
+        </p>
+      </div>
+
+      <section v-if="lyricsOpen" class="lt-lyrics">
+        <div class="lt-lyrics__head">
+          <div class="lt-card__title">
+            歌词 <small>{{ lyrics.title || '' }}</small>
+          </div>
+          <div class="lt-colhead__actions">
+            <button
+              class="lt-btn lt-btn--sm lt-btn--ghost"
+              @click="lyricsFollow = true; scrollLyricsToActive(true)"
+            >
+              回到当前
+            </button>
+            <button
+              class="lt-icon-btn"
+              title="收起歌词"
+              @click="lyricsOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <div
+          ref="lyricsBox"
+          class="lt-lyrics__body"
+          @scroll.passive="onLyricsScroll"
+        >
+          <div v-if="lyrics.loading" class="lt-lyrics__empty">
+            正在加载歌词…
+          </div>
+          <div
+            v-else-if="lyrics.error || !lyrics.lines.length"
+            class="lt-lyrics__empty"
+          >
+            {{ lyrics.error || '这首歌还没有歌词' }}
+          </div>
+          <div v-else class="lt-lyrics__list" ref="lyricsList">
+            <div
+              v-for="(line, li) in lyrics.lines"
+              :key="'lyric-' + li"
+              class="lt-lyrics__line"
+              :class="{ 'is-active': li === lyricsActiveIndex }"
+            >
+              <span>{{ line.text || '··' }}</span>
+              <span v-if="line.translation" class="lt-lyrics__trans"
+                >{{ line.translation }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lt-roominfo">
+        <div class="lt-roominfo__row">
+          <span class="lt-roominfo__label">房间</span>
+          <span class="lt-roominfo__value" :title="roomInfo.roomId">{{ roomInfo.roomId }}</span>
+          <button
+            class="lt-btn lt-btn--sm lt-btn--ghost"
+            @click="copyText(roomInfo.roomId, '房间 ID')"
+          >
+            复制
+          </button>
+          <span class="lt-roominfo__label">{{ memberCount }} 人</span>
+          <span class="lt-roominfo__spacer"></span>
+          <button
+            class="lt-icon-btn lt-icon-btn--sm"
+            title="分享房间"
+            @click="shareOpen = true"
+          >
+            <i class="lt-icon fa-solid fa-share-nodes" aria-hidden="true"></i>
+          </button>
+          <button
+            class="lt-icon-btn lt-icon-btn--sm"
+            title="刷新房间状态"
+            :disabled="refreshing"
+            @click="refreshRoom()"
+          >
+            <i
+              class="lt-icon fa-solid fa-rotate-right"
+              :class="{ 'fa-spin': refreshing }"
+              aria-hidden="true"
+            ></i>
+          </button>
+        </div>
+        <div class="lt-roominfo__row">
+          <span class="lt-chip" :class="roomInfo.permission.addSong ? 'is-ok' : 'is-warn'"
+            >加歌{{ roomInfo.permission.addSong ? '✓' : '✗' }}</span
+          >
+          <span
+            class="lt-chip"
+            :class="roomInfo.permission.switchSong ? 'is-ok' : 'is-warn'"
+            >切歌{{ roomInfo.permission.switchSong ? '✓' : '✗' }}</span
+          >
+          <span
+            class="lt-chip"
+            :class="roomInfo.permission.topSong ? 'is-ok' : 'is-warn'"
+            >顶歌{{ roomInfo.permission.topSong ? '✓' : '✗' }}</span
+          >
+          <button
+            class="lt-btn lt-btn--sm lt-btn--ghost"
+            :disabled="!currentSongUrl"
+            @click="copyText(currentSongUrl, '歌曲链接')"
+          >
+            复制歌曲链接
+          </button>
+          <span
+            v-for="(t, ti) in roomInfo.roomTags"
+            :key="'roomtag-' + ti"
+            class="lt-chip"
+            >{{ t }}</span
+          >
+          <span v-if="roomInfo.hintText" class="lt-roominfo__note-inline">{{
+            roomInfo.hintText
+          }}</span>
+        </div>
+      </section>
+    </template>
+
+    <!-- ================= 队列 ================= -->
+    <template id="tpl-queue">
+      <div class="lt-colhead">
+        <div class="lt-colhead__title">
+          播放队列
+          <small
+            >{{ queueTab === 'wait' ? playingInfo.nextSongs.length : playedSongs.length }}</small
+          >
+        </div>
+        <div class="lt-colhead__actions">
+          <button class="lt-icon-btn" title="刷新队列" @click="refreshQueue">
+            <i class="lt-icon fa-solid fa-rotate-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="lt-queue__tabs">
+        <div class="lt-tabs">
+          <button
+            class="lt-tab"
+            :class="{ 'is-active': queueTab === 'wait' }"
+            @click="queueTab = 'wait'"
+          >
+            待播
+            <span class="lt-tab__count"
+              >{{ playingInfo.nextSongs.length }}</span
+            >
+          </button>
+          <button
+            class="lt-tab"
+            :class="{ 'is-active': queueTab === 'played' }"
+            @click="setQueueTab('played')"
+          >
+            已播 <span class="lt-tab__count">{{ playedSongs.length }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div v-show="queueTab === 'wait'" class="lt-queue__list">
+        <div
+          v-for="(song, idx) in playingInfo.nextSongs"
+          :key="'song-' + song.songId + '-' + song.bizId + '-' + idx"
+          class="lt-track"
+          :class="{ 'is-next': idx === 0 }"
+        >
+          <img
+            v-if="song.cover"
+            :src="img(song.cover, 96)"
+            class="lt-track__cover"
+            alt=""
+          />
+          <div v-else class="lt-track__cover lt-skeleton"></div>
+          <div class="lt-track__main">
+            <div class="lt-track__title" :title="song.name">
+              {{ song.name }}
+            </div>
+            <div class="lt-track__sub" :title="song.artist">
+              {{ song.artist }}
+            </div>
+            <div class="lt-track__meta">
+              <span v-if="idx === 0" class="lt-chip is-accent">下一首</span>
+              <span
+                class="lt-chip"
+                :class="song.isMine ? 'is-mine' : song.songRcmdUid ? '' : 'is-info'"
+                >{{ songSource(song).label }}</span
+              >
+              <span
+                v-if="upCntMap[String(song.bizId)] && upCntMap[String(song.bizId)].uped"
+                class="lt-chip is-ok"
+                >我顶过</span
+              >
+            </div>
+          </div>
+          <div class="lt-track__actions">
+            <button
+              class="lt-track__up"
+              :class="{ 'is-on': upCntMap[String(song.bizId)] && upCntMap[String(song.bizId)].uped }"
+              title="UP 顶歌"
+              @click.stop="operateSong(2, song.songId, song.bizId)"
+            >
+              <i class="lt-icon fa-solid fa-arrow-up" aria-hidden="true"></i>{{ (upCntMap[String(song.bizId)] && upCntMap[String(song.bizId)].upCnt) || 0 }}
+            </button>
+            <button
+              v-if="song.isMine"
+              class="lt-icon-btn lt-track__del"
+              title="删除我的推荐"
+              @click.stop="operateSong(7, song.songId, song.bizId)"
+            >
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-trash-can"
+                aria-hidden="true"
+              ></i>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="!playingInfo.nextSongs.length" class="lt-empty">
+          <div class="lt-empty__art">
+            <i class="lt-icon fa-solid fa-list-ul" aria-hidden="true"></i>
+          </div>
+          <div class="lt-empty__title">还没有待播歌曲</div>
+          <div>点右上角「添加歌曲」往里推一首</div>
+        </div>
+      </div>
+
+      <div v-show="queueTab === 'played'" class="lt-queue__list">
+        <div
+          v-if="playedLoading && !playedSongs.length"
+          class="lt-queue__list"
+          style="padding: 8px 4px"
+        >
+          <div v-for="n in 4" :key="'played-sk-' + n" class="lt-track">
+            <div class="lt-track__cover lt-skeleton"></div>
+            <div class="lt-track__main">
+              <div class="lt-skeleton" style="height: 12px; width: 70%"></div>
+              <div
+                class="lt-skeleton"
+                style="height: 10px; width: 42%; margin-top: 5px"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-for="(song, pi) in playedSongs"
+          :key="'played-' + song.bizId + '-' + pi"
+          class="lt-track"
+        >
+          <img
+            v-if="song.cover"
+            :src="img(song.cover, 96)"
+            class="lt-track__cover"
+            alt=""
+          />
+          <div v-else class="lt-track__cover lt-skeleton"></div>
+          <div class="lt-track__main">
+            <div class="lt-track__title" :title="song.name">
+              {{ song.name }}
+            </div>
+            <div class="lt-track__sub">{{ song.artist }}</div>
+            <div class="lt-track__meta">
+              <span class="lt-chip" :class="song.isMine ? 'is-mine' : ''"
+                >{{ songSource(song).label }}</span
+              >
+              <span v-if="song.playTime" class="lt-track__time"
+                >{{ formatRelativeTime(song.playTime) }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div v-if="playedMore" class="lt-empty" style="padding: 10px">
+          <button
+            class="lt-btn lt-btn--sm"
+            :disabled="playedLoading"
+            @click="loadMorePlayed"
+          >
+            {{ playedLoading ? '加载中…' : '加载更早的已播' }}
+          </button>
+        </div>
+
+        <div v-if="!playedLoading && !playedSongs.length" class="lt-empty">
+          <div class="lt-empty__art">
+            <i class="lt-icon fa-solid fa-clock" aria-hidden="true"></i>
+          </div>
+          <div class="lt-empty__title">还没有已播记录</div>
+          <div>房间播放过的歌会出现在这里</div>
+        </div>
+      </div>
+
+      <div class="lt-queue__foot">
+        <span
+          >{{ queueTab === 'wait' ? '顺序由房间同步' : '来自官方已播记录' }}</span
+        >
+        <button class="lt-btn lt-btn--sm" @click="openSongDialog('add')">
+          <i class="lt-icon lt-icon--sm fa-solid fa-plus" aria-hidden="true"></i
+          >推歌
+        </button>
+      </div>
+    </template>
+
+    <!-- ================= 聊天 ================= -->
+    <template id="tpl-chat">
+      <div class="lt-colhead">
+        <div class="lt-tabs">
+          <button
+            class="lt-tab"
+            :class="{ 'is-active': chatTab === 'chat' }"
+            @click="setChatTab('chat')"
+          >
+            聊天
+            <span v-if="chatUnread" class="lt-badge is-accent"
+              >{{ chatUnread > 99 ? '99+' : chatUnread }}</span
+            >
+          </button>
+          <button
+            class="lt-tab"
+            :class="{ 'is-active': chatTab === 'logs' }"
+            @click="setChatTab('logs')"
+          >
+            日志
+          </button>
+        </div>
+        <div class="lt-colhead__actions">
+          <button class="lt-icon-btn" title="刷新聊天" @click="fetchChat()">
+            <i class="lt-icon fa-solid fa-rotate-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <template v-if="chatTab === 'chat'">
+        <div class="lt-chat__flow">
+        <div
+          id="chatList"
+          ref="chatList"
+          class="lt-msgs"
+          @scroll.passive="onChatScroll"
+        >
+          <div class="lt-msgs__spacer" aria-hidden="true"></div>
+          <button
+            v-if="chatMore || chatLoadingMore"
+            class="lt-msgs__more"
+            :disabled="chatLoadingMore"
+            @click="loadMoreChat"
+          >
+            {{ chatLoadingMore ? '正在加载更早消息…' : '加载更早消息' }}
+          </button>
+
+          <template
+            v-for="(msg, mi) in chatHistory"
+            :key="'chat-' + (msg.id || mi)"
+          >
+            <div v-if="showDayDivider(mi)" class="lt-msgs__day">
+              {{ dayLabel(msg.sendTime) }}
+            </div>
+            <div v-if="mi === chatNewIndex" class="lt-msgs__new">未读消息</div>
+            <div
+              class="lt-msg"
+              :class="{ 'is-system': msg.isSystem, 'is-me': isMeUid(msg.sendUid) }"
+            >
+              <template v-if="!msg.isSystem">
+                <img
+                  v-if="msg.avatarUrl"
+                  :src="img(msg.avatarUrl, 72)"
+                  class="lt-msg__avatar"
+                  alt=""
+                />
+                <span v-else class="lt-msg__avatar lt-msg__avatar-fallback"
+                  >{{ initialOf(msg.nickname) }}</span
+                >
+              </template>
+              <div class="lt-msg__body">
+                <div v-if="showMsgName(mi)" class="lt-msg__name">
+                  <span>{{ msg.nickname || '听友' }}</span>
+                </div>
+                <div
+                  class="lt-msg__bubble"
+                  :class="{ 'is-sticker': msg.emojiUrl && !msg.text }"
+                >
+                  <template v-if="msg.emojiUrl">
+                    <span class="lt-msg__emoji-wrap">
+                      <img
+                        :src="msg.emojiUrl"
+                        class="lt-emoji-img"
+                        :width="(msg.emoji && msg.emoji.width) || 160"
+                        :height="(msg.emoji && msg.emoji.height) || 160"
+                        :alt="msg.emoji && msg.emoji.emojiName"
+                        @load="onChatImageLoad"
+                      />
+                      <button
+                        class="lt-msg__emoji-save"
+                        title="收藏这个表情"
+                        @click.stop="saveSticker(msg.emoji)"
+                      >
+                        <i
+                          class="lt-icon fa-solid fa-plus"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                    </span>
+                  </template>
+                  <template v-else-if="msg.text">
+                    <span v-html="formatMessageText(msg.text)"></span>
+                  </template>
+
+                  <div v-if="msg.cover" class="lt-songcard">
+                    <img :src="img(msg.cover, 96)" alt="" @load="onChatImageLoad" />
+                    <div class="lt-songcard__text">
+                      <span class="lt-songcard__name">{{ msg.songName }}</span>
+                      <span class="lt-songcard__artist"
+                        >{{ msg.artistName }}</span
+                      >
+                    </div>
+                    <button
+                      v-if="msg.suggestSongId && roomInfo.permission.addSong"
+                      class="lt-songcard__add"
+                      @click.stop="operateSong(1, msg.suggestSongId)"
+                    >
+                      加歌
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <div v-if="!chatHistory.length" class="lt-empty">
+            <div class="lt-empty__art">
+              <i
+                class="lt-icon fa-solid fa-comment-dots"
+                aria-hidden="true"
+              ></i>
+            </div>
+            <div class="lt-empty__title">还没有聊天消息</div>
+            <div>说点什么，或者发个表情</div>
+          </div>
+          <div ref="chatBottom"></div>
+        </div>
+
+        <button
+          v-if="!chatAtBottom || chatUnread"
+          class="lt-chat__jump"
+          :aria-label="chatUnread ? `回到最新消息，${chatUnread} 条未读` : '回到最新消息'"
+          @click="jumpChatToBottom"
+        >
+          <i class="lt-icon fa-solid fa-arrow-down" aria-hidden="true"></i>
+          <span v-if="chatUnread">{{ chatUnread > 99 ? '99+' : chatUnread }}</span>
+        </button>
+        </div>
+
+        <div
+          class="lt-composer"
+          :class="{ 'is-disabled': !roomInfo.chatRoomId }"
+        >
+          <lt-emoji
+            v-if="emojiPickerOpen"
+            @insert="insertEmojiText"
+            @sticker="sendSticker"
+          ></lt-emoji>
+
+          <div
+            v-if="mentionOpen && mentionCandidates.length"
+            class="lt-mentions"
+          >
+            <button
+              v-for="(u, ui) in mentionCandidates"
+              :key="'mention-' + userUid(u)"
+              class="lt-mentions__item"
+              :class="{ 'is-active': ui === mentionIndex }"
+              @mousedown.prevent="applyMention(u)"
+            >
+              <img v-if="u.avatar" :src="img(u.avatar, 96)" alt="" />
+              <span v-else class="lt-avatar-fallback"
+                >{{ initialOf(u.nickname) }}</span
+              >
+              <span>{{ u.nickname || '听友' }}</span>
+            </button>
+          </div>
+
+          <textarea
+            ref="chatInput"
+            v-model="chatInput"
+            class="lt-composer__input"
+            rows="1"
+            maxlength="100"
+            :placeholder="roomInfo.chatRoomId ? '说点什么…（Ctrl+Enter 发送）' : '房间还没有聊天室'"
+            :disabled="!roomInfo.chatRoomId"
+            @keydown="onChatKeydown"
+            @input="onChatInputChange"
+          ></textarea>
+
+          <div class="lt-composer__bar">
+            <button
+              class="lt-icon-btn"
+              :class="{ 'is-active': emojiPickerOpen }"
+              title="表情"
+              :disabled="!roomInfo.chatRoomId"
+              @click="emojiPickerOpen = !emojiPickerOpen"
+            >
+              <i class="lt-icon fa-solid fa-face-smile" aria-hidden="true"></i>
+            </button>
+            <button
+              class="lt-icon-btn"
+              title="提及成员"
+              :disabled="!roomInfo.chatRoomId"
+              @click="openMentions('@')"
+            >
+              <span style="font-weight: 700; font-size: 15px">@</span>
+            </button>
+            <span
+              class="lt-composer__count"
+              :class="{ 'is-warn': chatInput.length >= 90 }"
+              >{{ chatInput.length }}/100</span
+            >
+            <button
+              class="lt-btn lt-btn--primary"
+              :disabled="chatSending || !chatInput.trim() || !roomInfo.chatRoomId"
+              title="Ctrl+Enter"
+              @click="sendChat()"
+            >
+              <i
+                class="lt-icon lt-icon--sm fa-solid fa-paper-plane"
+                aria-hidden="true"
+              ></i
+              >{{ chatSending ? '发送中' : '发送' }}
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div id="logList" class="lt-logs">
+          <div
+            v-for="(entry, li) in logEntries"
+            :key="'log-' + li"
+            class="lt-log"
+          >
+            <span class="lt-log__time">{{ logTime(entry.time) }}</span>
+            <span class="lt-log__tag">{{ entry.tag }}</span>
+            <span class="lt-log__msg"
+              >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
+                >{{ entry.data }}</span
+              ></span
+            >
+          </div>
+          <div v-if="!logEntries.length" class="lt-empty">
+            <div class="lt-empty__title">暂无日志</div>
+          </div>
+        </div>
+        <div class="lt-logs__foot">
+          <button class="lt-btn lt-btn--sm lt-btn--ghost" @click="clearLogs">
+            清空
+          </button>
+          <button class="lt-btn lt-btn--sm" @click="exportDiagnostics">
+            导出诊断
+          </button>
+        </div>
+      </template>
+    </template>
+
+    <!-- ================= 表情面板 ================= -->
+    <template id="tpl-emoji">
+      <div class="lt-emoji">
+        <div class="lt-emoji__tabs">
+          <button
+            class="lt-emoji__tab"
+            :class="{ 'is-active': emojiTab === 'pack' }"
+            @click="setEmojiTab('pack')"
+          >
+            表情包
+          </button>
+          <button
+            class="lt-emoji__tab"
+            :class="{ 'is-active': emojiTab === 'unicode' }"
+            @click="setEmojiTab('unicode')"
+          >
+            表情
+          </button>
+          <button
+            class="lt-emoji__tab"
+            :class="{ 'is-active': emojiTab === 'kaomoji' }"
+            @click="setEmojiTab('kaomoji')"
+          >
+            颜文字
+          </button>
+        </div>
+
+        <template v-if="emojiTab === 'pack'">
+          <div class="lt-emoji__grid" @scroll="onEmojiScroll">
+            <div
+              v-for="emoji in myStickers"
+              :key="'pack-' + emoji.emojiImgUrl"
+              class="lt-emoji__cell"
+            >
+              <button
+                type="button"
+                :title="emoji.emojiName"
+                :disabled="chatSending"
+                @click="sendSticker(emoji)"
+              >
+                <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
+              </button>
+              <button
+                v-if="canDeleteSticker(emoji)"
+                type="button"
+                class="lt-emoji__remove"
+                title="删除这个表情"
+                @click.stop="requestRemoveSticker(emoji)"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              v-for="n in (cloudLoading ? 8 : 0)"
+              :key="'emoji-sk-' + n"
+              class="lt-emoji__cell"
+            >
+              <div
+                class="lt-skeleton"
+                style="width: 80%; height: 80%; border-radius: 8px"
+              ></div>
+            </div>
+          </div>
+          <div class="lt-emoji__foot">
+            <span
+              >{{ cloudError || (cloudGroups.length ? cloudGroups[0].name : '网易云自定义表情') }}</span
+            >
+            <button
+              class="lt-btn lt-btn--sm"
+              :disabled="cloudLoading"
+              @click="refreshCloudStickers"
+            >
+              {{ cloudLoading ? '读取中' : '刷新' }}
+            </button>
+          </div>
+          <button
+            v-if="cloudMore"
+            class="lt-btn lt-btn--sm"
+            :disabled="cloudLoading"
+            @click="loadMoreCloud"
+          >
+            加载更多
+          </button>
+          <div class="lt-emoji__url">
+            <input
+              v-model="emojiUrlInput"
+              class="lt-input"
+              type="text"
+              placeholder="粘贴表情图片 URL"
+              @keyup.enter="addStickerUrl"
+            />
+            <button class="lt-btn lt-btn--sm" @click="addStickerUrl">
+              存到本地
+            </button>
+          </div>
+        </template>
+
+        <div v-else-if="emojiTab === 'unicode'" class="lt-emoji__grid">
+          <button
+            v-for="char in unicodeEmojis"
+            :key="'u-' + char"
+            class="lt-emoji__cell is-char"
+            :disabled="chatSending"
+            @click="insertEmojiText(char)"
+          >
+            {{ char }}
+          </button>
+        </div>
+
+        <div v-else class="lt-emoji__grid">
+          <button
+            v-for="face in kaomojiList"
+            :key="'k-' + face"
+            class="lt-emoji__cell is-kaomoji"
+            :disabled="chatSending"
+            @click="insertEmojiText(face)"
+          >
+            {{ face }}
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 选歌 ================= -->
+    <template id="tpl-song-picker">
+      <div class="lt-overlay" @click.self="closeSongDialog">
+        <div
+          class="lt-modal lt-modal--picker"
+          role="dialog"
+          aria-modal="true"
+          aria-label="选择歌曲"
+        >
+          <div class="lt-modal__head">
+            <div>
+              <div class="lt-modal__title">
+                {{ songDialogMode === 'initial' ? '选择匹配用歌' : '添加歌曲到队列' }}
+              </div>
+              <div class="lt-hint">粘贴网易云歌曲链接，或输入歌名 / 歌手；选中即可试听</div>
+            </div>
+            <button class="lt-close" aria-label="关闭" @click="closeSongDialog">
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="lt-modal__body lt-picker">
+            <div class="lt-picker__top">
+              <div class="lt-tabs lt-picker__tabs">
+                <button
+                  class="lt-tab"
+                  :class="{ 'is-active': pickerTab === 'search' }"
+                  @click="setPickerTab('search')"
+                >
+                  搜索
+                </button>
+                <button
+                  class="lt-tab"
+                  :class="{ 'is-active': pickerTab === 'playlists' }"
+                  @click="setPickerTab('playlists')"
+                >
+                  我的歌单
+                </button>
+              </div>
+
+              <template v-if="pickerTab === 'search'">
+                <div class="lt-search">
+                  <i
+                    class="lt-icon lt-icon--sm fa-solid fa-magnifying-glass"
+                    aria-hidden="true"
+                  ></i>
+                  <input
+                    ref="songInput"
+                    v-model="songInput"
+                    class="lt-input"
+                    type="text"
+                    placeholder="歌曲链接 / 歌名 / 歌手"
+                    @input="onSongInput"
+                    @keyup.enter="resolveSongInput"
+                  />
+                </div>
+                <div v-if="searchHistory.length" class="lt-picker__history">
+                  <span class="lt-hint">最近</span>
+                  <button
+                    v-for="(kw, ki) in searchHistory"
+                    :key="'kw-' + ki"
+                    class="lt-chip"
+                    @click="songInput = kw; resolveSongInput()"
+                  >
+                    {{ kw }}
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <div class="lt-picker__list" ref="pickerList" @scroll.passive="onPickerScroll">
+              <template v-if="pickerTab === 'search'">
+                <div v-if="songSearching" class="lt-picker__hint">
+                  <i
+                    class="lt-icon fa-solid fa-spinner fa-spin"
+                    aria-hidden="true"
+                  ></i>
+                  正在解析 / 搜索…
+                </div>
+
+                <button
+                  v-for="song in songResults"
+                  :key="'pick-' + song.id"
+                  class="lt-invite__row"
+                  :class="{ 'is-on': selectedSong && selectedSong.id === song.id }"
+                  @click="selectSong(song)"
+                >
+                  <img
+                    v-if="song.cover"
+                    :src="img(song.cover, 96)"
+                    class="lt-track__cover"
+                    alt=""
+                  />
+                  <span class="lt-invite__text">
+                    <span class="lt-invite__name">{{ song.name }}</span>
+                    <span class="lt-invite__sub">{{ song.artist }}</span>
+                  </span>
+                  <span
+                    v-if="selectedSong && selectedSong.id === song.id"
+                    class="lt-chip is-accent"
+                    >已选</span
+                  >
+                </button>
+
+                <button
+                  v-if="searchMore"
+                  class="lt-btn lt-btn--sm lt-picker__more"
+                  :disabled="songSearching"
+                  @click="loadMoreSearch"
+                >
+                  {{ songSearching ? '加载中…' : '加载更多结果' }}
+                </button>
+
+                <div
+                  v-if="!songSearching && !songResults.length"
+                  class="lt-empty"
+                >
+                  <div class="lt-empty__art">
+                    <i
+                      class="lt-icon fa-solid fa-magnifying-glass"
+                      aria-hidden="true"
+                    ></i>
+                  </div>
+                  <div class="lt-empty__title">粘贴链接或输入关键词</div>
+                  <div>也可以切到「我的歌单」直接挑歌</div>
+                </div>
+              </template>
+
+              <template v-else>
+                <div v-if="activePlaylist" class="lt-picker__plhead">
+                  <button
+                    class="lt-icon-btn lt-icon-btn--sm"
+                    title="返回歌单列表"
+                    @click="closePlaylist()"
+                  >
+                    <i class="lt-icon fa-solid fa-arrow-left" aria-hidden="true"></i>
+                  </button>
+                  <div class="lt-picker__plhead-text">
+                    <strong>{{ activePlaylist.name }}</strong>
+                    <small>
+                      {{ activePlaylistTracks.length }} /
+                      {{ activePlaylist.trackCount || '?' }} 首
+                    </small>
+                  </div>
+                  <button
+                    class="lt-icon-btn lt-icon-btn--sm"
+                    title="重新读取"
+                    :disabled="activePlaylistLoading"
+                    @click="loadPlaylistTracks(true)"
+                  >
+                    <i
+                      class="lt-icon fa-solid fa-rotate-right"
+                      :class="{ 'fa-spin': activePlaylistLoading }"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                </div>
+
+                <div v-else class="lt-picker__plhead">
+                  <div class="lt-picker__plhead-text">
+                    <strong>我的歌单</strong>
+                    <small>创建与收藏的歌单</small>
+                  </div>
+                  <button
+                    class="lt-icon-btn lt-icon-btn--sm"
+                    title="刷新歌单"
+                    :disabled="myPlaylistsLoading"
+                    @click="loadMyPlaylists(true)"
+                  >
+                    <i
+                      class="lt-icon fa-solid fa-rotate-right"
+                      :class="{ 'fa-spin': myPlaylistsLoading }"
+                      aria-hidden="true"
+                    ></i>
+                  </button>
+                </div>
+
+                <template v-if="activePlaylist">
+                  <div v-if="activePlaylistLoading && !activePlaylistTracks.length" class="lt-picker__hint">
+                    <i class="lt-icon fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                    正在读取歌单歌曲…
+                  </div>
+                  <div v-else-if="activePlaylistError" class="lt-picker__hint is-error">
+                    {{ activePlaylistError }}
+                    <button class="lt-btn lt-btn--sm" @click="loadPlaylistTracks(true)">重试</button>
+                  </div>
+
+                  <button
+                    v-for="song in activePlaylistTracks"
+                    :key="'pl-' + song.id"
+                    class="lt-invite__row"
+                    :class="{ 'is-on': selectedSong && selectedSong.id === song.id }"
+                    @click="selectSong(song)"
+                  >
+                    <img
+                      v-if="song.cover"
+                      :src="img(song.cover, 96)"
+                      class="lt-track__cover"
+                      alt=""
+                    />
+                    <span class="lt-invite__text">
+                      <span class="lt-invite__name">{{ song.name }}</span>
+                      <span class="lt-invite__sub">{{ song.artist }}</span>
+                    </span>
+                    <span
+                      v-if="selectedSong && selectedSong.id === song.id"
+                      class="lt-chip is-accent"
+                      >已选</span
+                    >
+                  </button>
+
+                  <button
+                    v-if="activePlaylistMore"
+                    class="lt-btn lt-btn--sm lt-picker__more"
+                    :disabled="activePlaylistLoading"
+                    @click="loadMorePlaylistTracks"
+                  >
+                    {{ activePlaylistLoading ? '加载中…' : '加载更多歌曲' }}
+                  </button>
+
+                  <div
+                    v-if="!activePlaylistLoading && !activePlaylistError && !activePlaylistTracks.length"
+                    class="lt-empty"
+                  >
+                    <div class="lt-empty__art">
+                      <i class="lt-icon fa-solid fa-music" aria-hidden="true"></i>
+                    </div>
+                    <div class="lt-empty__title">这个歌单还没有歌曲</div>
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div v-if="myPlaylistsLoading && !myPlaylists.length" class="lt-picker__hint">
+                    <i class="lt-icon fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                    正在读取歌单…
+                  </div>
+                  <div v-else-if="myPlaylistsError" class="lt-picker__hint is-error">
+                    {{ myPlaylistsError }}
+                    <button class="lt-btn lt-btn--sm" @click="loadMyPlaylists(true)">重试</button>
+                  </div>
+
+                  <button
+                    v-for="playlist in myPlaylists"
+                    :key="'plist-' + playlist.id"
+                    class="lt-invite__row"
+                    @click="openPlaylist(playlist)"
+                  >
+                    <img
+                      v-if="playlist.cover"
+                      :src="img(playlist.cover, 96)"
+                      class="lt-track__cover"
+                      alt=""
+                    />
+                    <span class="lt-invite__text">
+                      <span class="lt-invite__name">{{ playlist.name }}</span>
+                      <span class="lt-invite__sub">
+                        {{ playlist.trackCount }} 首 · {{ playlist.subscribed ? '我收藏的' : '我创建的' }}
+                      </span>
+                    </span>
+                    <i class="lt-icon fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </button>
+
+                  <div
+                    v-if="!myPlaylistsLoading && !myPlaylistsError && !myPlaylists.length"
+                    class="lt-empty"
+                  >
+                    <div class="lt-empty__art">
+                      <i class="lt-icon fa-solid fa-list-ul" aria-hidden="true"></i>
+                    </div>
+                    <div class="lt-empty__title">还没有歌单</div>
+                    <div>登录后会自动读取创建与收藏的歌单</div>
+                  </div>
+                </template>
+              </template>
+            </div>
+
+            <div v-if="selectedSong" class="lt-picker__foot">
+              <div class="lt-picked">
+                <img
+                  v-if="selectedSong.cover"
+                  :src="img(selectedSong.cover, 128)"
+                  alt=""
+                />
+                <div class="lt-picked__text">
+                  <div class="lt-picked__name">{{ selectedSong.name }}</div>
+                  <div class="lt-picked__artist">{{ selectedSong.artist }}</div>
+                </div>
+              </div>
+
+              <div class="lt-preview">
+                <button
+                  class="lt-preview__play"
+                  :aria-label="preview.playing ? '暂停试听' : '播放试听'"
+                  @click="togglePreview"
+                >
+                  <i
+                    class="lt-icon"
+                    :class="
+                      preview.loading
+                        ? 'fa-solid fa-spinner fa-spin'
+                        : preview.playing
+                          ? 'fa-solid fa-pause'
+                          : 'fa-solid fa-play'
+                    "
+                    aria-hidden="true"
+                  ></i>
+                </button>
+                <div class="lt-preview__body">
+                  <input
+                    class="lt-range"
+                    type="range"
+                    min="0"
+                    :max="preview.duration || selectedSong.duration / 1000 || 1"
+                    step="0.1"
+                    :value="preview.current"
+                    :style="{ '--fill': previewPercent() + '%' }"
+                    aria-label="试听进度"
+                    @input="onPreviewSeek"
+                  />
+                  <div class="lt-preview__meta">
+                    <span>
+                      {{ formatAudioTime(preview.current) }} /
+                      {{ formatAudioTime(preview.duration) }}
+                    </span>
+                    <span v-if="preview.loading" class="lt-preview__state"
+                      >正在获取试听…</span
+                    >
+                    <span
+                      v-else-if="preview.error"
+                      class="lt-preview__state is-error"
+                      >{{ preview.error }}</span
+                    >
+                    <span v-else-if="preview.trial" class="lt-chip is-warn"
+                      >试听片段</span
+                    >
+                    <span v-else class="lt-chip is-ok">可拖动进度</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="lt-modal__foot">
+            <button class="lt-btn lt-btn--ghost" @click="closeSongDialog">
+              取消
+            </button>
+            <button
+              v-if="songDialogMode === 'add'"
+              class="lt-btn lt-btn--primary"
+              :disabled="!selectedSong || !roomInfo.permission.addSong || cooldownLeft > 0"
+              @click="addSelectedSong"
+            >
+              {{ cooldownLeft > 0 ? '冷却中 剩 ' + cooldownLeft + 's' : '添加到队列' }}
+            </button>
+            <button
+              v-else
+              class="lt-btn lt-btn--primary"
+              :disabled="!selectedSong"
+              @click="closeSongDialog"
+            >
+              使用这首歌
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 分享 ================= -->
+    <template id="tpl-share">
+      <div class="lt-overlay" @click.self="shareOpen = false">
+        <div
+          class="lt-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="分享房间"
+        >
+          <div class="lt-modal__head">
+            <div class="lt-modal__title">分享房间</div>
+            <button
+              class="lt-close"
+              aria-label="关闭"
+              @click="shareOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="lt-modal__body">
+            <div class="lt-field">
+              <label class="lt-field__label">房间链接（官方分享格式）</label>
+              <div class="lt-input-row">
+                <input
+                  class="lt-input"
+                  type="text"
+                  :value="shareUrl"
+                  readonly
+                />
+                <button
+                  class="lt-btn lt-btn--primary lt-btn--sm"
+                  @click="copyShareLink"
+                >
+                  复制
+                </button>
+              </div>
+            </div>
+            <div class="lt-field">
+              <label class="lt-field__label">房间号</label>
+              <div class="lt-input-row">
+                <input
+                  class="lt-input"
+                  type="text"
+                  :value="roomInfo.roomId"
+                  readonly
+                />
+                <button
+                  class="lt-btn lt-btn--sm"
+                  @click="copyText(roomInfo.roomId, '房间 ID')"
+                >
+                  复制
+                </button>
+              </div>
+            </div>
+            <div class="lt-field">
+              <label class="lt-field__label">当前歌曲链接</label>
+              <div class="lt-input-row">
+                <input
+                  class="lt-input"
+                  type="text"
+                  :value="currentSongUrl"
+                  readonly
+                />
+                <button
+                  class="lt-btn lt-btn--sm"
+                  :disabled="!currentSongUrl"
+                  @click="copyText(currentSongUrl, '歌曲链接')"
+                >
+                  复制
+                </button>
+              </div>
+            </div>
+            <div class="lt-roominfo__note">
+              好友用网易云 App 打开链接即可加入；也可以把房间号和邀请者 UID
+              发给对方，在本页「加入房间」填入。
+            </div>
+            <div class="lt-roominfo__actions">
+              <button
+                class="lt-btn lt-btn--soft"
+                @click="shareOpen = false; inviteOpen = true"
+              >
+                <i
+                  class="lt-icon lt-icon--sm fa-solid fa-user-plus"
+                  aria-hidden="true"
+                ></i
+                >在站内邀请好友
+              </button>
+            </div>
+          </div>
+          <div class="lt-modal__foot">
+            <button class="lt-btn lt-btn--ghost" @click="shareOpen = false">
+              关闭
+            </button>
+            <button class="lt-btn lt-btn--primary" @click="copyShareLink">
+              复制分享链接
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 邀请 ================= -->
+    <template id="tpl-invite">
+      <div class="lt-overlay" @click.self="inviteOpen = false">
+        <div
+          class="lt-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="邀请好友"
+        >
+          <div class="lt-modal__head">
+            <div>
+              <div class="lt-modal__title">邀请好友一起听</div>
+              <div class="lt-hint">
+                来自互关 / 推荐 / 群聊的候选，按在线状态排序
+              </div>
+            </div>
+            <button
+              class="lt-close"
+              aria-label="关闭"
+              @click="inviteOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="lt-modal__body">
+            <div v-if="inviteLoading" class="lt-empty">
+              <div class="lt-empty__title">正在读取邀请候选…</div>
+            </div>
+            <div v-else-if="inviteError" class="lt-empty">
+              <div class="lt-empty__title">{{ inviteError }}</div>
+              <button class="lt-btn lt-btn--sm" @click="loadInvitePanel">
+                重试
+              </button>
+            </div>
+
+            <template v-else>
+              <div v-if="inviteUsers.length" class="lt-invite__section">
+                <div class="lt-invite__label">好友</div>
+                <div class="lt-invite">
+                  <button
+                    v-for="u in inviteUsers"
+                    :key="'invite-' + u.uid"
+                    class="lt-invite__row"
+                    :class="{ 'is-on': inviteSelected.includes(String(u.uid)), 'is-disabled': u.inRoom }"
+                    :disabled="u.inRoom"
+                    @click="toggleInviteUser(u)"
+                  >
+                    <img
+                      v-if="u.avatar"
+                      :src="u.avatar"
+                      class="lt-avatar lt-avatar--sm"
+                      alt=""
+                    />
+                    <span
+                      v-else
+                      class="lt-avatar lt-avatar--sm lt-avatar-fallback"
+                      >{{ initialOf(u.nickname) }}</span
+                    >
+                    <span class="lt-invite__text">
+                      <span class="lt-invite__name"
+                        >{{ u.nickname || u.uid }}</span
+                      >
+                      <span class="lt-invite__sub">
+                        {{ u.inRoom ? '已在房间中' : u.online ? '在线' : '离线' }}
+                        <template v-if="u.reason"> · {{ u.reason }}</template>
+                      </span>
+                    </span>
+                    <span class="lt-invite__check"
+                      ><i
+                        class="lt-icon fa-solid fa-check"
+                        aria-hidden="true"
+                      ></i
+                    ></span>
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="inviteGroups.length" class="lt-invite__section">
+                <div class="lt-invite__label">群聊</div>
+                <div class="lt-invite">
+                  <button
+                    v-for="g in inviteGroups"
+                    :key="'group-' + g.groupId"
+                    class="lt-invite__row"
+                    :class="{ 'is-on': inviteGroupsSelected.includes(String(g.groupId)) }"
+                    @click="toggleInviteGroup(g)"
+                  >
+                    <span class="lt-avatar lt-avatar--sm lt-avatar-fallback"
+                      ><i
+                        class="lt-icon lt-icon--sm fa-solid fa-users"
+                        aria-hidden="true"
+                      ></i
+                    ></span>
+                    <span class="lt-invite__text">
+                      <span class="lt-invite__name">{{ g.name }}</span>
+                      <span class="lt-invite__sub"
+                        >{{ g.memberCount ? g.memberCount + ' 人' : '群聊' }}</span
+                      >
+                    </span>
+                    <span class="lt-invite__check"
+                      ><i
+                        class="lt-icon fa-solid fa-check"
+                        aria-hidden="true"
+                      ></i
+                    ></span>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="!inviteUsers.length && !inviteGroups.length"
+                class="lt-empty"
+              >
+                <div class="lt-empty__art">
+                  <i
+                    class="lt-icon fa-solid fa-user-plus"
+                    aria-hidden="true"
+                  ></i>
+                </div>
+                <div class="lt-empty__title">没有可邀请的候选</div>
+                <div>可以直接复制分享链接发给好友</div>
+              </div>
+            </template>
+          </div>
+
+          <div class="lt-modal__foot">
+            <button class="lt-btn lt-btn--ghost" @click="inviteOpen = false">
+              取消
+            </button>
+            <button
+              class="lt-btn lt-btn--primary"
+              :disabled="inviteSending || (!inviteSelected.length && !inviteGroupsSelected.length)"
+              @click="sendInvites"
+            >
+              {{ inviteSending ? '发送中…' : '发送邀请' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 收藏到歌单 ================= -->
+    <template id="tpl-collect">
+      <div class="lt-overlay" @click.self="closeCollectSheet">
+        <div class="lt-modal" role="dialog" aria-modal="true" aria-label="收藏到歌单">
+          <div class="lt-modal__head">
+            <div>
+              <div class="lt-modal__title">收藏到歌单</div>
+              <div class="lt-hint">选择我创建或收藏的歌单</div>
+            </div>
+            <button class="lt-close" aria-label="关闭" @click="closeCollectSheet">
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="lt-modal__body">
+            <div v-if="collectSong" class="lt-picked">
+              <img
+                v-if="collectSong.cover"
+                :src="img(collectSong.cover, 128)"
+                alt=""
+              />
+              <div class="lt-picked__text">
+                <div class="lt-picked__name">{{ collectSong.name }}</div>
+                <div class="lt-picked__artist">{{ collectSong.artist }}</div>
+              </div>
+              <span class="lt-chip is-accent">当前歌曲</span>
+            </div>
+
+            <div v-if="collectError" class="lt-picker__hint is-error">
+              {{ collectError }}
+            </div>
+
+            <div v-if="myPlaylistsLoading && !myPlaylists.length" class="lt-picker__hint">
+              <i class="lt-icon fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+              正在读取歌单…
+            </div>
+            <div v-else-if="myPlaylistsError" class="lt-picker__hint is-error">
+              {{ myPlaylistsError }}
+              <button class="lt-btn lt-btn--sm" @click="loadMyPlaylists(true)">重试</button>
+            </div>
+
+            <button
+              v-for="playlist in myPlaylists"
+              :key="'collect-' + playlist.id"
+              class="lt-invite__row"
+              :disabled="collectLoading"
+              @click="addSongToPlaylist(collectSong, playlist)"
+            >
+              <img
+                v-if="playlist.cover"
+                :src="img(playlist.cover, 96)"
+                class="lt-track__cover"
+                alt=""
+              />
+              <span class="lt-invite__text">
+                <span class="lt-invite__name">{{ playlist.name }}</span>
+                <span class="lt-invite__sub">
+                  {{ playlist.trackCount }} 首 ·
+                  {{ playlist.subscribed ? '我收藏的' : '我创建的' }}
+                </span>
+              </span>
+              <i
+                class="lt-icon fa-solid"
+                :class="collectLoading ? 'fa-spinner fa-spin' : 'fa-plus'"
+                aria-hidden="true"
+              ></i>
+            </button>
+
+            <div
+              v-if="!myPlaylistsLoading && !myPlaylistsError && !myPlaylists.length"
+              class="lt-empty"
+            >
+              <div class="lt-empty__art">
+                <i class="lt-icon fa-solid fa-list-ul" aria-hidden="true"></i>
+              </div>
+              <div class="lt-empty__title">还没有歌单</div>
+            </div>
+          </div>
+
+          <div class="lt-modal__foot">
+            <button class="lt-btn lt-btn--ghost" @click="closeCollectSheet">关闭</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 设置 ================= -->
+    <template id="tpl-settings">
+      <div class="lt-overlay" @click.self="settingsOpen = false">
+        <div class="lt-modal" role="dialog" aria-modal="true" aria-label="设置">
+          <div class="lt-modal__head">
+            <div class="lt-modal__title">设置</div>
+            <button
+              class="lt-close"
+              aria-label="关闭"
+              @click="settingsOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="lt-modal__body">
+            <div class="lt-field">
+              <span class="lt-field__label">外观</span>
+              <div class="lt-tabs">
+                <button
+                  class="lt-tab"
+                  :class="{ 'is-active': theme === 'auto' }"
+                  @click="setTheme('auto')"
+                >
+                  跟随系统
+                </button>
+                <button
+                  class="lt-tab"
+                  :class="{ 'is-active': theme === 'dark' }"
+                  @click="setTheme('dark')"
+                >
+                  深色
+                </button>
+                <button
+                  class="lt-tab"
+                  :class="{ 'is-active': theme === 'light' }"
+                  @click="setTheme('light')"
+                >
+                  浅色
+                </button>
+              </div>
+            </div>
+
+            <div class="lt-field">
+              <span class="lt-field__label">默认音质</span>
+              <select
+                class="lt-select"
+                v-model="audioLevel"
+                @change="onLevelChange"
+              >
                 <option v-for="l in audioLevels" :key="l.key" :value="l.key">
                   {{ l.label }}
                 </option>
               </select>
-            </label>
-            <button
-              class="btn btn-sm"
-              :disabled="!roomInfo.permission.switchSong"
-              @click="nextSong"
-            >
-              切歌
-            </button>
-            <button class="btn btn-sm btn-warn" @click="likeCurrentSong">
-              点赞
-            </button>
-            <button
-              class="btn btn-sm"
-              :class="likedMap[String(playingInfo.songId)] ? 'btn-danger' : ''"
-              @click="toggleLikeCurrentSong"
-            >
-              {{ likedMap[String(playingInfo.songId)] ? '已喜欢 ♥' : '喜欢 ♡' }}
-            </button>
-          </div>
-        </div>
-        <div class="player-quality-note">
-          实际音质: {{ playingInfo.actualLevel ? levelLabel(playingInfo.actualLevel) : '—' }}
-          <span v-if="playingInfo.actualLevel && playingInfo.actualLevel !== audioLevel">（已自动降级）</span>
-        </div>
-        <div class="player-permissions">
-          权限: 加歌 {{ roomInfo.permission.addSong ? '✅' : '❌' }} | 切歌
-          {{ roomInfo.permission.switchSong ? '✅' : '❌' }} | 顶歌
-          {{ roomInfo.permission.topSong ? '✅' : '❌' }}
-        </div>
-        <div class="control-buttons" style="margin-top: 16px">
-          <button class="btn" @click="exitRoom">正常退出房间</button>
-          <button
-            class="btn btn-primary"
-            :disabled="isMatching || rematching"
-            @click="rematch"
-          >
-            {{ isMatching || rematching ? '正在匹配…' : '重新匹配' }}
-          </button>
-        </div>
-      </div>
-
-      <div v-show="roomInfo.roomId" class="section room-side room-members">
-        <h3>在线成员 ({{ roomInfo.roomUsers.length }})</h3>
-        <div
-          class="hint"
-          style="
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-          "
-        >
-          <button
-            class="btn btn-sm"
-            :disabled="imConnecting"
-            @click="toggleImMembers"
-          >
-            {{ imConnected ? '断开 IM 实时成员' : imConnecting ? 'IM 连接中…' : '连接 IM 实时成员' }}
-          </button>
-          <span>{{ imStatus }}</span>
-        </div>
-        <ul class="user-list">
-          <li
-            v-for="(u, i) in roomInfo.roomUsers"
-            :key="'user-' + i"
-            class="user-item"
-          >
-            <img v-if="u.avatar" :src="u.avatar" class="user-avatar" />
-            <span>{{ u.nickname || '匿名' }}</span>
-            <span style="color: #999; font-size: 12px"
-              >(UID: {{ userUid(u) || '?' }})</span
-            >
-            <span v-if="isMe(u)" class="tag tag-mine" style="margin-left: 0"
-              >我</span
-            >
-          </li>
-        </ul>
-        <div v-if="roomInfo.roomUsers.length === 0" class="empty-hint">
-          暂无成员信息
-        </div>
-      </div>
-
-      <div v-show="roomInfo.roomId" class="section room-main room-queue">
-        <h3>待播列表 ({{ playingInfo.nextSongs.length }} 首)</h3>
-        <ul class="queue-list">
-          <li
-            v-for="(song, idx) in playingInfo.nextSongs"
-            :key="'song-' + song.songId + '-' + song.bizId + '-' + idx"
-            class="queue-item"
-          >
-            <img v-if="song.cover" :src="song.cover" class="queue-cover" />
-            <div class="queue-info">
-              <div style="font-weight: 500">
-                <span
-                  v-if="idx === 0"
-                  class="tag tag-next"
-                  style="margin-left: 0; margin-right: 6px"
-                  >下一首</span
-                >
-                {{ song.name }}
-              </div>
-              <div style="font-size: 12px; color: #999; margin-top: 2px">
-                {{ song.artist }}
-              </div>
-              <div
-                style="
-                  margin-top: 4px;
-                  display: flex;
-                  flex-wrap: wrap;
-                  gap: 4px;
-                "
+              <span class="lt-field__hint"
+                >不可用时自动降级，并显示实际音质</span
               >
-                <span class="tag tag-up" style="margin-left: 0; font-size: 11px"
-                  >↑ {{ (upCntMap[String(song.bizId)] &&
-                  upCntMap[String(song.bizId)].upCnt) || 0 }}</span
+            </div>
+
+            <div class="lt-field">
+              <span class="lt-field__label">诊断</span>
+              <div class="lt-roominfo__actions">
+                <button
+                  class="lt-btn lt-btn--sm"
+                  @click="settingsOpen = false; debugOpen = true"
                 >
-                <span
-                  v-if="upCntMap[String(song.bizId)] && upCntMap[String(song.bizId)].uped"
-                  class="tag tag-uped"
-                  style="margin-left: 0; font-size: 11px"
-                  >我顶过</span
-                >
-                <span
-                  :class="['tag', song.isMine ? 'tag-mine' : (song.songRcmdUid ? 'tag-other' : 'tag-sys')]"
-                  style="margin-left: 0; font-size: 11px"
-                >
-                  {{ songSource(song).label }}
-                </span>
+                  打开调试面板
+                </button>
+                <button class="lt-btn lt-btn--sm" @click="exportDiagnostics">
+                  <i
+                    class="lt-icon lt-icon--sm fa-solid fa-download"
+                    aria-hidden="true"
+                  ></i
+                  >导出诊断 JSON
+                </button>
               </div>
             </div>
-            <div class="queue-actions">
-              <button
-                class="btn btn-sm"
-                @click.stop="operateSong(2, song.songId, song.bizId)"
-              >
-                顶歌
-              </button>
-              <button
-                v-if="song.isMine"
-                class="btn btn-sm btn-danger"
-                style="margin-right: 0"
-                @click.stop="operateSong(7, song.songId, song.bizId)"
-              >
-                删除
-              </button>
-            </div>
-          </li>
-        </ul>
-        <div v-if="playingInfo.nextSongs.length === 0" class="empty-hint">
-          暂无待播歌曲
-        </div>
-      </div>
 
-      </div>
-
-      <div v-if="songOpen" class="song-overlay" @click.self="closeSongDialog">
-        <div class="song-dialog" role="dialog" aria-modal="true" aria-label="添加歌曲">
-          <div class="song-dialog-head">
-            <strong>添加歌曲</strong>
-            <button class="chat-close" @click="closeSongDialog" aria-label="关闭">×</button>
-          </div>
-          <div class="song-dialog-body">
-            <div class="song-smart-input">
-              <input
-                v-model="songInput"
-                type="text"
-                placeholder="粘贴歌曲链接，或输入歌名/歌手"
-                @input="onSongInput"
-                @keyup.enter="resolveSongInput"
-              />
-              <button
-                class="btn"
-                :disabled="songSearching"
-                @click="resolveSongInput"
-                style="margin-bottom: 0"
-              >
-                {{ songSearching ? '解析中…' : '解析 / 搜索' }}
-              </button>
-            </div>
-            <p class="hint" style="margin: 6px 0 0">
-              支持网易云歌曲链接、163cn.tv 短链接；解析不到会自动按关键词搜索。
-            </p>
-            <div v-if="songResults.length" class="song-results">
-              <button
-                v-for="song in songResults"
-                :key="'dialog-song-' + song.id"
-                type="button"
-                class="song-result"
-                @click="selectSong(song)"
-              >
-                <img v-if="song.cover" :src="song.cover" alt="" />
-                <span>
-                  <b>{{ song.name }}</b>
-                  <small>{{ song.artist }}</small>
-                </span>
-              </button>
-            </div>
-            <div v-if="selectedSong" class="selected-song">
-              <span>已选: {{ selectedSong.name }} - {{ selectedSong.artist }}</span>
-              <button
-                v-if="songDialogMode === 'add'"
-                class="btn btn-sm btn-primary"
-                :disabled="!roomInfo.permission.addSong || nextAddSongDuration > 0"
-                @click="addSelectedSong"
-              >
-                {{ nextAddSongDuration > 0 ? `冷却中 剩 ${nextAddSongDuration}s` : '添加' }}
-              </button>
-              <button v-else class="btn btn-sm btn-primary" @click="closeSongDialog">
-                使用这首歌
-              </button>
-            </div>
-            <p v-if="songSearching" class="hint">正在解析 / 搜索…</p>
-            <p
-              v-if="!songSearching && !songResults.length && !selectedSong"
-              class="empty-hint"
-            >
-              粘贴歌曲链接或输入歌名，结果会显示在这里。
+            <div class="lt-divider"></div>
+            <p class="lt-hint">
+              数据来自 api-enhanced
+              的多人一起听接口。界面为纯静态页面，不需要构建。
             </p>
           </div>
         </div>
       </div>
-      <button
-        v-if="roomInfo.roomId"
-        class="chat-fab"
-        :class="{ dragging: chatDragging, active: chatOpen, 'has-unread': chatUnread > 0 }"
-        :style="{ left: chatButtonPos.x + 'px', top: chatButtonPos.y + 'px' }"
-        :aria-label="chatUnread ? `打开聊天，${chatUnread} 条未读` : '打开聊天'"
-        @pointerdown="startChatDrag"
-        @pointermove="onChatDrag"
-        @pointerup="endChatDrag"
-        @pointercancel="cancelChatDrag"
-      >
-        <span v-if="chatOpen" class="chat-fab-close">×</span>
-        <span v-else-if="chatUnread" class="chat-fab-count">
-          {{ chatUnread > 99 ? '99+' : chatUnread }}
-        </span>
-        <svg
-          v-else
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-        </svg>
-      </button>
-      <div v-if="chatOpen" class="chat-overlay" @click.self="closeChat">
+    </template>
+
+    <!-- ================= 调试 ================= -->
+    <template id="tpl-debug">
+      <div class="lt-overlay" @click.self="debugOpen = false">
         <div
-          class="chat-dialog"
+          class="lt-modal lt-modal--wide"
           role="dialog"
           aria-modal="true"
-          aria-label="房间聊天"
-          :style="chatDialogStyle"
+          aria-label="调试面板"
         >
-          <div class="chat-dialog-head">
-            <div class="chat-tabs">
-              <button
-                class="chat-tab"
-                :class="{ active: chatTab === 'chat' }"
-                @click="setChatTab('chat')"
+          <div class="lt-modal__head">
+            <div class="lt-modal__title">调试与诊断</div>
+            <button
+              class="lt-close"
+              aria-label="关闭"
+              @click="debugOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="lt-modal__body">
+            <div class="lt-roominfo__row">
+              <span
+                class="lt-chip"
+                :class="'is-' + (syncState === 'live' ? 'ok' : syncState === 'offline' ? 'warn' : 'info')"
+                >同步 {{ syncLabel }}</span
               >
-                聊天
-                <span v-if="chatUnread" class="chat-unread">{{ chatUnread }}</span>
-              </button>
-              <button
-                class="chat-tab"
-                :class="{ active: chatTab === 'logs' }"
-                @click="setChatTab('logs')"
+              <span class="lt-chip">SSE {{ sync.sse }}</span>
+              <span class="lt-chip"
+                >IM {{ imConnected ? '已连接' : imConnecting ? '连接中' : '未连接' }}</span
               >
-                工作日志
+              <span class="lt-chip"
+                >音频 {{ playingInfo.actualLevel || '未加载' }}</span
+              >
+            </div>
+            <div class="lt-roominfo__row">
+              <span class="lt-roominfo__label">Room</span>
+              <span class="lt-roominfo__value"
+                >{{ roomInfo.roomId || '—' }}</span
+              >
+              <span class="lt-roominfo__label">Chat</span>
+              <span class="lt-roominfo__value"
+                >{{ roomInfo.chatRoomId || '—' }}</span
+              >
+            </div>
+            <div class="lt-roominfo__row">
+              <span class="lt-roominfo__label">Song</span>
+              <span class="lt-roominfo__value"
+                >{{ playingInfo.songId || '—' }}</span
+              >
+              <span class="lt-roominfo__label">Biz</span>
+              <span class="lt-roominfo__value"
+                >{{ playingInfo.bizId || '—' }}</span
+              >
+              <span class="lt-roominfo__label">Version</span>
+              <span class="lt-roominfo__value"
+                >{{ playingInfo.version || '—' }}</span
+              >
+            </div>
+            <div class="lt-roominfo__actions">
+              <button class="lt-btn lt-btn--sm" @click="exportDiagnostics">
+                导出诊断 JSON
+              </button>
+              <button class="lt-btn lt-btn--sm" @click="forceExitAndReset">
+                强制重置本地状态
+              </button>
+              <button class="lt-btn lt-btn--sm" @click="clearLogs">
+                清空日志
               </button>
             </div>
-            <button class="chat-close" @click="closeChat" aria-label="关闭聊天">×</button>
-          </div>
-          <div v-show="chatTab === 'chat'" class="chat-panel">
-        <ul class="chat-list" id="chatList">
-          <li
-            v-for="(msg, mi) in chatHistory"
-            :key="'chat-' + (msg.id || mi)"
-            :class="[
-              'chat-item',
-              msg.isSystem ? 'system' : '',
-              { 'no-avatar': !msg.avatarUrl },
-            ]"
-          >
+
             <div
-              v-if="msg.avatarUrl || msg.nickname"
-              class="chat-header"
-            >
-              <img
-                v-if="msg.avatarUrl"
-                :src="msg.avatarUrl"
-                class="chat-avatar"
-              />
-              <span v-if="msg.nickname" class="chat-nickname">
-                {{ msg.nickname }}
-              </span>
-            </div>
-            <div class="chat-body">
-              <template v-if="msg.emojiUrl">
-                <div class="chat-emoji-wrap">
-                  <img :src="msg.emojiUrl" class="chat-emoji" />
-                  <div class="chat-emoji-actions">
-                    <button
-                      class="btn btn-sm"
-                      :disabled="emojiSaving"
-                      @click.stop="saveSticker(msg.emoji)"
-                    >
-                      {{ isStickerSaved(msg.emoji) ? '已存' : '存表情' }}
-                    </button>
-                  </div>
-                </div>
-              </template>
-              <template v-else>{{ msg.text }}</template>
-              <div v-if="msg.cover" class="chat-card">
-                <img :src="msg.cover" />
-                <span>{{ msg.songName }} - {{ msg.artistName }}</span>
-                <button
-                  v-if="msg.suggestSongId && roomInfo.permission.addSong"
-                  class="btn btn-sm btn-primary"
-                  style="margin: 0"
-                  @click.stop="operateSong(1, msg.suggestSongId)"
-                >
-                  加歌
-                </button>
-              </div>
-            </div>
-          </li>
-        </ul>
-        <div v-if="chatHistory.length === 0" class="empty-hint">
-          暂无聊天消息
-        </div>
-        <div class="input-group" style="margin-bottom: 0">
-          <input
-            v-model="chatInput"
-            type="text"
-            placeholder="输入消息..."
-            style="flex: 1; max-width: none"
-            :disabled="chatSending || !roomInfo.chatRoomId"
-            @keyup.enter="sendChat"
-          />
-          <button
-            class="btn"
-            :disabled="!roomInfo.chatRoomId"
-            @click="emojiPickerOpen = !emojiPickerOpen"
-            style="margin: 0"
-          >
-            {{ emojiPickerOpen ? '收起表情' : '表情' }}
-          </button>
-          <button
-            class="btn"
-            :disabled="chatSending || !chatInput.trim() || !roomInfo.chatRoomId"
-            @click="sendChat"
-            style="margin: 0"
-          >
-            {{ chatSending ? '发送中…' : '发送' }}
-          </button>
-        </div>
-
-        <div v-if="emojiPickerOpen" class="emoji-picker">
-          <div class="emoji-tabs">
-            <button
-              class="btn btn-sm"
-              :class="{ active: emojiTab === 'builtin' }"
-              @click="emojiTab = 'builtin'"
-            >
-              一起听表情
-            </button>
-            <button
-              class="btn btn-sm"
-              :class="{ active: emojiTab === 'saved' }"
-              @click="openMyStickers"
-            >
-              我的表情 ({{ myStickers.length }})
-            </button>
-          </div>
-
-          <div v-if="emojiTab === 'builtin'" class="emoji-grid">
-            <button
-              v-for="emoji in builtinStickers"
-              :key="emoji.emojiId"
-              type="button"
-              :title="emoji.emojiName"
-              :disabled="chatSending"
-              @click="sendSticker(emoji)"
-            >
-              <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
-            </button>
-          </div>
-
-          <div v-else>
-            <div
+              id="debugLogList"
+              class="lt-logs"
               style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 8px;
-                margin-bottom: 8px;
+                max-height: 260px;
+                border: 1px solid var(--lt-line);
+                border-radius: var(--lt-r-sm);
+                padding: 8px;
               "
             >
-              <span class="hint">
-                {{ cloudGroups.length ? cloudGroups[0].name : '网易云自定义表情' }}
-              </span>
-              <button
-                class="btn btn-sm"
-                :disabled="cloudLoading"
-                @click="refreshCloudStickers"
-              >
-                {{ cloudLoading ? '读取中…' : '刷新' }}
-              </button>
-            </div>
-            <p v-if="cloudLoading" class="hint">正在读取网易云自定义表情…</p>
-            <p v-if="cloudError" class="hint">
-              {{ cloudError }}
-              <button class="btn btn-sm" @click="refreshCloudStickers">
-                重试
-              </button>
-            </p>
-            <div
-              v-if="myStickers.length"
-              class="emoji-grid"
-              @scroll="onEmojiScroll"
-            >
               <div
-                v-for="emoji in myStickers"
-                :key="emoji.emojiImgUrl"
-                class="emoji-cell"
+                v-for="(entry, li) in logEntries"
+                :key="'dbg-' + li"
+                class="lt-log"
               >
-                <button
-                  type="button"
-                  :title="emoji.emojiName"
-                  :disabled="chatSending"
-                  @click="sendSticker(emoji)"
+                <span class="lt-log__time">{{ logTime(entry.time) }}</span>
+                <span class="lt-log__tag">{{ entry.tag }}</span>
+                <span class="lt-log__msg"
+                  >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
+                    >{{ entry.data }}</span
+                  ></span
                 >
-                  <img :src="emoji.emojiImgUrl" :alt="emoji.emojiName" />
-                </button>
-                <button
-                  v-if="isLocalSticker(emoji)"
-                  type="button"
-                  class="emoji-remove"
-                  title="从本地移除"
-                  @click.stop="removeSavedSticker(emoji)"
-                >
-                  ×
-                </button>
               </div>
-            </div>
-            <p v-else-if="!cloudLoading && !cloudError" class="empty-hint">
-              网易云账号里还没有自定义表情，收到图片表情后点“存表情”即可。
-            </p>
-            <button
-              v-if="cloudMore"
-              class="btn btn-sm"
-              :disabled="cloudLoading"
-              @click="loadMoreCloud"
-              style="margin-top: 8px"
-            >
-              加载更多
-            </button>
-            <div class="input-group" style="margin: 8px 0 0">
-              <input
-                v-model="emojiUrlInput"
-                type="text"
-                placeholder="粘贴表情图片 URL"
-                style="flex: 1; max-width: none"
-                @keyup.enter="addStickerUrl"
-              />
-              <button class="btn btn-sm" @click="addStickerUrl">
-                存到本地
-              </button>
-            </div>
-          </div>
-          <p class="hint" style="margin-top: 8px">
-            点击表情发送；收到图片表情后可点“存表情”收藏到本地/网易云。
-          </p>
-        </div>
-          </div>
-          <div v-show="chatTab === 'logs'" class="log-panel">
-            <div id="logList" class="log-list">
-              <div
-                v-for="(entry, index) in logEntries"
-                :key="'log-' + index"
-                class="log-entry"
-              >
-                <span class="log-time">{{ logTime(entry.time) }}</span>
-                <span class="log-tag">{{ entry.tag }}</span>
-                <span class="log-msg">
-                  {{ entry.msg }}
-                  <span v-if="entry.data" class="log-data">{{ entry.data }}</span>
-                </span>
+              <div v-if="!logEntries.length" class="lt-empty">
+                <div class="lt-empty__title">暂无日志</div>
               </div>
-              <p v-if="!logEntries.length" class="empty-hint">暂无工作日志</p>
-            </div>
-            <div class="log-actions">
-              <button class="btn btn-sm" @click="clearLogs">清空日志</button>
             </div>
           </div>
         </div>
       </div>
+    </template>
 
-    </div>
+    <!-- ================= 邀请落地页 ================= -->
+    <template id="tpl-landing">
+      <div class="lt-overlay" @click.self="dismissLanding">
+        <div
+          class="lt-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="加入房间"
+        >
+          <div class="lt-modal__head">
+            <div class="lt-modal__title">邀请你一起听</div>
+            <button class="lt-close" aria-label="关闭" @click="dismissLanding">
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="lt-modal__body">
+            <div class="lt-picked">
+              <img
+                v-if="landingInfo.inviterAvatar"
+                :src="img(landingInfo.inviterAvatar, 96)"
+                alt=""
+              />
+              <div class="lt-picked__text">
+                <div class="lt-picked__name">
+                  {{ landingInfo.inviterName || '好友' }} 邀请你加入
+                </div>
+                <div class="lt-picked__artist">
+                  {{ landingInfo.roomTypeLabel || '一起听房间' }}
+                </div>
+              </div>
+            </div>
 
-    <script src="/listen_together_multi/js/core.js?v=18"></script>
-    <script src="/listen_together_multi/js/stickers.js?v=18"></script>
-    <script src="/listen_together_multi/js/state.js?v=18"></script>
-    <script src="/listen_together_multi/js/computed.js?v=18"></script>
-    <script src="/listen_together_multi/js/methods/common.js?v=18"></script>
-    <script src="/listen_together_multi/js/methods/room.js?v=18"></script>
-    <script src="/listen_together_multi/js/methods/match.js?v=18"></script>
-    <script src="/listen_together_multi/js/methods/stickers.js?v=18"></script>
-    <script src="/listen_together_multi/js/methods/songs.js?v=18"></script>
-    <script src="/listen_together_multi/js/mounted.js?v=18"></script>
-    <script src="/listen_together_multi/app.js?v=18"></script>
+            <div v-if="landingInfo.songName" class="lt-picked">
+              <img
+                v-if="landingInfo.songCover"
+                :src="img(landingInfo.songCover, 128)"
+                alt=""
+              />
+              <div class="lt-picked__text">
+                <div class="lt-picked__name">{{ landingInfo.songName }}</div>
+                <div class="lt-picked__artist">
+                  {{ landingInfo.songArtist }}
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="landingInfo.roomStatus && landingInfo.roomStatus !== 'AVAILABLE'"
+              class="lt-picker__hint is-error"
+            >
+              房间已结束或不可加入
+            </div>
+
+            <div class="lt-roominfo__row">
+              <span class="lt-roominfo__label">房间</span>
+              <span class="lt-roominfo__value">{{ landingInfo.roomId }}</span>
+              <span class="lt-roominfo__label">成员</span>
+              <span class="lt-roominfo__value"
+                >{{ landingInfo.members }} 人</span
+              >
+            </div>
+
+            <div v-if="landingInfo.memberList.length" class="lt-invite">
+              <div
+                v-for="(m, mi) in landingInfo.memberList.slice(0, 6)"
+                :key="'lm-' + mi"
+                class="lt-invite__row"
+                style="cursor: default"
+              >
+                <img
+                  v-if="m.avatar"
+                  :src="img(m.avatar, 96)"
+                  class="lt-avatar lt-avatar--sm"
+                  alt=""
+                />
+                <span v-else class="lt-avatar lt-avatar--sm lt-avatar-fallback"
+                  >{{ initialOf(m.nickname) }}</span
+                >
+                <span class="lt-invite__text"
+                  ><span class="lt-invite__name">{{ m.nickname }}</span></span
+                >
+              </div>
+            </div>
+          </div>
+          <div class="lt-modal__foot">
+            <button class="lt-btn lt-btn--ghost" @click="dismissLanding">
+              取消
+            </button>
+            <button
+              class="lt-btn lt-btn--primary"
+              :disabled="
+                landingInfo.roomStatus &&
+                landingInfo.roomStatus !== 'AVAILABLE'
+              "
+              @click="joinLandingRoom"
+            >
+              加入房间
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= 成员抽屉 ================= -->
+    <template id="tpl-members-drawer">
+      <div class="lt-overlay" @click.self="membersOpen = false">
+        <div
+          class="lt-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="在线成员"
+        >
+          <div class="lt-colhead">
+            <div class="lt-colhead__title">
+              在线成员 <small>{{ roomInfo.roomUsers.length }}</small>
+            </div>
+            <button
+              class="lt-close"
+              aria-label="关闭"
+              @click="membersOpen = false"
+            >
+              <i class="lt-icon fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <lt-members flat></lt-members>
+        </div>
+      </div>
+    </template>
+
+    <!-- ================= Toast ================= -->
+    <template id="tpl-toasts">
+      <div class="lt-toast-host" aria-live="polite">
+        <div
+          v-for="toast in toasts"
+          :key="toast.id"
+          class="lt-toast"
+          :class="'is-' + toast.type"
+        >
+          <span class="lt-toast__dot"></span>
+          <span class="lt-toast__text">{{ toast.text }}</span>
+        </div>
+      </div>
+    </template>
+
+    <script src="/listen_together_multi/js/boot.js?v=79"></script>
   </body>
 </html>
