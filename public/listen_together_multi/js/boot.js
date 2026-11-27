@@ -7,7 +7,7 @@
 ;(function () {
   'use strict'
 
-  var VERSION = '82'
+  var VERSION = '85'
   var BASES = ['https://fastly.jsdelivr.net/npm/', 'https://unpkg.com/']
 
   var DEPS = [

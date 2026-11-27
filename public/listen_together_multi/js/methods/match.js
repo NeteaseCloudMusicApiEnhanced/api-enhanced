@@ -16,6 +16,11 @@
     LISTEN_STICKERS,
     loadSavedStickers,
   } = window.LT
+
+  // 所有创建过的 Chatroom 实例。SDK 的 getInstance 可能返回多个实例，
+  // 只保留 this._imChatroom 会在重连/失败时漏掉仍在收消息的旧实例。
+  const imInstances = new Set()
+
   const matchMethods = {
     async startMatch() {
       if (this.isMatching) return
@@ -523,11 +528,54 @@
       return this.connectImMembers()
     },
 
+    /**
+     * 断开一个 Chatroom。无参 disconnect() 在控制台已验证可用；
+     * 若 SDK 返回 Promise 或触发 ondisconnect，则尽早结束等待。
+     */
+    disconnectChatroom(chatroom, onDone) {
+      if (!chatroom) {
+        if (onDone) onDone()
+        return
+      }
+      let settled = false
+      const done = (err) => {
+        if (settled) return
+        settled = true
+        imInstances.delete(chatroom)
+        if (window.LT.chatroom === chatroom) window.LT.chatroom = null
+        if (err) log('IM', 'disconnect 回调异常', err?.message || err)
+        else log('IM', 'disconnect 完成')
+        if (onDone) onDone(err)
+      }
+      try {
+        log(
+          'IM',
+          'disconnect 调用',
+          chatroom.options?.chatroomId || '未知聊天室',
+        )
+        const result = chatroom.disconnect()
+        if (result && typeof result.then === 'function') {
+          result.then(
+            () => done(),
+            (err) => done(err),
+          )
+        }
+      } catch (e) {
+        done(e)
+      }
+    },
+
     disconnectImMembers() {
+      // 已经在断开中就不要重复调用 SDK（resetLocalState 可能在 rematch 里再次触发）
+      if (this._imDisconnectActive) return this._imDisconnectPromise
+
       // 换一代，旧连接的回调（onconnect/ondisconnect/onmsgs）全部失效，
       // 避免重新匹配时旧房间的回调把新连接顶掉。
       this._imGeneration = (this._imGeneration || 0) + 1
-      const chatroom = this._imChatroom
+      const current = this._imChatroom
+      if (current) window.LT.lastChatroom = current
+      const targets = new Set(imInstances)
+      if (current) targets.add(current)
       this._imChatroom = null
       this.imConnected = false
       this.imConnecting = false
@@ -542,40 +590,46 @@
       this._imRetryTimer = null
       this._imRetryCount = 0
       if (this.recomputeRoomUsers) this.recomputeRoomUsers()
-      if (!chatroom) {
-        this._imDisconnectPromise = null
-        this._imDisconnectingChatroom = null
-        return
+
+      if (!targets.size) {
+        this._imDisconnectPromise = Promise.resolve()
+        this._imDisconnectActive = false
+        return this._imDisconnectPromise
       }
-      // NIM SDK 的 disconnect() 是异步的；新房间必须等旧连接真正断开后再
-      // getInstance，否则重新匹配时容易出现两个聊天室消息交叉。
-      this._imDisconnectingChatroom = chatroom
-      this._imDisconnectPromise = new Promise((resolve) => {
-        let done = false
-        let timer = null
-        const finish = () => {
-          if (done) return
-          done = true
-          if (timer) clearTimeout(timer)
-          if (this._imDisconnectFinish === finish)
-            this._imDisconnectFinish = null
-          if (this._imDisconnectingChatroom === chatroom)
-            this._imDisconnectingChatroom = null
-          resolve()
-        }
-        this._imDisconnectFinish = finish
-        timer = setTimeout(finish, 3000)
-        try {
-          chatroom.disconnect()
-        } catch (e) {
-          finish()
-        }
+
+      this._imDisconnectActive = true
+      const resolvers = new Map()
+      this._imDisconnectResolvers = resolvers
+      this._imDisconnectPromise = Promise.all(
+        [...targets].map(
+          (chatroom) =>
+            new Promise((resolve) => {
+              let done = false
+              const finish = (err) => {
+                if (done) return
+                done = true
+                if (resolvers.get(chatroom) === finish)
+                  resolvers.delete(chatroom)
+                imInstances.delete(chatroom)
+                if (window.LT.chatroom === chatroom) window.LT.chatroom = null
+                resolve(err)
+              }
+              resolvers.set(chatroom, finish)
+              this.disconnectChatroom(chatroom, finish)
+              setTimeout(finish, 3000)
+            }),
+        ),
+      ).finally(() => {
+        this._imDisconnectActive = false
+        this._imDisconnectResolvers = new Map()
       })
+      return this._imDisconnectPromise
     },
 
     finishImDisconnect(chatroom) {
-      if (this._imDisconnectingChatroom !== chatroom) return
-      if (this._imDisconnectFinish) this._imDisconnectFinish()
+      const finish =
+        this._imDisconnectResolvers && this._imDisconnectResolvers.get(chatroom)
+      if (finish) finish()
     },
 
     autoConnectIm() {
@@ -646,9 +700,7 @@
           binaryWebsocket: false,
           onconnect: () => {
             if (this._imGeneration !== generation) {
-              try {
-                chatroom.disconnect()
-              } catch (e) {}
+              this.disconnectChatroom(chatroom)
               return
             }
             this.imConnected = true
@@ -664,11 +716,14 @@
           },
           ondisconnect: (err) => {
             this.finishImDisconnect(chatroom)
+            imInstances.delete(chatroom)
+            if (window.LT.chatroom === chatroom) window.LT.chatroom = null
             if (this._imGeneration !== generation) return
             this.imConnected = false
             this.imConnecting = false
             clearTimeout(this._imConnectTimer)
             this._imConnectTimer = null
+            if (window.LT.chatroom === chatroom) window.LT.chatroom = null
             this._imChatroom = null
             this._imChatRoomId = ''
             this._imMembers = []
@@ -694,13 +749,16 @@
           String(this.roomInfo.chatRoomId || '') !== String(chatRoomId) ||
           !this.roomInfo.roomId
         ) {
-          try {
-            chatroom.disconnect()
-          } catch (e) {}
+          this.disconnectChatroom(chatroom)
           if (generation === this._imGeneration) this.imConnecting = false
           return
         }
+        imInstances.add(chatroom)
+        window.LT.chatrooms = imInstances
         this._imChatroom = chatroom
+        // 调试入口：控制台可直接检查/操作当前 Chatroom 实例
+        window.LT.chatroom = chatroom
+        window.LT.lastChatroom = chatroom
         clearTimeout(this._imConnectTimer)
         this._imConnectTimer = setTimeout(() => {
           if (generation !== this._imGeneration || this.imConnected) return
@@ -736,6 +794,52 @@
           }, 1000 * this._imRetryCount)
         }
       }
+    },
+  }
+
+  window.LT.imDebug = {
+    get chatroom() {
+      return window.LT.vm && window.LT.vm._imChatroom
+    },
+    get lastChatroom() {
+      return window.LT.lastChatroom || null
+    },
+    state() {
+      const vm = window.LT.vm
+      if (!vm) return null
+      return {
+        roomId: vm.roomInfo?.roomId || null,
+        chatRoomId: vm.roomInfo?.chatRoomId || null,
+        activeChatRoomId: vm._imChatRoomId || null,
+        connected: !!vm.imConnected,
+        connecting: !!vm.imConnecting,
+        generation: vm._imGeneration || 0,
+        status: vm.imStatus || '',
+        hasChatroom: !!vm._imChatroom,
+        instances: [...imInstances].map((chatroom) => ({
+          chatroomId: chatroom.options && chatroom.options.chatroomId,
+          status:
+            chatroom.connectStatus !== undefined
+              ? chatroom.connectStatus
+              : 'unknown',
+        })),
+      }
+    },
+    /** 控制台里手动断开当前实例，返回 Promise */
+    disconnect() {
+      const vm = window.LT.vm
+      const chatroom = vm && vm._imChatroom
+      if (!chatroom) return Promise.resolve('没有活动 Chatroom 实例')
+      return new Promise((resolve) => {
+        let done = false
+        const finish = (value) => {
+          if (done) return
+          done = true
+          resolve(value)
+        }
+        vm.disconnectChatroom(chatroom, finish)
+        setTimeout(() => finish('disconnect 超时（3s）'), 3200)
+      })
     },
   }
 

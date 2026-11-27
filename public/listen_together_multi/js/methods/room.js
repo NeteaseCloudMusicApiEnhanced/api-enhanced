@@ -248,6 +248,7 @@
 
     async exitRoom() {
       this.pauseRoomForExit()
+      this.disconnectImMembers()
       try {
         await api({
           url: '/listentogether/multi/match/exit',
@@ -284,6 +285,7 @@
         ? `正在退出当前房间，准备用《${songName}》重新匹配...`
         : '正在退出当前房间，准备重新匹配...'
       this.pauseRoomForExit()
+      this.disconnectImMembers()
       try {
         const res = await api({
           url: '/listentogether/multi/match/exit',
@@ -308,6 +310,8 @@
           (e.response?.data?.message || e.message || '未知错误') +
           '）'
         this.toast(this.message, 'error', 4000)
+        // 退出失败会留在原房间，把刚断开的 IM 重新连回来
+        if (this.roomInfo.roomId) this.autoConnectIm()
         return
       }
       this.resetLocalState()
@@ -323,6 +327,7 @@
 
     async forceExitAndReset() {
       this.pauseRoomForExit()
+      this.disconnectImMembers()
       this.message = '正在清理服务端残留状态...'
       let targetRoomId = this.roomInfo.roomId || this.joinForm.roomId
       if (!targetRoomId) {
