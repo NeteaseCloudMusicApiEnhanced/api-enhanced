@@ -264,8 +264,11 @@ class MiniNim extends EventEmitter {
         port: 8080,
       }))
       const stop = (message) => {
-        login.fill(0)
-        login = null
+        // 握手成功后 login 已经置空；socket 断开时不能再次 fill(0)
+        if (login) {
+          login.fill(0)
+          login = null
+        }
         this.close(message)
       }
       const send = (service, command, body) => {
@@ -349,7 +352,10 @@ class MiniNim extends EventEmitter {
       })
       socket.on('error', () => stop('无法连接网易云 mini NIM，请检查网络'))
       socket.once('close', () => stop('mini NIM 连接已断开'))
-      this.timeout = setTimeout(() => stop('连接 mini NIM 超时，请重试'), this.timeoutMs)
+      this.timeout = setTimeout(
+        () => stop('连接 mini NIM 超时，请重试'),
+        this.timeoutMs,
+      )
       this.timeout.unref()
     })
   }
