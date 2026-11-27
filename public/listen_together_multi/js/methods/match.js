@@ -42,8 +42,12 @@
       this.closeMatchEvents()
       this._matchSongId = songId
       this._matchRequested = false
+      // 每次点击匹配/重新匹配都开启独立会话；服务端按这个 nonce 新建
+      // mini NIM 会话，避免复用上一次匹配残留的 ready 事件。
+      this._matchSession =
+        Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
       const events = new EventSource(
-        `/listentogether/multi/match/events?timestamp=${Date.now()}`,
+        `/listentogether/multi/match/events?timestamp=${Date.now()}&session=${encodeURIComponent(this._matchSession)}`,
       )
       this._matchEvents = events
       events.onmessage = (e) => {
@@ -143,6 +147,10 @@
       }
       if (event.type === 'ready') {
         if (!event.roomId) return
+        if (this.isExitingRoom(event.roomId)) {
+          log('Match', '忽略旧房间的 ready 事件', event.roomId)
+          return
+        }
         this.isMatching = false
         this._matchRequested = false
         clearTimeout(this.matchTimeoutTimer)
@@ -173,6 +181,10 @@
     },
 
     async acceptMatch(roomId) {
+      if (this.isExitingRoom(roomId)) {
+        log('Match', '忽略旧房间的 ack', roomId)
+        return
+      }
       const epoch = this._matchEpoch || 0
       try {
         const res = await api({
@@ -189,6 +201,7 @@
         const snapshot = res.data.data?.multiLtRoomSnapshot
         if (res.data.code === 200 && snapshot) {
           this.roomInfo.roomId = snapshot.multiRoomInfoDTO.roomId
+          this._exitingRoomId = ''
           this.roomInfo.creatorId = snapshot.multiRoomInfoDTO.creatorId
           this.roomInfo.chatRoomId = snapshot.multiRoomInfoDTO.chatRoomId || ''
           this.roomInfo.roomBizType = snapshot.multiRoomInfoDTO.roomBizType
@@ -244,6 +257,14 @@
 
     _handleImMessage(msg) {
       if (!msg) return
+      // 兜底：即使旧连接的回调漏过了 generation 校验，也不能把旧聊天室的
+      // 播放/成员/消息写进当前房间。
+      if (
+        this._imChatRoomId &&
+        this.roomInfo.chatRoomId &&
+        String(this._imChatRoomId) !== String(this.roomInfo.chatRoomId)
+      )
+        return
       let payload = msg.custom ?? msg.remoteExtension ?? msg.localCustom ?? null
       if (typeof payload === 'string') {
         const fixed = util.fixMojibake(payload)
@@ -514,10 +535,42 @@
       this._imMembers = []
       this._imMemberSignature = ''
       this._imMemberMap = new Map()
+      this._imChatRoomId = ''
       if (this.recomputeRoomUsers) this.recomputeRoomUsers()
-      try {
-        if (chatroom) chatroom.disconnect()
-      } catch (e) {}
+      if (!chatroom) {
+        this._imDisconnectPromise = null
+        this._imDisconnectingChatroom = null
+        return
+      }
+      // NIM SDK 的 disconnect() 是异步的；新房间必须等旧连接真正断开后再
+      // getInstance，否则重新匹配时容易出现两个聊天室消息交叉。
+      this._imDisconnectingChatroom = chatroom
+      this._imDisconnectPromise = new Promise((resolve) => {
+        let done = false
+        let timer = null
+        const finish = () => {
+          if (done) return
+          done = true
+          if (timer) clearTimeout(timer)
+          if (this._imDisconnectFinish === finish)
+            this._imDisconnectFinish = null
+          if (this._imDisconnectingChatroom === chatroom)
+            this._imDisconnectingChatroom = null
+          resolve()
+        }
+        this._imDisconnectFinish = finish
+        timer = setTimeout(finish, 1500)
+        try {
+          chatroom.disconnect()
+        } catch (e) {
+          finish()
+        }
+      })
+    },
+
+    finishImDisconnect(chatroom) {
+      if (this._imDisconnectingChatroom !== chatroom) return
+      if (this._imDisconnectFinish) this._imDisconnectFinish()
     },
 
     autoConnectIm() {
@@ -534,10 +587,19 @@
       if (this._imChatroom || this.imConnecting) return
       const chatRoomId = this.roomInfo.chatRoomId
       if (!chatRoomId) return (this.imStatus = '当前没有 ChatRoom ID')
-      const generation = (this._imGeneration = (this._imGeneration || 0) + 1)
       this.imConnecting = true
+      const generation = (this._imGeneration = (this._imGeneration || 0) + 1)
       this.imStatus = '获取聊天室凭据…'
       try {
+        if (this._imDisconnectPromise) await this._imDisconnectPromise
+        if (
+          generation !== this._imGeneration ||
+          this.roomInfo.chatRoomId !== chatRoomId ||
+          !this.roomInfo.roomId
+        ) {
+          if (generation === this._imGeneration) this.imConnecting = false
+          return
+        }
         const res = await api({
           url: '/listentogether/multi/chatroom/token',
           method: 'post',
@@ -556,10 +618,11 @@
           this.roomInfo.chatRoomId !== chatRoomId ||
           !this.roomInfo.roomId
         ) {
-          this.imConnecting = false
+          if (generation === this._imGeneration) this.imConnecting = false
           return
         }
         this.imStatus = '连接聊天室…'
+        this._imChatRoomId = String(chatRoomId)
         const chatroom = window.Chatroom.getInstance({
           appKey: '3a6a3e48f6854dfa4e4464f3bdaec3b4',
           account: data.accId,
@@ -590,10 +653,12 @@
             this.fetchStatus().catch(() => {})
           },
           ondisconnect: (err) => {
+            this.finishImDisconnect(chatroom)
             if (this._imGeneration !== generation) return
             this.imConnected = false
             this.imConnecting = false
             this._imChatroom = null
+            this._imChatRoomId = ''
             this._imMembers = []
             this._imMemberMap = new Map()
             this._imMemberSignature = ''
@@ -618,14 +683,17 @@
           try {
             chatroom.disconnect()
           } catch (e) {}
-          this.imConnecting = false
+          if (generation === this._imGeneration) this.imConnecting = false
           return
         }
         this._imChatroom = chatroom
       } catch (e) {
+        // 旧连接的失败不能清掉新连接的状态
+        if (generation !== this._imGeneration) return
         this.imConnected = false
         this.imConnecting = false
         this._imChatroom = null
+        this._imChatRoomId = ''
         const message = e.message || String(e)
         this.imStatus = /clientip|414/.test(message)
           ? 'IM 连接失败：API 出口 IP 被云信判定为内网/代理（yunxinCode 414），请在公网出口运行 api-enhanced 后重试'

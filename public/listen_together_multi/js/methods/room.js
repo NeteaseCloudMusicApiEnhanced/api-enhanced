@@ -158,6 +158,7 @@
         const snapshot = res.data.data?.multiLtRoomSnapshot
         if (res.data.code == 200 && snapshot) {
           this.roomInfo.roomId = snapshot.multiRoomInfoDTO.roomId
+          this._exitingRoomId = ''
           this.roomInfo.creatorId = snapshot.multiRoomInfoDTO.creatorId
           this.roomInfo.chatRoomId = snapshot.multiRoomInfoDTO.chatRoomId || ''
           if (snapshot?.multiRoomInfoDTO?.roomBizType !== undefined)
@@ -204,6 +205,7 @@
         if (res.data.code === 200 || res.data.status === 200) {
           const snapshot = res.data.data?.multiLtRoomSnapshot
           this.roomInfo.roomId = roomId
+          this._exitingRoomId = ''
           this.roomInfo.inviterId = inviterId
           if (snapshot?.multiRoomInfoDTO?.chatRoomId) {
             this.roomInfo.chatRoomId = snapshot.multiRoomInfoDTO.chatRoomId
@@ -264,7 +266,7 @@
         ? `正在退出当前房间，准备用《${songName}》重新匹配...`
         : '正在退出当前房间，准备重新匹配...'
       try {
-        await api({
+        const res = await api({
           url: '/listentogether/multi/match/exit',
           method: 'post',
           data: {
@@ -273,7 +275,22 @@
             cookie: this.getFakeAndroidCookie(),
           },
         })
-      } catch (e) {}
+        if (!res.data || res.data.code !== 200) {
+          throw new Error(
+            (res.data && (res.data.message || res.data.msg)) ||
+              '退出房间接口返回异常',
+          )
+        }
+      } catch (e) {
+        // 退出没成功就继续匹配，服务端可能还把我们放在旧房间，IM/播放都会串。
+        this.rematching = false
+        this.message =
+          '重新匹配失败：退出当前房间失败（' +
+          (e.response?.data?.message || e.message || '未知错误') +
+          '）'
+        this.toast(this.message, 'error', 4000)
+        return
+      }
       this.resetLocalState()
       this.selectedSong = null
       if (songId) this.inputSongId = String(songId)
@@ -318,6 +335,10 @@
     },
 
     resetLocalState() {
+      // 记住刚离开的房间：匹配轮询若仍返回旧房间，不能把它当成新匹配结果
+      if (this.roomInfo.roomId)
+        this._exitingRoomId = String(this.roomInfo.roomId)
+      this._roomEpoch = (this._roomEpoch || 0) + 1
       this.stopPolling()
       this.closeMatchEvents()
       this.disconnectImMembers()
@@ -411,6 +432,12 @@
       this.audioCurrentTime = 0
       this.audioDuration = 0
       clearTimeout(this.matchTimeoutTimer)
+      clearTimeout(this._imStatusTimer)
+      clearTimeout(this._imQueueTimer)
+      clearTimeout(this._imChatTimer)
+      this._imStatusTimer = null
+      this._imQueueTimer = null
+      this._imChatTimer = null
       const audio = document.getElementById('player')
       if (audio) {
         audio.onloadedmetadata = null
@@ -418,6 +445,14 @@
         audio.removeAttribute('src')
         audio.load()
       }
+    },
+
+    isExitingRoom(roomId) {
+      return (
+        !!roomId &&
+        !!this._exitingRoomId &&
+        String(roomId) === String(this._exitingRoomId)
+      )
     },
 
     stopPolling() {
@@ -589,6 +624,15 @@
         !this.roomInfo.roomId &&
         multiRoom?.multiRoomInfoDTO?.roomId
       ) {
+        // 刚退出/重新匹配时，status 可能短暂还返回旧房间，不能当成新匹配
+        if (this.isExitingRoom(multiRoom.multiRoomInfoDTO.roomId)) {
+          log(
+            'Match',
+            '忽略旧房间的 status 快照',
+            multiRoom.multiRoomInfoDTO.roomId,
+          )
+          return
+        }
         // 状态轮询先看到了房间：作废还在途的 /match 响应与 SSE，避免又被改回匹配中
         this._matchEpoch = (this._matchEpoch || 0) + 1
         this._matchRequested = false
@@ -598,6 +642,7 @@
         this.roomInfo.roomId = multiRoom.multiRoomInfoDTO.roomId
         this.roomInfo.creatorId = multiRoom.multiRoomInfoDTO.creatorId
         this.roomInfo.chatRoomId = multiRoom.multiRoomInfoDTO.chatRoomId || ''
+        this._exitingRoomId = ''
         this.message = '匹配成功，已进入房间'
         try {
           await api({
@@ -616,9 +661,18 @@
       }
 
       if (!this.roomInfo.roomId && multiRoom?.multiRoomInfoDTO?.roomId) {
+        if (this.isExitingRoom(multiRoom.multiRoomInfoDTO.roomId)) {
+          log(
+            'Room',
+            '忽略刚退出房间的恢复快照',
+            multiRoom.multiRoomInfoDTO.roomId,
+          )
+          return
+        }
         this.roomInfo.roomId = multiRoom.multiRoomInfoDTO.roomId
         this.roomInfo.creatorId = multiRoom.multiRoomInfoDTO.creatorId
         this.roomInfo.chatRoomId = multiRoom.multiRoomInfoDTO.chatRoomId || ''
+        this._exitingRoomId = ''
         this.message = '已恢复所在房间'
         if (!this.isPolling) this.startPolling()
       }
@@ -636,6 +690,10 @@
       this.emptyRoomCount = 0
 
       const dto = multiRoom.multiRoomInfoDTO || {}
+      if (dto.roomId && String(dto.roomId) !== String(this.roomInfo.roomId)) {
+        log('Room', '忽略其他房间的快照', dto.roomId)
+        return
+      }
       if (dto.chatRoomId) this.roomInfo.chatRoomId = dto.chatRoomId
       if (dto.creatorId) this.roomInfo.creatorId = dto.creatorId
       if (dto.roomBizType !== undefined)

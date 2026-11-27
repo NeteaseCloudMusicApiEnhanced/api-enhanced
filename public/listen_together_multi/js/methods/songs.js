@@ -551,6 +551,7 @@
 
     async loadAudioForSong(songId, seekTo) {
       const sid = Number(songId)
+      const roomEpoch = this._roomEpoch || 0
       const audio = document.getElementById('player')
       // 切歌时先停掉上一首，避免取新音源期间旧歌继续出声；
       // 同时清理上一轮音质切换的回调，防止 audioSwitching 永远卡在 true。
@@ -565,6 +566,8 @@
 
       const r = await this.resolveAudioUrl(sid, this.audioLevel)
 
+      // 重新匹配/换房后，即使新房间第一首恰好是同一首歌，旧房间的音源请求也不能落回来
+      if (roomEpoch !== (this._roomEpoch || 0)) return
       if (Number(this.playingInfo.songId) !== sid) return
       if (!r || !r.url) return
 
@@ -588,6 +591,10 @@
 
       audio.pause()
       audio.onloadedmetadata = () => {
+        if (roomEpoch !== (this._roomEpoch || 0)) {
+          audio.onloadedmetadata = null
+          return
+        }
         try {
           audio.currentTime = Math.max(0, seekTo)
           this.audioCurrentTime = Math.max(0, seekTo)
@@ -649,7 +656,10 @@
         }
       }
       audio.onloadedmetadata = () => {
-        if (epoch !== this._levelEpoch) {
+        if (
+          epoch !== this._levelEpoch ||
+          roomEpoch !== (this._roomEpoch || 0)
+        ) {
           settle()
           audio.onloadedmetadata = null
           return
@@ -682,7 +692,8 @@
       }
       // 元数据一直不来时兜底解锁 UI（例如切歌覆盖了回调）
       settleTimer = setTimeout(() => {
-        if (epoch !== this._levelEpoch) return
+        if (epoch !== this._levelEpoch || roomEpoch !== (this._roomEpoch || 0))
+          return
         this.audioSwitching = false
         audio.onloadedmetadata = null
       }, 10000)

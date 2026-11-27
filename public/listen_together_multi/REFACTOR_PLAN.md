@@ -609,3 +609,35 @@ listen_together_multi/
 - 交互脚本验证：暂停后不再自动恢复、点击其他区域不恢复；静音 0 刷新后仍为 0；`Esc` 可关闭收藏弹层；有设置弹层时 `/` 不再打开选歌；大厅开关点击可切换；顶栏菜单在 844×390 下命中菜单项而不是 tabbar。
 - 逻辑脚本验证：同来源重复普通消息保留、跨来源同文本合并、系统消息合并；`userId` 形式的 30005 成员可正确归一化与改名刷新；落地页 `songData/roomStatus/inviter.uid` 正确映射；`data.nextAddSongDuration=42` 能产生冷却倒计时。
 - 版本号 `?v=79`。
+
+## 27. 重新匹配串房修复（v80）
+
+现象：点「重新匹配」后偶发进入旧房间，表现为 IM 聊天室/成员、当前播放歌曲仍来自上一个房间，Vercel 部署时更明显。
+
+根因与处理：
+
+1. **status 快照把旧房间当成新匹配结果**
+   - `rematch()` 退出后立即 `resetLocalState()`，随后 `startMatch()` 的 status 轮询（每 2s）可能仍拿到旧房间；`applyStatus()` 的「匹配成功」和「已恢复所在房间」分支不区分房间，直接 ack 进入。
+   - 现在 `resetLocalState()` 记录 `_exitingRoomId`；`applyStatus()`、`handleMatchEvent('ready')`、`acceptMatch()` 全部忽略这个旧房间；只有收到不同 roomId 才进入并清除标记。
+   - 当前房间已存在时，若 status 返回的 `dto.roomId` 与本地不一致也直接丢弃。
+
+2. **退出房间失败仍继续匹配**
+   - `rematch()` 原先 `try { exit } catch {}`，退出失败也会 reset + match，服务端仍可能把账号留在旧房间。
+   - 现在退出接口必须返回 `code=200` 才继续；失败会提示并保持原房间，不再制造幽灵状态。
+
+3. **匹配 SSE / mini NIM 会话复用**
+   - 服务端 `util/match-events.js` 的 session 只按 cookie 缓存，旧 mini NIM 在 SSE 关闭后会保留 15s；重新匹配的新 SSE 可能复用旧会话，收到上一轮的 `ready`。
+   - `startMatch()` 每次生成新的 `session` nonce 并拼进 `/match/events`；服务端按 `cookie + nonce` 建 session，并主动关闭同账号的旧 session。EventSource 自动重连仍用同一 nonce，不会误杀。
+
+4. **IM 旧连接回调/新连接失败互相覆盖**
+   - `disconnectImMembers()` 的 `disconnect()` 是异步的；新房间可能先 `getInstance`。现在旧连接断开（或 1.5s 兜底）之前，新连接会等待；旧连接的 catch 也不会再清空新连接的 `_imChatroom` / `imConnecting`。
+   - 所有 IM 广播再按 `_imChatRoomId` 与当前 `chatRoomId` 校验一次，旧聊天室消息不会写入新房间。
+   - `resetLocalState()` 同时清理 `_imStatusTimer` / `_imQueueTimer` / `_imChatTimer`。
+
+5. **同一首歌导致旧音源请求落回新房间**
+   - `loadAudioForSong()` / `onLevelChange()` 增加 `_roomEpoch` 校验：换房后即使新房间第一首恰好与旧房间相同，旧房间的 `/song/url/v1` 响应和 `onloadedmetadata` 回调也会被丢弃。
+
+6. **缓存**
+   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **80**，避免 Vercel/浏览器继续使用旧脚本。
+
+验收：真实账号创建私房后重匹配到新的公开房，新房间的首歌/聊天室/聊天记录均来自新 roomId；旧 roomId 的 status 快照、ready 事件、IM 消息均被忽略；本地 headless 用 fake Chatroom 验证旧连接消息不会进入新连接。
