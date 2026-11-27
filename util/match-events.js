@@ -146,8 +146,25 @@ function ensureSession(key, session, cookie) {
  * Subscribe to matching notifications for the cookie's account.
  * Returns an unsubscribe function after the mini NIM login succeeds.
  */
-async function subscribe(cookie, send) {
-  const key = cookieKey(cookie)
+async function subscribe(cookie, send, sessionId = '') {
+  const baseKey = cookieKey(cookie)
+  const key = `${baseKey}:${sessionId || 'default'}`
+
+  // A new match attempt gets a new nonce. Tear down any older mini NIM
+  // sessions for the same account so a late WAIT_ACK from the previous pool
+  // cannot be replayed into the new SSE subscriber.
+  if (sessionId) {
+    for (const [existingKey, existing] of sessions) {
+      if (existingKey === key) continue
+      if (!existingKey.startsWith(`${baseKey}:`)) continue
+      existing.closed = true
+      try {
+        if (existing.client) existing.client.close('新的匹配会话')
+      } catch (e) {}
+      sessions.delete(existingKey)
+    }
+  }
+
   let session = sessions.get(key)
   if (!session || session.closed) {
     session = { subs: new Set(), client: null, ready: null, closed: false }

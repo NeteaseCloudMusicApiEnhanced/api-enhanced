@@ -349,8 +349,13 @@ async function constructServer(moduleDefs) {
     ping = setInterval(() => {
       if (!closed) res.write(': ping\n\n')
     }, 15000)
+    const requestedSession =
+      typeof req.query.session === 'string' &&
+      /^[a-z0-9-]{1,64}$/i.test(req.query.session)
+        ? req.query.session
+        : ''
     try {
-      unsubscribe = await matchEvents.subscribe(cookie, send)
+      unsubscribe = await matchEvents.subscribe(cookie, send, requestedSession)
     } catch (error) {
       send({ type: 'error', message: error.message })
       cleanup()
