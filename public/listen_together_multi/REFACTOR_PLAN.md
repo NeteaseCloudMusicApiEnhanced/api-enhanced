@@ -630,14 +630,15 @@ listen_together_multi/
    - `startMatch()` 每次生成新的 `session` nonce 并拼进 `/match/events`；服务端按 `cookie + nonce` 建 session，并主动关闭同账号的旧 session。EventSource 自动重连仍用同一 nonce，不会误杀。
 
 4. **IM 旧连接回调/新连接失败互相覆盖**
-   - `disconnectImMembers()` 的 `disconnect()` 是异步的；新房间可能先 `getInstance`。现在旧连接断开（或 1.5s 兜底）之前，新连接会等待；旧连接的 catch 也不会再清空新连接的 `_imChatroom` / `imConnecting`。
+   - `disconnectImMembers()` 的 `disconnect()` 是异步的；新房间可能先 `getInstance`。现在旧连接断开（或 3s 兜底）之前，新连接会等待；旧连接的 catch 也不会再清空新连接的 `_imChatroom` / `imConnecting`。
    - 所有 IM 广播再按 `_imChatRoomId` 与当前 `chatRoomId` 校验一次，旧聊天室消息不会写入新房间。
    - `resetLocalState()` 同时清理 `_imStatusTimer` / `_imQueueTimer` / `_imChatTimer`。
+   - 新连接 10s 内没有 `onconnect` 会主动断开并重试；普通连接异常最多自动重试 2 次（414 出口 IP 错误不重试，避免刷屏）。
 
 5. **同一首歌导致旧音源请求落回新房间**
    - `loadAudioForSong()` / `onLevelChange()` 增加 `_roomEpoch` 校验：换房后即使新房间第一首恰好与旧房间相同，旧房间的 `/song/url/v1` 响应和 `onloadedmetadata` 回调也会被丢弃。
 
 6. **缓存**
-   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **80**，避免 Vercel/浏览器继续使用旧脚本。
+   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **81**，避免 Vercel/浏览器继续使用旧脚本。
 
 验收：真实账号创建私房后重匹配到新的公开房，新房间的首歌/聊天室/聊天记录均来自新 roomId；旧 roomId 的 status 快照、ready 事件、IM 消息均被忽略；本地 headless 用 fake Chatroom 验证旧连接消息不会进入新连接。

@@ -536,6 +536,11 @@
       this._imMemberSignature = ''
       this._imMemberMap = new Map()
       this._imChatRoomId = ''
+      clearTimeout(this._imConnectTimer)
+      clearTimeout(this._imRetryTimer)
+      this._imConnectTimer = null
+      this._imRetryTimer = null
+      this._imRetryCount = 0
       if (this.recomputeRoomUsers) this.recomputeRoomUsers()
       if (!chatroom) {
         this._imDisconnectPromise = null
@@ -559,7 +564,7 @@
           resolve()
         }
         this._imDisconnectFinish = finish
-        timer = setTimeout(finish, 1500)
+        timer = setTimeout(finish, 3000)
         try {
           chatroom.disconnect()
         } catch (e) {
@@ -594,7 +599,7 @@
         if (this._imDisconnectPromise) await this._imDisconnectPromise
         if (
           generation !== this._imGeneration ||
-          this.roomInfo.chatRoomId !== chatRoomId ||
+          String(this.roomInfo.chatRoomId || '') !== String(chatRoomId) ||
           !this.roomInfo.roomId
         ) {
           if (generation === this._imGeneration) this.imConnecting = false
@@ -615,7 +620,7 @@
         await this.loadChatroomSdk()
         if (
           this._imGeneration !== generation ||
-          this.roomInfo.chatRoomId !== chatRoomId ||
+          String(this.roomInfo.chatRoomId || '') !== String(chatRoomId) ||
           !this.roomInfo.roomId
         ) {
           if (generation === this._imGeneration) this.imConnecting = false
@@ -648,6 +653,11 @@
             }
             this.imConnected = true
             this.imConnecting = false
+            this._imRetryCount = 0
+            clearTimeout(this._imConnectTimer)
+            this._imConnectTimer = null
+            clearTimeout(this._imRetryTimer)
+            this._imRetryTimer = null
             this.imStatus = 'IM 已连接，等待 30005'
             this.fetchChat().catch(() => {})
             this.fetchStatus().catch(() => {})
@@ -657,6 +667,8 @@
             if (this._imGeneration !== generation) return
             this.imConnected = false
             this.imConnecting = false
+            clearTimeout(this._imConnectTimer)
+            this._imConnectTimer = null
             this._imChatroom = null
             this._imChatRoomId = ''
             this._imMembers = []
@@ -668,6 +680,8 @@
           onerror: (err) => {
             if (this._imGeneration !== generation) return
             this.imConnecting = false
+            clearTimeout(this._imConnectTimer)
+            this._imConnectTimer = null
             this.imStatus = 'IM 错误: ' + ((err && err.message) || 'unknown')
           },
           onmsgs: (msgs) => {
@@ -677,7 +691,7 @@
         })
         if (
           this._imGeneration !== generation ||
-          this.roomInfo.chatRoomId !== chatRoomId ||
+          String(this.roomInfo.chatRoomId || '') !== String(chatRoomId) ||
           !this.roomInfo.roomId
         ) {
           try {
@@ -687,6 +701,16 @@
           return
         }
         this._imChatroom = chatroom
+        clearTimeout(this._imConnectTimer)
+        this._imConnectTimer = setTimeout(() => {
+          if (generation !== this._imGeneration || this.imConnected) return
+          this.imStatus = 'IM 连接超时，正在重试…'
+          this.disconnectImMembers()
+          this._imRetryTimer = setTimeout(() => {
+            if (this.roomInfo.roomId && this.roomInfo.chatRoomId)
+              this.connectImMembers()
+          }, 800)
+        }, 10000)
       } catch (e) {
         // 旧连接的失败不能清掉新连接的状态
         if (generation !== this._imGeneration) return
@@ -698,6 +722,19 @@
         this.imStatus = /clientip|414/.test(message)
           ? 'IM 连接失败：API 出口 IP 被云信判定为内网/代理（yunxinCode 414），请在公网出口运行 api-enhanced 后重试'
           : 'IM 连接失败: ' + message
+        if (
+          !/clientip|414/.test(message) &&
+          this.roomInfo.roomId &&
+          this.roomInfo.chatRoomId &&
+          this._imRetryCount < 2
+        ) {
+          this._imRetryCount++
+          clearTimeout(this._imRetryTimer)
+          this._imRetryTimer = setTimeout(() => {
+            if (this.roomInfo.roomId && this.roomInfo.chatRoomId)
+              this.connectImMembers()
+          }, 1000 * this._imRetryCount)
+        }
       }
     },
   }
