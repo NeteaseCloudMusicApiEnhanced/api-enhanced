@@ -229,7 +229,25 @@
       }
     },
 
+    pauseRoomForExit() {
+      // 点击退出/重新匹配时立刻静音，不要等 /match/exit 的网络往返结束；
+      // 同时作废在途的音质/音源回调，避免它们稍后把旧歌又播起来。
+      const audio = document.getElementById('player')
+      this._roomEpoch = (this._roomEpoch || 0) + 1
+      this._levelEpoch = (this._levelEpoch || 0) + 1
+      this.localPaused = true
+      this.audioPlaying = false
+      this.audioSwitching = false
+      this.playingInfo.status = 'PAUSE'
+      if (audio) {
+        audio.onloadedmetadata = null
+        audio.pause()
+      }
+      if (this.stopPreview) this.stopPreview()
+    },
+
     async exitRoom() {
+      this.pauseRoomForExit()
       try {
         await api({
           url: '/listentogether/multi/match/exit',
@@ -265,6 +283,7 @@
       this.message = songName
         ? `正在退出当前房间，准备用《${songName}》重新匹配...`
         : '正在退出当前房间，准备重新匹配...'
+      this.pauseRoomForExit()
       try {
         const res = await api({
           url: '/listentogether/multi/match/exit',
@@ -303,6 +322,7 @@
     },
 
     async forceExitAndReset() {
+      this.pauseRoomForExit()
       this.message = '正在清理服务端残留状态...'
       let targetRoomId = this.roomInfo.roomId || this.joinForm.roomId
       if (!targetRoomId) {

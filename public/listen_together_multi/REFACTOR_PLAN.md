@@ -635,10 +635,11 @@ listen_together_multi/
    - `resetLocalState()` 同时清理 `_imStatusTimer` / `_imQueueTimer` / `_imChatTimer`。
    - 新连接 10s 内没有 `onconnect` 会主动断开并重试；普通连接异常最多自动重试 2 次（414 出口 IP 错误不重试，避免刷屏）。
 
-5. **同一首歌导致旧音源请求落回新房间**
+5. **同一首歌导致旧音源请求落回新房间 / 退出后歌还在放**
    - `loadAudioForSong()` / `onLevelChange()` 增加 `_roomEpoch` 校验：换房后即使新房间第一首恰好与旧房间相同，旧房间的 `/song/url/v1` 响应和 `onloadedmetadata` 回调也会被丢弃。
+   - 点击退出/重新匹配时立即 `audio.pause()` 并作废在途音质回调，不再等 `/match/exit` 网络往返；同时置 `localPaused`，避免同一次点击冒泡到 body 的自动播放解锁又把歌播起来。
 
 6. **缓存**
-   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **81**，避免 Vercel/浏览器继续使用旧脚本。
+   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **82**，避免 Vercel/浏览器继续使用旧脚本。
 
 验收：真实账号创建私房后重匹配到新的公开房，新房间的首歌/聊天室/聊天记录均来自新 roomId；旧 roomId 的 status 快照、ready 事件、IM 消息均被忽略；本地 headless 用 fake Chatroom 验证旧连接消息不会进入新连接。
