@@ -650,3 +650,21 @@ listen_together_multi/
    - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **86**，避免 Vercel/浏览器继续使用旧脚本。
 
 验收：真实账号创建私房后重匹配到新的公开房，新房间的首歌/聊天室/聊天记录均来自新 roomId；旧 roomId 的 status 快照、ready 事件、IM 消息均被忽略；本地 headless 用 fake Chatroom 验证旧连接消息不会进入新连接。
+
+## 28. Cloudflare / 静态资源加载优化（v87）
+
+原加载方式有两个明显瓶颈：
+
+1. `boot.js` 逐个 `await` 注入 24 个业务脚本，每个都要等上一个 `onload`，在网络 RTT 高或 Cloudflare 回源慢时形成整条瀑布。
+2. Vue / axios 走公共 CDN，且 Font Awesome CSS 加载完成前不开始任何业务脚本。
+
+处理：
+
+- **同源 vendor**：`vendor/vue.global.prod.js`（3.5.46）与 `vendor/axios.min.js`（0.26.1），`boot.js` 优先同源加载，失败再回退 jsDelivr → unpkg。Vue 版本从浮动的 `vue@3` 固定到 3.5.46。
+- **并行下载、顺序执行**：业务脚本一次性全部插入，`async=false` 保证依赖顺序，`Promise.all` 只等全部加载完成。实测 24 个脚本在同一时间窗口发出（约 190–300ms 完成），不再串行等待。
+- **图标 CSS 不阻塞**：Font Awesome 与 Vue/axios、业务脚本并行加载，失败只丢图标。
+- **资源提示**：`index.html` 对 vendor 的 Vue/axios、`js/core.js` 加 `preload`，并对 jsDelivr 加 `preconnect`。
+- **缓存**：`server.js` 对 `public/listen_together_multi/**` 的 js/css/vendor/字体/图片返回 `Cache-Control: public, max-age=31536000, immutable`；HTML 返回 `no-cache`。所有资源 URL 带 `?v=`，Cloudflare 可长期缓存静态资源，HTML 始终回源拿新版本。
+- 版本号 `?v=88`。
+
+注意：Vercel 的 `@vercel/node` 走 Express，Cloudflare 在回源时会按上述响应头缓存；如果 Cloudflare 开了 Rocket Loader，建议对本 demo 关闭，避免它重排 classic script 执行顺序。

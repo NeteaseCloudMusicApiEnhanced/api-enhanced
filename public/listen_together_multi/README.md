@@ -2,7 +2,7 @@
 
 `/listen_together_multi/` 是 api-enhanced 的多人一起听网页控制台：创建 / 匹配 / 加入房间，跟随房间同步播放，排队推歌、一起听点赞、聊天与表情。
 
-页面是**纯静态零构建**的：Express 直接托管 `public/`，浏览器按顺序加载 classic script，不经过打包器，也不新增 npm 依赖。图标使用 Font Awesome 6 Free（CDN，失败自动降级），Vue 3 与 axios 由 `js/boot.js` 依次尝试 jsDelivr → unpkg，全部失败时给出可重试的错误面板而不是白屏。
+页面是**纯静态零构建**的：Express 直接托管 `public/`，浏览器按顺序执行 classic script，不经过打包器，也不新增 npm 依赖。Vue 3 与 axios 优先从同源 `vendor/` 加载（Cloudflare/浏览器可长期缓存），失败再回退 jsDelivr → unpkg；业务脚本一次性并行下载、按 `async=false` 顺序执行，不再逐个等 `onload`。图标使用 Font Awesome 6 Free（CDN，失败自动降级），依赖全部失败时给出可重试的错误面板而不是白屏。
 
 ## 快速开始
 
@@ -94,6 +94,9 @@ pnpm start            # 或 node app.js，默认 http://localhost:3000
 
 ```text
 index.html                 壳 + 全部 <template id="tpl-*"> 模板
+vendor/
+  vue.global.prod.js       Vue 3.5.46（同源优先，失败回退 CDN）
+  axios.min.js             axios 1.20.0
 css/
   tokens.css               设计令牌 / 深浅主题 / 重置
   base.css                 按钮、输入、标签、弹层、Toast、骨架
@@ -102,7 +105,7 @@ css/
   queue.css                队列、成员、邀请
   chat.css                 消息流、输入区、表情、日志
 js/
-  boot.js                  依赖加载（jsDelivr → unpkg → 错误面板）
+  boot.js                  依赖加载（同源 vendor → jsDelivr → unpkg）
   core.js                  axios 实例、日志、存储、常量与工具
   stickers.js              内置表情、本地表情读取
   state.js                 共享响应式 store

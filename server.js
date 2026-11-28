@@ -234,8 +234,26 @@ async function constructServer(moduleDefs) {
 
   /**
    * Serving static files
+   *
+   * 一起听 demo 的 js/css/vendor 都带 ?v= 版本号，可以安全地交给浏览器和
+   * Cloudflare 长期缓存；HTML 仍然每次回源，保证版本号更新能立即生效。
    */
-  app.use(express.static(path.join(__dirname, 'public')))
+  app.use(
+    express.static(path.join(__dirname, 'public'), {
+      setHeaders(res, filePath) {
+        if (!filePath.includes(`${path.sep}listen_together_multi${path.sep}`)) {
+          return
+        }
+        if (
+          /\.(?:js|css|woff2?|ttf|eot|svg|png|jpe?g|gif|webp)$/i.test(filePath)
+        ) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+        } else if (/\.html?$/i.test(filePath)) {
+          res.setHeader('Cache-Control', 'no-cache')
+        }
+      },
+    }),
+  )
   /**
    * CORS & Preflight request
    */

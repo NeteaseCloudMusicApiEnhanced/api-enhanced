@@ -7,19 +7,21 @@
 ;(function () {
   'use strict'
 
-  var VERSION = '86'
+  var VERSION = '88'
   var BASES = ['https://fastly.jsdelivr.net/npm/', 'https://unpkg.com/']
 
   var DEPS = [
     {
       name: 'Vue',
-      file: 'vue@3/dist/vue.global.prod.js',
+      local: 'vendor/vue.global.prod.js',
+      file: 'vue@3.5.46/dist/vue.global.prod.js',
       ready: function () {
         return typeof window.Vue !== 'undefined'
       },
     },
     {
       name: 'axios',
+      local: 'vendor/axios.min.js',
       file: 'axios@0.26.1/dist/axios.min.js',
       ready: function () {
         return typeof window.axios !== 'undefined'
@@ -109,6 +111,14 @@
     return attempt()
   }
 
+  function loadDep(dep) {
+    // 优先同源 vendor（Cloudflare/浏览器可长期缓存），失败再回退公共 CDN
+    var local = '/listen_together_multi/' + dep.local + '?v=' + VERSION
+    return inject(local).catch(function () {
+      return loadOne(dep.file, dep.name)
+    })
+  }
+
   function fatal(message, detail) {
     var app = document.getElementById('app')
     if (!app) return
@@ -124,20 +134,23 @@
       '<div class="lt-boot-error__actions">' +
       '<button onclick="location.reload()">重新加载</button>' +
       '</div>' +
-      '<p class="lt-boot-error__hint">Vue / axios 来自公共 CDN（jsDelivr、unpkg）。' +
-      '如果网络无法访问，可改用本地反向代理或在能访问 CDN 的网络下打开。</p>' +
+      '<p class="lt-boot-error__hint">Vue / axios 优先使用站点 vendor，失败后回退到公共 CDN（jsDelivr、unpkg）。' +
+      '如果网络无法访问，请检查站点静态资源或 CDN 可用性。</p>' +
       '</div>'
   }
 
   function boot() {
-    var chain = Promise.resolve()
-    DEPS.forEach(function (dep) {
-      chain = chain.then(function () {
-        if (dep.ready()) return null
-        return loadOne(dep.file, dep.name)
-      })
+    // 图标样式与业务脚本互不依赖，失败也不阻塞页面
+    loadCss(ICONS).catch(function () {
+      return null
     })
-    chain
+
+    Promise.all(
+      DEPS.map(function (dep) {
+        if (dep.ready()) return null
+        return loadDep(dep)
+      }),
+    )
       .then(function () {
         if (
           !DEPS.every(function (dep) {
@@ -146,19 +159,13 @@
         ) {
           throw new Error('依赖未初始化')
         }
-        // 图标样式失败不阻塞页面，只是不显示图标
-        var iconReady = loadCss(ICONS).catch(function () {
-          return null
-        })
-        return iconReady.then(function () {
-          var load = Promise.resolve()
-          SCRIPTS.forEach(function (path) {
-            load = load.then(function () {
-              return inject('/listen_together_multi/' + path + '?v=' + VERSION)
-            })
-          })
-          return load
-        })
+        // 所有业务脚本一次性插入：浏览器并行下载，async=false 保证按顺序执行，
+        // 不再像以前那样每个脚本都等上一个 onload。
+        return Promise.all(
+          SCRIPTS.map(function (path) {
+            return inject('/listen_together_multi/' + path + '?v=' + VERSION)
+          }),
+        )
       })
       .catch(function (error) {
         fatal(
