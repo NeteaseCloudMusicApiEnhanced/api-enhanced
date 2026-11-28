@@ -1,0 +1,440 @@
+/* ==========================================================================
+   队列 / 成员 / 邀请
+   ========================================================================== */
+
+/* 面板通用表头 */
+.lt-colhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lt-2);
+  padding: 13px 12px 10px 14px;
+  flex: 0 0 auto;
+}
+
+.lt-colhead__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  min-width: 0;
+}
+
+.lt-colhead__title small {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--lt-text-3);
+}
+
+.lt-colhead__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ==========================================================================
+   队列
+   ========================================================================== */
+
+.lt-queue__tabs {
+  padding: 0 12px 10px;
+  flex: 0 0 auto;
+}
+
+.lt-queue__tabs .lt-tabs {
+  width: 100%;
+}
+
+.lt-queue__tabs .lt-tab {
+  flex: 1;
+  justify-content: center;
+}
+
+.lt-queue__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overscroll-behavior: contain;
+}
+
+.lt-queue__foot {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-top: 1px solid var(--lt-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--lt-text-3);
+}
+
+.lt-track {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--lt-r-sm);
+  transition: background var(--lt-dur) var(--lt-ease);
+}
+
+.lt-track:hover,
+.lt-track:focus-within {
+  background: var(--lt-surface);
+}
+
+.lt-track.is-next {
+  background: var(--lt-accent-soft);
+}
+
+.lt-track__cover {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lt-r-xs);
+  object-fit: cover;
+  background: var(--lt-surface-3);
+}
+
+.lt-track__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lt-track__title {
+  font-size: 12.8px;
+  font-weight: 500;
+  color: var(--lt-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-track__sub {
+  font-size: 11.5px;
+  color: var(--lt-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-track__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.lt-track__meta .lt-chip {
+  height: 18px;
+  padding: 0 7px;
+  font-size: 10.5px;
+}
+
+.lt-track__actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.lt-track__up {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: var(--lt-r-full);
+  color: var(--lt-text-2);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background var(--lt-dur) var(--lt-ease),
+    color var(--lt-dur) var(--lt-ease);
+}
+
+.lt-track__up:hover {
+  background: var(--lt-surface-2);
+  color: var(--lt-text);
+}
+
+.lt-track__up.is-on {
+  color: var(--lt-accent-2);
+  background: var(--lt-accent-soft);
+}
+
+.lt-track__up .lt-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.lt-track__del {
+  width: 28px;
+  height: 28px;
+  color: var(--lt-text-3);
+  opacity: 0;
+  transition: opacity var(--lt-dur) var(--lt-ease);
+}
+
+.lt-track:hover .lt-track__del,
+.lt-track:focus-within .lt-track__del {
+  opacity: 1;
+}
+
+.lt-track__del:hover {
+  color: var(--lt-accent-2);
+  background: var(--lt-accent-soft);
+}
+
+.lt-track__del:focus-visible {
+  opacity: 1;
+}
+
+/* 触屏没有 hover，删除按钮必须可见，不能留一个透明但可点的区域 */
+@media (hover: none) {
+  .lt-track__del {
+    opacity: 0.55;
+  }
+
+  .lt-track__del:active {
+    opacity: 1;
+  }
+}
+
+.lt-track__badge {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--lt-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* 已播列表的时间列 */
+.lt-track__time {
+  font-family: var(--lt-font-num);
+  font-size: 10.5px;
+  color: var(--lt-text-3);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   成员
+   ========================================================================== */
+
+.lt-people {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 0 8px;
+}
+
+.lt-person {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: var(--lt-r-sm);
+  transition: background var(--lt-dur) var(--lt-ease);
+}
+
+.lt-person:hover {
+  background: var(--lt-surface);
+}
+
+.lt-person__text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lt-person__name {
+  font-size: 12.8px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-person__uid {
+  font-family: var(--lt-font-num);
+  font-size: 10.5px;
+  color: var(--lt-text-3);
+}
+
+.lt-person__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lt-ok);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.lt-members__foot {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--lt-line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lt-members__im {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--lt-text-3);
+}
+
+.lt-members__im .lt-btn {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+.lt-members__im-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 成员抽屉 */
+.lt-drawer {
+  width: min(400px, 100%);
+  max-height: min(660px, 86dvh);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--lt-r-xl);
+  border: 1px solid var(--lt-line-strong);
+  background: var(--lt-elev);
+  box-shadow: var(--lt-shadow-3);
+  overflow: hidden;
+  animation: lt-rise var(--lt-dur-slow) var(--lt-ease);
+}
+
+/* ==========================================================================
+   邀请
+   ========================================================================== */
+
+.lt-invite {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lt-invite__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--lt-r-sm);
+  border: 1px solid transparent;
+  transition:
+    background var(--lt-dur) var(--lt-ease),
+    border-color var(--lt-dur) var(--lt-ease);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.lt-invite__row:hover {
+  background: var(--lt-surface);
+}
+
+.lt-invite__row.is-on {
+  background: var(--lt-accent-soft);
+  border-color: var(--lt-accent-line);
+}
+
+.lt-invite__row.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lt-invite__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lt-invite__name {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lt-invite__sub {
+  font-size: 11px;
+  color: var(--lt-text-3);
+}
+
+.lt-invite__check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lt-line-strong);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  flex: 0 0 auto;
+}
+
+.lt-invite__row.is-on .lt-invite__check {
+  border-color: var(--lt-accent);
+  background: var(--lt-accent);
+  color: #fff;
+}
+
+.lt-invite__check .lt-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.lt-invite__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lt-invite__label {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lt-text-3);
+}
+
+.lt-chip.is-sys {
+  background: var(--lt-surface-2);
+  color: var(--lt-text-2);
+}
+
+.lt-members__truncated {
+  margin: 8px 12px 0;
+  padding: 8px 10px;
+  border-radius: var(--lt-r-sm);
+  background: var(--lt-warn-soft);
+  color: var(--lt-warn);
+  font-size: 11px;
+  line-height: 1.55;
+}
