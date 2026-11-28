@@ -21,16 +21,102 @@
     }
   }
 
-  const log = (tag, msg, data = '') => {
-    console.log(`[${new Date().toLocaleTimeString()}] [${tag}] ${msg}`, data)
+  const LOG_LEVELS = (LT.LOG_LEVELS = {
+    debug: { label: '调试', weight: 10 },
+    info: { label: '信息', weight: 20 },
+    warn: { label: '警告', weight: 30 },
+    error: { label: '错误', weight: 40 },
+  })
+
+  const MODULE_ALIASES = {
+    Init: 'App',
+    app: 'App',
+    Poll: 'Room',
+    PlayInfo: 'Room',
+    User: 'Room',
+    Landing: 'Invite',
+    QR: 'Login',
+    MediaSession: 'UI',
+    status: 'Status',
+  }
+
+  const normalizeLevel = (level) =>
+    Object.prototype.hasOwnProperty.call(LOG_LEVELS, level) ? level : 'info'
+
+  const normalizeModule = (module) => {
+    const value = String(module || 'App').trim()
+    return MODULE_ALIASES[value] || value || 'App'
+  }
+
+  const logLevelFromText = (text) => {
+    const value = String(text || '')
+    if (/失败|异常|错误|不可|无权|超时|拒绝|拦截|不支持|崩溃/.test(value))
+      return 'error'
+    if (/重连|忽略|兜底|阻止|冷却|断开|警告|降级|限制/.test(value))
+      return 'warn'
+    return 'info'
+  }
+
+  /**
+   * log(level, module, message, data, payload)
+   * payload 是结构化对象时会写入日志并交给 JSON viewer；浏览器控制台用
+   * console.group 输出：原始 JSON 折叠，展开后的 parsed 组默认展开。
+   * 兼容旧调用 log(module, message, data)，旧调用统一记为 info。
+   */
+  const log = (level, module, msg, data, payload) => {
+    if (!Object.prototype.hasOwnProperty.call(LOG_LEVELS, level)) {
+      // 旧签名 log(module, message, data?)：第二个参数是 message，
+      // 第三个参数才是 data；没有第三个参数时不要把它重复写进 data。
+      data = msg !== undefined ? msg : ''
+      msg = module
+      module = level
+      level = 'info'
+    }
+    const normalizedLevel = normalizeLevel(level)
+    const normalizedModule = normalizeModule(module)
+    const text = String(msg || '')
+    const now = Date.now()
     const entry = {
-      time: Date.now(),
-      tag: String(tag || 'log'),
-      msg: String(msg || ''),
+      time: now,
+      level: normalizedLevel,
+      module: normalizedModule,
+      // 保留 tag 字段，兼容旧日志/旧导出
+      tag: normalizedModule,
+      msg: text,
       data: logData(data),
     }
+    if (payload !== undefined) entry.payload = payload
+    const stamp = new Date(now).toLocaleTimeString()
+    const label = `[${stamp}] [${normalizedLevel.toUpperCase()}] [${normalizedModule}] ${text}`
+    if (payload !== undefined) {
+      // raw JSON 默认折叠；展开 console group 后 parsed JSON 组默认展开
+      console.groupCollapsed(label)
+      try {
+        console.log(
+          'raw JSON',
+          typeof payload === 'string'
+            ? payload
+            : JSON.stringify(payload, null, 2),
+        )
+        console.group('parsed JSON')
+        console.dir(payload, { depth: null })
+        console.groupEnd()
+      } finally {
+        console.groupEnd()
+      }
+    } else {
+      const consoleFn =
+        normalizedLevel === 'error'
+          ? console.error
+          : normalizedLevel === 'warn'
+            ? console.warn
+            : normalizedLevel === 'debug'
+              ? console.debug
+              : console.log
+      consoleFn(label, data ?? '')
+    }
     logs.push(entry)
-    if (logs.length > 300) logs.splice(0, logs.length - 300)
+    if (logs.length > 1000) logs.splice(0, logs.length - 1000)
     if (typeof CustomEvent !== 'undefined') {
       window.dispatchEvent(new CustomEvent('lt-log', { detail: entry }))
     }
@@ -83,6 +169,75 @@
     return config
   })
 
+  // 调试日志：仅在 debugCapture 开启时记录 HTTP 请求/响应。
+  const debugHttpRequest = (config) => {
+    const vm = window.LT.vm
+    if (!vm || !vm.debugCapture) return config
+    config.__ltDebugStart = Date.now()
+    window.LT.debugLog?.(
+      'HTTP',
+      `→ ${String(config.method || 'get').toUpperCase()} ${config.url || ''}`,
+      {
+        phase: 'request',
+        method: String(config.method || 'get').toUpperCase(),
+        url: config.url || '',
+        params: config.params || {},
+        data: config.data,
+      },
+    )
+    return config
+  }
+
+  const debugHttpResponse = (response) => {
+    const vm = window.LT.vm
+    if (!vm || !vm.debugCapture) return response
+    const config = response.config || {}
+    const duration = config.__ltDebugStart
+      ? Date.now() - config.__ltDebugStart
+      : 0
+    window.LT.debugLog?.(
+      'HTTP',
+      `← ${response.status} ${String(config.method || 'get').toUpperCase()} ${config.url || ''} · ${duration}ms`,
+      {
+        phase: 'response',
+        status: response.status,
+        duration,
+        url: config.url || '',
+        response: response.data,
+      },
+    )
+    return response
+  }
+
+  const debugHttpError = (error) => {
+    const vm = window.LT.vm
+    if (vm && vm.debugCapture) {
+      const config = error.config || {}
+      const duration = config.__ltDebugStart
+        ? Date.now() - config.__ltDebugStart
+        : 0
+      window.LT.debugLog?.(
+        'HTTP',
+        `✖ ${error.response?.status || 'NETWORK'} ${String(config.method || 'get').toUpperCase()} ${config.url || ''} · ${duration}ms`,
+        {
+          phase: 'error',
+          status: error.response?.status || 0,
+          duration,
+          url: config.url || '',
+          message: error.message || '',
+          response: error.response?.data || null,
+        },
+        'error',
+      )
+    }
+    return Promise.reject(error)
+  }
+
+  for (const instance of [api, axios]) {
+    instance.interceptors.request.use(debugHttpRequest)
+    instance.interceptors.response.use(debugHttpResponse, debugHttpError)
+  }
+
   /* ---------------- 存储 ---------------- */
 
   const safeStorage = {
@@ -90,7 +245,7 @@
       try {
         return localStorage.getItem(key) || ''
       } catch (e) {
-        log('Storage', '读取被阻止', e.message)
+        log('warn', 'Storage', '读取被阻止', e.message)
         return ''
       }
     },
@@ -99,7 +254,7 @@
         localStorage.setItem(key, String(val))
         return true
       } catch (e) {
-        log('Storage', '写入被阻止', e.message)
+        log('warn', 'Storage', '写入被阻止', e.message)
         return false
       }
     },
@@ -316,6 +471,10 @@
   Object.assign(LT, {
     log,
     logs,
+    LOG_LEVELS,
+    logLevelFromText,
+    normalizeLogLevel: normalizeLevel,
+    normalizeLogModule: normalizeModule,
     HEARTBEAT_INTERVAL,
     STATUS_INTERVAL,
     MATCH_POLL_INTERVAL,

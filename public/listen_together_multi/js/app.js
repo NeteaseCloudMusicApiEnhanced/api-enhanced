@@ -23,6 +23,7 @@
     previewMethods,
     inviteMethods,
     uiMethods,
+    debugMethods,
     components,
   } = LT
 
@@ -60,6 +61,7 @@
     previewMethods,
     inviteMethods,
     uiMethods,
+    debugMethods,
   )
 
   const REQUIRED_METHODS = [
@@ -79,12 +81,14 @@
     'loadMyPlaylists',
     'addSongToPlaylist',
     'openCollectSheet',
+    'toggleDebugCapture',
+    'ensureJsonFormatter',
   ]
   const missing = REQUIRED_METHODS.filter(
     (name) => typeof methods[name] !== 'function',
   )
   if (missing.length) {
-    LT.log('app', '缺少关键方法', missing.join(','))
+    LT.log('error', 'App', '缺少关键方法', missing.join(','))
     console.error('[listen-together] 缺少关键方法:', missing)
   }
 

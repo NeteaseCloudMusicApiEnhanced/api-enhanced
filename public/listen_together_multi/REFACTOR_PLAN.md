@@ -678,3 +678,32 @@ listen_together_multi/
 修复：`togglePreview()` 在 `audio.src` 为空且存在 `selectedSong` 时，重新调用 `previewSelectedSong(selectedSong)` 拉取一次试听音源；`preview.loading` 时避免重复请求。
 
 验收：关闭/重开匹配用歌弹窗后点播放，`preview.songId` 正确、`preview.url` 重新获取、`previewAudio.src` 有值。版本号 `?v=89`。
+
+
+## 30. 日志分级与模块过滤（v90）
+
+原来日志只有 `tag` + 文本，失败、警告、普通同步混在一起，排查时很难快速定位。
+
+现在：
+
+- `LT.log(level, module, message, data)` 统一签名，level 支持 `debug / info / warn / error`；模块统一为 `App / Room / Match / IM / Chat / Queue / Audio / Preview / Playlist / Invite / Login / Storage / UI / ...`。
+- 旧调用 `log(tag, message, data)` 仍兼容，自动记为 `info`。
+- `console` 输出同步带 `[LEVEL] [Module]`，日志对象包含 `{ level, module, time, msg, data }`，`exportDiagnostics` 也导出 level/module。
+- 「工作日志 / 调试与诊断」新增：
+  - 等级改为四个独立 toggle（错误 / 警告 / 信息 / 调试），可多选，默认全开，每个带数量；不再需要「全部」；
+  - 模块下拉筛选；
+  - 每行显示时间、等级、模块、消息；等级按颜色区分（错误红 / 警告黄 / 信息蓝 / 调试灰）。
+- `?mock=1` 预览数据包含 info / debug / warn 示例，方便验收。
+- 版本号 `?v=91`。
+
+
+## 31. HTTP / IM 调试日志与 JSON 查看器（v92）
+
+需求：WS 面板里的 IM 原始帧太难看；HTTP 请求也要能进日志。调试默认关闭，开启后：
+- HTTP：请求和响应（含 method/url/params/data/status/duration/response）通过 axios 拦截器记录；`api` 和全局 `axios` 都覆盖。
+- IM：`handleImMessage` 解析前后记录 `{ type, content, payload, msg }`。
+- 敏感字段（cookie / set-cookie / authorization / token / MUSIC_U / __csrf 等）统一脱敏；数组/深度有上限。
+- 日志条目带 `payload` 对象，点击「查看 JSON」用 vendor 的 `json-formatter-js` 渲染；UMD 自带样式，按 `Infinity` 展开所有嵌套节点，带 hover preview。
+- 浏览器 DevTools console 仍输出：`console.groupCollapsed` 包住整条记录，内部先列 raw JSON（字符串，默认折叠），再用 `console.group('parsed JSON')` + `console.dir(payload, { depth: null })` 展开 parsed；不开启调试时不产生 HTTP/IM 噪声。
+- 日志开关默认关闭，放在「工作日志」页签顶部（未开启时显示「开始录制」，录制中显示红点和「停止录制」），调试面板也保留同一开关；设置页不再重复放置，避免用户误以为开启筛选就等于开启采集。日志上限 1000 条。
+- 版本号 `?v=93`。

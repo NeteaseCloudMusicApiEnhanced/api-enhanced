@@ -231,6 +231,9 @@
       toasts: [],
       clock: Date.now(),
       logEntries: [],
+      logLevelFilters: { error: true, warn: true, info: true, debug: true },
+      logModuleFilter: 'all',
+      debugCapture: false,
       sync: { sse: 'idle', lastHeartbeat: 0, failures: 0, lastIm: 0 },
 
       /* ---------- 邀请面板 ---------- */

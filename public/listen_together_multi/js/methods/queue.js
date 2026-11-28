@@ -70,7 +70,7 @@
         this.playedMore = data.page?.more === true
         this.playedLoaded = true
       } catch (e) {
-        log('Played', '读取失败', e?.message || e)
+        log('error', 'Queue', '读取失败', e?.message || e)
         if (!this.playedSongs.length) {
           this.playedMore = false
         }

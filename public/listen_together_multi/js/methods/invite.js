@@ -62,11 +62,11 @@
             cookie: this.getFakeAndroidCookie(),
           },
         })
-        log('Landing', '预览返回', res.data?.data)
+        log('info', 'Invite', '预览返回', res.data?.data)
         const info = this.normalizeLanding(res.data?.data || {}, invite)
         this.landingInfo = info
       } catch (e) {
-        log('Landing', '预览失败', e?.message || e)
+        log('error', 'Invite', '预览失败', e?.message || e)
         // 预览失败也允许直接尝试加入
         this.landingInfo = {
           roomId: invite.roomId,
@@ -226,14 +226,14 @@
             cookie: this.getFakeAndroidCookie(),
           },
         })
-        log('Invite', '候选返回', res.data?.data)
+        log('info', 'Invite', '候选返回', res.data?.data)
         const data = res.data?.data || {}
         const users = this.collectInviteUsers(data)
         const groups = this.collectInviteGroups(data)
         this.inviteUsers = users
         this.inviteGroups = groups
       } catch (e) {
-        log('Invite', '候选读取失败', e?.message || e)
+        log('error', 'Invite', '候选读取失败', e?.message || e)
         this.inviteError =
           '邀请候选读取失败：' +
           (e.response?.data?.message || e.message || '未知错误')

@@ -113,7 +113,7 @@
         }
         this._qrTimer = setInterval(() => this.pollQrLogin(key), 3000)
       } catch (e) {
-        log('QR', '二维码获取失败', e?.message || e)
+        log('error', 'Login', '二维码获取失败', e?.message || e)
         this.qr = {
           img: '',
           status: 'error',
@@ -154,7 +154,7 @@
           }
         }
       } catch (e) {
-        log('QR', '扫码状态查询失败', e?.message || e)
+        log('error', 'Login', '扫码状态查询失败', e?.message || e)
       }
     },
 
@@ -191,7 +191,7 @@
           this.nextSong(),
         )
       } catch (e) {
-        log('MediaSession', '设置失败', e?.message || e)
+        log('error', 'UI', '设置失败', e?.message || e)
       }
     },
 

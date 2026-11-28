@@ -8,6 +8,7 @@ still falls back to jsDelivr/unpkg if a file is missing or corrupted.
 | --- | --- | --- | --- |
 | `vue.global.prod.js` | [vue](https://www.npmjs.com/package/vue) | 3.5.46 | MIT |
 | `axios.min.js` | [axios](https://www.npmjs.com/package/axios) | 0.26.1 | MIT |
+| `json-formatter.umd.js` | [json-formatter-js](https://www.npmjs.com/package/json-formatter-js) | 2.5.23 | MIT |
 
 When upgrading, update both the file and the version in `js/boot.js`, then bump
 `VERSION` in `boot.js` and every `?v=` in `index.html`.

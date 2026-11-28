@@ -82,7 +82,7 @@
           this.toast('浏览器拦截了自动试听，请点播放', 'warn')
         }
       } catch (e) {
-        log('Preview', '试听加载失败', e?.message || e)
+        log('error', 'Preview', '试听加载失败', e?.message || e)
         this.preview.error =
           e.response?.data?.message || e.message || '试听加载失败'
       } finally {

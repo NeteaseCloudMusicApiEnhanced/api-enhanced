@@ -1,7 +1,7 @@
 ;(function () {
   'use strict'
 
-  const { LISTEN_STICKERS, util } = window.LT
+  const { LISTEN_STICKERS, util, LOG_LEVELS } = window.LT
 
   const computed = {
     /* ---------------- 视图 ---------------- */
@@ -158,6 +158,33 @@
 
     selectedSongId() {
       return Number(this.selectedSong?.id || this.inputSongId) || 0
+    },
+
+    /* ---------------- 日志 ---------------- */
+
+    logLevelOptions() {
+      return ['error', 'warn', 'info', 'debug'].map((key) => ({
+        key,
+        label: LOG_LEVELS[key].label,
+        enabled: this.logLevelFilters[key] !== false,
+        count: this.logEntries.filter((entry) => entry.level === key).length,
+      }))
+    },
+
+    logModuleOptions() {
+      return [
+        ...new Set(this.logEntries.map((entry) => entry.module || 'App')),
+      ].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+    },
+
+    filteredLogEntries() {
+      const levels = this.logLevelFilters || {}
+      const module = this.logModuleFilter || 'all'
+      return this.logEntries.filter(
+        (entry) =>
+          levels[entry.level] !== false &&
+          (module === 'all' || entry.module === module),
+      )
     },
 
     /* ---------------- 聊天 ---------------- */

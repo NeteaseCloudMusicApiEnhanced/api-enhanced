@@ -68,7 +68,7 @@ pnpm start            # 或 node app.js，默认 http://localhost:3000
 - 草稿按房间保存；100 字上限与计数；`Ctrl/Cmd + Enter` 发送，`Enter` 换行
 - `@` 提及成员（完整昵称、光标处插入、消息内高亮）
 - 系统 / 互动消息按「文本 + 4 秒窗口」去重，IM 推送与历史回填不会重复出现
-- 工作日志页签，支持导出诊断 JSON
+- 工作日志页签：按 `错误 / 警告 / 信息 / 调试` 四个独立开关多选、按模块筛选，支持导出诊断 JSON；调试日志默认关闭，在日志页签顶部点「开始录制」后，HTTP 请求/响应和 IM 广播会带可展开的 JSON 查看器
 
 **邀请**
 
@@ -96,7 +96,8 @@ pnpm start            # 或 node app.js，默认 http://localhost:3000
 index.html                 壳 + 全部 <template id="tpl-*"> 模板
 vendor/
   vue.global.prod.js       Vue 3.5.46（同源优先，失败回退 CDN）
-  axios.min.js             axios 1.20.0
+  axios.min.js             axios 0.26.1
+  json-formatter.umd.js    日志 JSON 查看器（json-formatter-js）
 css/
   tokens.css               设计令牌 / 深浅主题 / 重置
   base.css                 按钮、输入、标签、弹层、Toast、骨架

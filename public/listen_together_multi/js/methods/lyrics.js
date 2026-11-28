@@ -92,7 +92,7 @@
           this.$nextTick(() => this.scrollLyricsToActive(true))
         }
       } catch (e) {
-        log('Lyrics', '加载失败', e?.message || e)
+        log('error', 'Lyrics', '加载失败', e?.message || e)
         if (this.lyrics.songId === songId) {
           this.lyrics = {
             lines: [],

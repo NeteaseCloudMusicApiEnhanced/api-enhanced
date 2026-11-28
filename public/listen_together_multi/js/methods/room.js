@@ -527,7 +527,7 @@
             }
           }
         } catch (e) {
-          log('Poll', '异常', e?.message)
+          log('error', 'Room', '异常', e?.message)
         }
         if (this.isPolling && this.pollGeneration === gen) {
           this.pollTimer = setTimeout(poll, TICK_INTERVAL)
@@ -652,6 +652,7 @@
         // 刚退出/重新匹配时，status 可能短暂还返回旧房间，不能当成新匹配
         if (this.isExitingRoom(multiRoom.multiRoomInfoDTO.roomId)) {
           log(
+            'warn',
             'Match',
             '忽略旧房间的 status 快照',
             multiRoom.multiRoomInfoDTO.roomId,
@@ -688,6 +689,7 @@
       if (!this.roomInfo.roomId && multiRoom?.multiRoomInfoDTO?.roomId) {
         if (this.isExitingRoom(multiRoom.multiRoomInfoDTO.roomId)) {
           log(
+            'warn',
             'Room',
             '忽略刚退出房间的恢复快照',
             multiRoom.multiRoomInfoDTO.roomId,
@@ -716,7 +718,7 @@
 
       const dto = multiRoom.multiRoomInfoDTO || {}
       if (dto.roomId && String(dto.roomId) !== String(this.roomInfo.roomId)) {
-        log('Room', '忽略其他房间的快照', dto.roomId)
+        log('warn', 'Room', '忽略其他房间的快照', dto.roomId)
         return
       }
       if (dto.chatRoomId) this.roomInfo.chatRoomId = dto.chatRoomId
@@ -767,7 +769,7 @@
       const version = Number(playInfo.version || 0)
       const lastVersion = Number(this.playingInfo.version || 0)
       if (version && lastVersion && version < lastVersion) {
-        log('PlayInfo', `忽略旧版本 ${version} < ${lastVersion}`)
+        log('warn', 'Room', `忽略旧版本 ${version} < ${lastVersion}`)
         return
       }
       if (version) this.playingInfo.version = version
@@ -828,7 +830,7 @@
       if (version && version !== this.lastQueueVersion) {
         this.lastQueueVersion = version
 
-        log('Queue', '同步全量')
+        log('info', 'Queue', '同步全量')
         setTimeout(() => {
           this.fetchFullQueue().catch(() => {})
         }, 1000)
@@ -872,7 +874,7 @@
           )
             return
           if (res.data.code !== 200) {
-            log('Queue', '拉取全量队列失败', res.data)
+            log('error', 'Queue', '拉取全量队列失败', res.data)
             break
           }
 
@@ -940,6 +942,7 @@
           seen.add(cursor)
         } catch (e) {
           log(
+            'error',
             'Queue',
             'fetchFullQueue 请求异常',
             e?.response?.data || e?.message,
@@ -994,7 +997,7 @@
           }
         }
       } catch (e) {
-        log('User', 'ensureUserNames 异常', e?.message || e)
+        log('error', 'Room', 'ensureUserNames 异常', e?.message || e)
       }
     },
 
@@ -1058,10 +1061,10 @@
           const m = {}
           for (const id of res.data.ids) m[String(id)] = true
           this.likedMap = m
-          log('Like', `已喜欢列表载入 ${res.data.ids.length} 首`)
+          log('info', 'Like', `已喜欢列表载入 ${res.data.ids.length} 首`)
         }
       } catch (e) {
-        log('Like', 'fetchLikedList 异常', e?.message || e)
+        log('error', 'Like', 'fetchLikedList 异常', e?.message || e)
       }
     },
 

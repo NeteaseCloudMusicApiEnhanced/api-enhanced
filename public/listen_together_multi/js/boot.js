@@ -7,7 +7,9 @@
 ;(function () {
   'use strict'
 
-  var VERSION = '89'
+  var VERSION = '93'
+  window.LT = window.LT || {}
+  window.LT.ASSET_VERSION = VERSION
   var BASES = ['https://fastly.jsdelivr.net/npm/', 'https://unpkg.com/']
 
   var DEPS = [
@@ -38,6 +40,7 @@
     'js/computed.js',
     'js/methods/common.js',
     'js/methods/api.js',
+    'js/methods/debug.js',
     'js/methods/room.js',
     'js/methods/match.js',
     'js/methods/stickers.js',

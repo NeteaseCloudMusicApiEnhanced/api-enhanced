@@ -115,7 +115,7 @@
         })
         if (res.data.code === 200) return res.data.data || {}
       } catch (e) {
-        log('Song', '分享链接解析失败', e.message)
+        log('error', 'Song', '分享链接解析失败', e.message)
       }
       return {}
     },
@@ -527,7 +527,7 @@
           }
         }
       } catch (e) {
-        log('Audio', 'fetchSongUrl 异常', e?.message || e)
+        log('error', 'Audio', 'fetchSongUrl 异常', e?.message || e)
       }
       return { url: '', level: '', freeTrialInfo: null }
     },
@@ -585,9 +585,10 @@
 
       this.playingInfo.audioSrc = r.url
       this.playingInfo.actualLevel = r.level
-      if (r.fallback) log('Audio', `歌曲 ${sid} 高音质不可用，已用 128k 兜底`)
+      if (r.fallback)
+        log('warn', 'Audio', `歌曲 ${sid} 高音质不可用，已用 128k 兜底`)
       if (r.freeTrialInfo)
-        log('Audio', `歌曲 ${sid} 为试听片段`, r.freeTrialInfo)
+        log('info', 'Audio', `歌曲 ${sid} 为试听片段`, r.freeTrialInfo)
 
       audio.pause()
       audio.onloadedmetadata = () => {

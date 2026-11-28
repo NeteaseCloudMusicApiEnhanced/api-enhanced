@@ -1,14 +1,14 @@
 ;(function () {
   'use strict'
 
-  const { api, log, util, AUDIO_LEVELS } = window.LT
+  const { api, log, util, AUDIO_LEVELS, LOG_LEVELS } = window.LT
 
   const commonMethods = {
     async init() {
       try {
         await this.login(true)
       } catch (e) {
-        log('Init', '初始化异常', e)
+        log('error', 'App', '初始化异常', e)
       }
     },
 
@@ -242,32 +242,70 @@
 
     /* ---------------- 日志 ---------------- */
 
-    pushLog(tag, msg, data = '') {
+    pushLog(level, module, msg, data = '') {
+      // 兼容旧的 pushLog(tag, msg, data)
+      if (!LOG_LEVELS[level]) {
+        data = arguments.length > 2 ? msg : ''
+        msg = module
+        module = level
+        level = 'info'
+      }
       const text = String(msg || '')
       if (!text) return
+      const normalizedLevel = LOG_LEVELS[level] ? level : 'info'
+      const normalizedModule =
+        window.LT.normalizeLogModule?.(module) || String(module || 'App')
       const last = this.logEntries[this.logEntries.length - 1]
-      if (last && last.tag === tag && last.msg === text) return
+      if (
+        last &&
+        last.module === normalizedModule &&
+        last.msg === text &&
+        last.level === normalizedLevel
+      )
+        return
       this.logEntries.push({
         time: Date.now(),
-        tag: String(tag || 'log'),
+        level: normalizedLevel,
+        module: normalizedModule,
+        tag: normalizedModule,
         msg: text,
         data: typeof data === 'string' ? data : '',
       })
-      if (this.logEntries.length > 300)
-        this.logEntries.splice(0, this.logEntries.length - 300)
+      if (this.logEntries.length > 1000)
+        this.logEntries.splice(0, this.logEntries.length - 1000)
       if (this.chatTab === 'logs') this.scrollLogs()
     },
 
     onLogEvent(event) {
       if (!event?.detail) return
-      this.logEntries.push(event.detail)
-      if (this.logEntries.length > 300)
-        this.logEntries.splice(0, this.logEntries.length - 300)
+      const detail = event.detail
+      const entry = Object.assign({}, detail, {
+        level: LOG_LEVELS[detail.level] ? detail.level : 'info',
+        module: detail.module || detail.tag || 'App',
+      })
+      this.logEntries.push(entry)
+      if (this.logEntries.length > 1000)
+        this.logEntries.splice(0, this.logEntries.length - 1000)
       if (this.chatTab === 'logs') this.scrollLogs()
     },
 
     logTime(time) {
       return new Date(time || Date.now()).toLocaleTimeString()
+    },
+
+    logLevelLabel(level) {
+      return LOG_LEVELS[level]?.label || '信息'
+    },
+
+    toggleLogLevel(level) {
+      if (!LOG_LEVELS[level]) return
+      this.logLevelFilters = Object.assign({}, this.logLevelFilters, {
+        [level]: this.logLevelFilters[level] === false,
+      })
+    },
+
+    setLogModuleFilter(module) {
+      this.logModuleFilter = module || 'all'
     },
 
     clearLogs() {
@@ -326,11 +364,14 @@
           imConnected: this.imConnected,
           sse: this.sync.sse,
         },
-        logs: this.logEntries.slice(-300).map((entry) => ({
+        logs: this.logEntries.slice(-1000).map((entry) => ({
           time: new Date(entry.time).toISOString(),
+          level: entry.level,
+          module: entry.module,
           tag: entry.tag,
           msg: entry.msg,
           data: entry.data,
+          payload: entry.payload,
         })),
       }
       try {

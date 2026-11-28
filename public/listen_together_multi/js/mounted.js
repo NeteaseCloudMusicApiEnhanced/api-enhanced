@@ -15,12 +15,15 @@
 
     /* ---------- 日志与状态 ---------- */
 
-    this.logEntries = (window.LT.logs || []).slice(-300)
+    // 预览模式已经注入了一组带等级/模块的示例日志，不要被空日志覆盖
+    if (!(window.LT.MOCK && Array.isArray(this.logEntries))) {
+      this.logEntries = (window.LT.logs || []).slice(-1000)
+    }
     window.addEventListener('lt-log', this.onLogEvent)
 
     this.$watch('message', (value, previous) => {
       if (!value || value === previous) return
-      this.pushLog('status', value)
+      this.pushLog(window.LT.logLevelFromText(value), 'Status', value)
       if (!this._booted) return
       const now = Date.now()
       if (this._lastToast === value && now - this._lastToastAt < 4000) return
@@ -146,12 +149,12 @@
       audio.onerror = () => {
         this.audioSwitching = false
         this.audioPlaying = false
-        if (audio.src) log('Audio', '加载失败', audio.src)
+        if (audio.src) log('error', 'Audio', '加载失败', audio.src)
       }
       audio.onended = () => {
         syncAudio()
         if (this.roomInfo.roomId) {
-          log('Audio', '播放结束，立即触发心跳同步下一首')
+          log('info', 'Audio', '播放结束，立即触发心跳同步下一首')
           this.lastHeartbeatTime = Date.now()
           this.heartbeat().catch(() => {})
         }
@@ -201,7 +204,7 @@
     const invite = this.readInviteFromUrl()
     if (invite) this._pendingInvite = invite
 
-    this.pushLog('app', '控制台已加载')
+    this.pushLog('info', 'App', '控制台已加载')
 
     if (window.LT.MOCK) {
       this.mockMode = true
@@ -214,7 +217,7 @@
     }
 
     this.init()
-      .catch((e) => log('Init', '初始化失败', e?.message || e))
+      .catch((e) => log('error', 'App', '初始化失败', e?.message || e))
       .finally(() => {
         this._booted = true
         if (this.account.login) this.maybeShowPendingInvite()

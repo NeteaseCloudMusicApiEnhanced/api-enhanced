@@ -10,33 +10,33 @@
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#0b0c10" />
     <title>一起听 · 多人一起听房间</title>
-    <link rel="stylesheet" href="/listen_together_multi/css/tokens.css?v=89" />
-    <link rel="stylesheet" href="/listen_together_multi/css/base.css?v=89" />
-    <link rel="stylesheet" href="/listen_together_multi/css/layout.css?v=89" />
-    <link rel="stylesheet" href="/listen_together_multi/css/player.css?v=89" />
-    <link rel="stylesheet" href="/listen_together_multi/css/queue.css?v=89" />
-    <link rel="stylesheet" href="/listen_together_multi/css/chat.css?v=89" />
+    <link rel="stylesheet" href="/listen_together_multi/css/tokens.css?v=93" />
+    <link rel="stylesheet" href="/listen_together_multi/css/base.css?v=93" />
+    <link rel="stylesheet" href="/listen_together_multi/css/layout.css?v=93" />
+    <link rel="stylesheet" href="/listen_together_multi/css/player.css?v=93" />
+    <link rel="stylesheet" href="/listen_together_multi/css/queue.css?v=93" />
+    <link rel="stylesheet" href="/listen_together_multi/css/chat.css?v=93" />
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin />
     <link rel="dns-prefetch" href="https://unpkg.com" />
     <link
       rel="preload"
       as="script"
-      href="/listen_together_multi/vendor/vue.global.prod.js?v=89"
+      href="/listen_together_multi/vendor/vue.global.prod.js?v=93"
     />
     <link
       rel="preload"
       as="script"
-      href="/listen_together_multi/vendor/axios.min.js?v=89"
+      href="/listen_together_multi/vendor/axios.min.js?v=93"
     />
     <link
       rel="preload"
       as="script"
-      href="/listen_together_multi/js/core.js?v=89"
+      href="/listen_together_multi/js/core.js?v=93"
     />
     <link
       rel="preload"
       as="script"
-      href="/listen_together_multi/js/boot.js?v=89"
+      href="/listen_together_multi/js/boot.js?v=93"
     />
   </head>
   <body>
@@ -1536,22 +1536,77 @@
       </template>
 
       <template v-else>
-        <div id="logList" class="lt-logs">
-          <div
-            v-for="(entry, li) in logEntries"
-            :key="'log-' + li"
-            class="lt-log"
+        <div class="lt-logbar__notice" :class="{ 'is-on': debugCapture }">
+          <span v-if="debugCapture" class="lt-logbar__recording">
+            <i aria-hidden="true"></i>正在录制 HTTP/IM 调试日志
+          </span>
+          <span v-else>调试日志未开启，HTTP/IM 不会写入</span>
+          <button
+            class="lt-btn lt-btn--sm"
+            :class="{ 'lt-btn--primary': !debugCapture }"
+            @click="toggleDebugCapture"
           >
-            <span class="lt-log__time">{{ logTime(entry.time) }}</span>
-            <span class="lt-log__tag">{{ entry.tag }}</span>
-            <span class="lt-log__msg"
-              >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
-                >{{ entry.data }}</span
-              ></span
+            {{ debugCapture ? '停止录制' : '开始录制' }}
+          </button>
+        </div>
+        <div class="lt-logbar">
+          <div class="lt-logbar__levels">
+            <button
+              v-for="opt in logLevelOptions"
+              :key="'lvl-' + opt.key"
+              class="lt-logbar__level"
+              :class="[
+                'is-' + opt.key,
+                { 'is-active': logLevelFilters[opt.key] !== false },
+              ]"
+              :aria-pressed="logLevelFilters[opt.key] !== false"
+              @click="toggleLogLevel(opt.key)"
             >
+              {{ opt.label }}
+              <span class="lt-logbar__count">{{ opt.count }}</span>
+            </button>
           </div>
-          <div v-if="!logEntries.length" class="lt-empty">
-            <div class="lt-empty__title">暂无日志</div>
+          <select
+            class="lt-select lt-select--sm lt-logbar__module"
+            :value="logModuleFilter"
+            @change="setLogModuleFilter($event.target.value)"
+          >
+            <option value="all">全部模块</option>
+            <option v-for="m in logModuleOptions" :key="'mod-' + m" :value="m">
+              {{ m }}
+            </option>
+          </select>
+        </div>
+        <div id="logList" class="lt-logs">
+          <template
+            v-for="(entry, li) in filteredLogEntries"
+            :key="'log-' + li"
+          >
+            <div class="lt-log">
+              <span class="lt-log__time">{{ logTime(entry.time) }}</span>
+              <span class="lt-log__level" :class="'is-' + entry.level">{{
+                logLevelLabel(entry.level)
+              }}</span>
+              <span class="lt-log__module">{{ entry.module }}</span>
+              <span class="lt-log__msg"
+                >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
+                  >{{ entry.data }}</span
+                >
+                <button
+                  v-if="entry.payload"
+                  class="lt-log__json-btn"
+                  @click="toggleLogPayload(entry)"
+                >
+                  {{ entry.payloadOpen ? '收起 JSON' : '查看 JSON' }}
+                </button>
+              </span>
+            </div>
+            <div v-if="entry.payload && entry.payloadOpen" class="lt-log__json">
+              <lt-json-view :value="entry.payload"></lt-json-view>
+            </div>
+          </template>
+          <div v-if="!filteredLogEntries.length" class="lt-empty">
+            <div class="lt-empty__title">暂无匹配日志</div>
           </div>
         </div>
         <div class="lt-logs__foot">
@@ -2505,6 +2560,11 @@
               <span class="lt-chip"
                 >音频 {{ playingInfo.actualLevel || '未加载' }}</span
               >
+              <span
+                class="lt-chip"
+                :class="debugCapture ? 'is-ok' : ''"
+                >调试日志 {{ debugCapture ? '开' : '关' }}</span
+              >
             </div>
             <div class="lt-roominfo__row">
               <span class="lt-roominfo__label">Room</span>
@@ -2540,8 +2600,51 @@
               <button class="lt-btn lt-btn--sm" @click="clearLogs">
                 清空日志
               </button>
+              <button
+                class="lt-btn lt-btn--sm"
+                :class="{ 'lt-btn--primary': debugCapture }"
+                @click="toggleDebugCapture"
+              >
+                调试日志：{{ debugCapture ? '开' : '关' }}
+              </button>
             </div>
+            <p class="lt-hint">
+              调试日志默认关闭；开启后 HTTP 请求/响应与 IM 广播会进入工作日志，
+              带 JSON 查看器，Cookie/token 等字段已脱敏。
+            </p>
 
+            <div class="lt-logbar lt-logbar--compact">
+              <div class="lt-logbar__levels">
+                <button
+                  v-for="opt in logLevelOptions"
+                  :key="'dbg-lvl-' + opt.key"
+                  class="lt-logbar__level"
+                  :class="[
+                    'is-' + opt.key,
+                    { 'is-active': logLevelFilters[opt.key] !== false },
+                  ]"
+                  :aria-pressed="logLevelFilters[opt.key] !== false"
+                  @click="toggleLogLevel(opt.key)"
+                >
+                  {{ opt.label }}
+                  <span class="lt-logbar__count">{{ opt.count }}</span>
+                </button>
+              </div>
+              <select
+                class="lt-select lt-select--sm lt-logbar__module"
+                :value="logModuleFilter"
+                @change="setLogModuleFilter($event.target.value)"
+              >
+                <option value="all">全部模块</option>
+                <option
+                  v-for="m in logModuleOptions"
+                  :key="'dbg-mod-' + m"
+                  :value="m"
+                >
+                  {{ m }}
+                </option>
+              </select>
+            </div>
             <div
               id="debugLogList"
               class="lt-logs"
@@ -2552,21 +2655,38 @@
                 padding: 8px;
               "
             >
-              <div
-                v-for="(entry, li) in logEntries"
+              <template
+                v-for="(entry, li) in filteredLogEntries"
                 :key="'dbg-' + li"
-                class="lt-log"
               >
-                <span class="lt-log__time">{{ logTime(entry.time) }}</span>
-                <span class="lt-log__tag">{{ entry.tag }}</span>
-                <span class="lt-log__msg"
-                  >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
-                    >{{ entry.data }}</span
-                  ></span
+                <div class="lt-log">
+                  <span class="lt-log__time">{{ logTime(entry.time) }}</span>
+                  <span class="lt-log__level" :class="'is-' + entry.level">{{
+                    logLevelLabel(entry.level)
+                  }}</span>
+                  <span class="lt-log__module">{{ entry.module }}</span>
+                  <span class="lt-log__msg"
+                    >{{ entry.msg }}<span v-if="entry.data" class="lt-log__data"
+                      >{{ entry.data }}</span
+                    >
+                    <button
+                      v-if="entry.payload"
+                      class="lt-log__json-btn"
+                      @click="toggleLogPayload(entry)"
+                    >
+                      {{ entry.payloadOpen ? '收起 JSON' : '查看 JSON' }}
+                    </button>
+                  </span>
+                </div>
+                <div
+                  v-if="entry.payload && entry.payloadOpen"
+                  class="lt-log__json"
                 >
-              </div>
-              <div v-if="!logEntries.length" class="lt-empty">
-                <div class="lt-empty__title">暂无日志</div>
+                  <lt-json-view :value="entry.payload"></lt-json-view>
+                </div>
+              </template>
+              <div v-if="!filteredLogEntries.length" class="lt-empty">
+                <div class="lt-empty__title">暂无匹配日志</div>
               </div>
             </div>
           </div>
@@ -2703,6 +2823,16 @@
       </div>
     </template>
 
+    <!-- ================= JSON 查看器 ================= -->
+    <template id="tpl-json-view">
+      <div class="lt-json-view">
+        <div ref="host" class="lt-json-view__host"></div>
+        <pre v-if="failed" class="lt-json-view__fallback">{{
+          pretty
+        }}</pre>
+      </div>
+    </template>
+
     <!-- ================= Toast ================= -->
     <template id="tpl-toasts">
       <div class="lt-toast-host" aria-live="polite">
@@ -2718,6 +2848,6 @@
       </div>
     </template>
 
-    <script data-cfasync="false" src="/listen_together_multi/js/boot.js?v=89"></script>
+    <script data-cfasync="false" src="/listen_together_multi/js/boot.js?v=93"></script>
   </body>
 </html>

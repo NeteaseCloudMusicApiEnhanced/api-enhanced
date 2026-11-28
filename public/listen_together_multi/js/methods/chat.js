@@ -100,7 +100,7 @@
         this.chatHistory = merged
         if (this.chatOpen && this.chatAtBottom) this.scrollChat(true)
       } catch (e) {
-        log('Chat', '请求异常', e?.message || e)
+        log('error', 'Chat', '请求异常', e?.message || e)
       }
     },
 
@@ -144,7 +144,7 @@
           })
         }
       } catch (e) {
-        log('Chat', '加载更早消息失败', e?.message || e)
+        log('error', 'Chat', '加载更早消息失败', e?.message || e)
       } finally {
         this.chatLoadingMore = false
       }

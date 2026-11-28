@@ -153,7 +153,7 @@
       if (event.type === 'ready') {
         if (!event.roomId) return
         if (this.isExitingRoom(event.roomId)) {
-          log('Match', '忽略旧房间的 ready 事件', event.roomId)
+          log('warn', 'Match', '忽略旧房间的 ready 事件', event.roomId)
           return
         }
         this.isMatching = false
@@ -187,7 +187,7 @@
 
     async acceptMatch(roomId) {
       if (this.isExitingRoom(roomId)) {
-        log('Match', '忽略旧房间的 ack', roomId)
+        log('warn', 'Match', '忽略旧房间的 ack', roomId)
         return
       }
       const epoch = this._matchEpoch || 0
@@ -256,7 +256,7 @@
       try {
         this._handleImMessage(msg)
       } catch (e) {
-        log('IM', '广播解析失败', e?.message || e)
+        log('error', 'IM', '广播解析失败', e?.message || e)
       }
     },
 
@@ -286,6 +286,13 @@
       const ext = payload && (payload.serverExt || payload.server || payload)
       const type = Number(ext && ext.type) || 0
       const content = ext && ext.content
+
+      window.LT.debugLog?.('IM', `收到广播 ${type || 'chat'}`, {
+        type,
+        content,
+        payload,
+        msg,
+      })
 
       if (type === 30000) {
         this.applyImPlayState(content)
@@ -543,12 +550,13 @@
         settled = true
         imInstances.delete(chatroom)
         if (window.LT.chatroom === chatroom) window.LT.chatroom = null
-        if (err) log('IM', 'disconnect 回调异常', err?.message || err)
-        else log('IM', 'disconnect 完成')
+        if (err) log('error', 'IM', 'disconnect 回调异常', err?.message || err)
+        else log('info', 'IM', 'disconnect 完成')
         if (onDone) onDone(err)
       }
       try {
         log(
+          'info',
           'IM',
           'disconnect 调用',
           chatroom.options?.chatroomId || '未知聊天室',

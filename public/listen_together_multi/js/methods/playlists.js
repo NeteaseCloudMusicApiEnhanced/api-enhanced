@@ -81,7 +81,7 @@
         this.myPlaylists = mapped
         this.myPlaylistsLoaded = true
       } catch (e) {
-        log('Playlist', '读取歌单失败', e?.message || e)
+        log('error', 'Playlist', '读取歌单失败', e?.message || e)
         this.myPlaylistsError =
           '歌单读取失败：' +
           (e.response?.data?.message || e.message || '未知错误')
@@ -161,7 +161,7 @@
           this.activePlaylistOffset < (playlist.trackCount || Infinity)
       } catch (e) {
         if (epoch === (this._playlistEpoch || 0)) {
-          log('Playlist', '读取歌单歌曲失败', e?.message || e)
+          log('error', 'Playlist', '读取歌单歌曲失败', e?.message || e)
           this.activePlaylistError =
             '歌单歌曲读取失败：' +
             (e.response?.data?.message || e.message || '未知错误')

@@ -308,9 +308,30 @@
     vm.audioCurrentTime = 72
     vm.queueTab = 'wait'
     vm.logEntries = [
-      { time: now - 9000, tag: 'app', msg: '控制台已加载', data: '' },
-      { time: now - 8000, tag: 'Poll', msg: '心跳同步 1', data: '' },
-      { time: now - 4000, tag: 'Queue', msg: '同步全量 7 首', data: '' },
+      {
+        time: now - 9000,
+        level: 'debug',
+        module: 'Room',
+        tag: 'Room',
+        msg: '心跳同步 1',
+        data: '',
+      },
+      {
+        time: now - 7000,
+        level: 'warn',
+        module: 'IM',
+        tag: 'IM',
+        msg: 'IM 连接重试 1/2',
+        data: '',
+      },
+      {
+        time: now - 4000,
+        level: 'info',
+        module: 'Queue',
+        tag: 'Queue',
+        msg: '同步全量 7 首',
+        data: '',
+      },
     ]
   }
 
