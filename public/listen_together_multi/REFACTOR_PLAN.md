@@ -668,3 +668,13 @@ listen_together_multi/
 - 版本号 `?v=88`。
 
 注意：Vercel 的 `@vercel/node` 走 Express，Cloudflare 在回源时会按上述响应头缓存；如果 Cloudflare 开了 Rocket Loader，建议对本 demo 关闭，避免它重排 classic script 执行顺序。
+
+## 29. 选歌弹窗重开后试听按钮无响应（v89）
+
+现象：选好歌后关闭弹窗，再次打开（尤其是「匹配用歌」的 `initial` 模式，`selectedSong` 会保留），底部试听条还在，但点播放没有反应。
+
+原因：`closeSongDialog()` 调用的 `stopPreview()` 会把 `previewAudio.src` 和 `preview` 状态清空；重开后 `selectedSong` 仍在，试听条 `v-if="selectedSong"` 照常显示，而 `togglePreview()` 发现没有 `audio.src` 直接 `return`。
+
+修复：`togglePreview()` 在 `audio.src` 为空且存在 `selectedSong` 时，重新调用 `previewSelectedSong(selectedSong)` 拉取一次试听音源；`preview.loading` 时避免重复请求。
+
+验收：关闭/重开匹配用歌弹窗后点播放，`preview.songId` 正确、`preview.url` 重新获取、`previewAudio.src` 有值。版本号 `?v=89`。

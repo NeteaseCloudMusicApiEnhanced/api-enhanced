@@ -92,7 +92,15 @@
 
     togglePreview() {
       const audio = this.previewAudio()
-      if (!audio || !audio.src) return
+      if (!audio) return
+      if (!audio.src) {
+        // 关闭弹窗时 stopPreview() 会清掉音源；再次打开后 selectedSong 仍在，
+        // 底部试听条也会显示。此时点播放应重新拉一次试听音源，而不是静默返回。
+        if (this.selectedSong && !this.preview.loading) {
+          this.previewSelectedSong(this.selectedSong)
+        }
+        return
+      }
       if (audio.paused) {
         this.muteRoomForPreview()
         audio.play().catch(() => {
