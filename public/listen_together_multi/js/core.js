@@ -52,14 +52,21 @@
   const api = axios.create({ timeout: REQ_TIMEOUT })
 
   api.interceptors.request.use((config) => {
-    // 让服务端把 body 中的伪装字段与请求头里的完整 Cookie 合并：
-    // HttpOnly 的 MUSIC_U 等条目从请求头补齐，同名条目以 body 为准。
-    if (
+    // 服务端默认不合并 cookie：body/query 里的伪装 Android cookie 会直接
+    // 覆盖请求头，连 MUSIC_U 一起丢掉。凡是带 cookie 的请求都必须在
+    // query 上显式带 mergeCookie=body（body 参数在 GET 请求里读不到）。
+    const bodyCookie =
       config.data &&
       typeof config.data === 'object' &&
       Object.prototype.hasOwnProperty.call(config.data, 'cookie')
-    ) {
-      config.data.mergeCookie = 'body'
+    const queryCookie =
+      config.params &&
+      typeof config.params === 'object' &&
+      Object.prototype.hasOwnProperty.call(config.params, 'cookie')
+    if (bodyCookie || queryCookie) {
+      config.params = Object.assign({}, config.params, {
+        mergeCookie: 'body',
+      })
     }
     if (config.cacheable) {
       delete config.cacheable

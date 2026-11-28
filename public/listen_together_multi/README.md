@@ -139,7 +139,7 @@ js/
 - 队列：`match/wait/song/list`、`match/played/song/list`、`match/song/operate`
 - 聊天：`match/msg/history`、`multi/chat/send`、`chatroom/token`
 - 邀请：`mutual/follows/get/v2`、`multi/invite`
-- 歌单：`user/playlist`、`playlist/track/all`、`playlist/tracks`（GET 请求带 `mergeCookie: body` 合并浏览器 Cookie）
+- 歌单：`user/playlist`、`playlist/track/all`、`playlist/tracks`（请求封装会给所有带 `cookie` 的请求自动追加 `mergeCookie=body` 查询参数，合并浏览器 Cookie）
 - 落地页：`multi/landing/info`
 - 表情：`social/emoji/groups`、`social/emoji/groups/detail/page`、`social/emoji/collect`
 - 分享解析：`share/resolve`

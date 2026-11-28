@@ -441,6 +441,7 @@ listen_together_multi/
 
 3. **Cookie 合并**
    - 这两个 GET 接口带伪装 Android cookie，必须同时传 `mergeCookie: 'body'`，否则会覆盖请求头里的 `MUSIC_U` 导致“明明登录了却提示未登录”。
+   - 现已在 `core.js` 的 axios 请求拦截器里统一处理：只要 body 或 query 里带 `cookie`，就自动追加 `mergeCookie=body` 查询参数；不再依赖调用方逐个手写，GET 请求也能生效。
 
 4. **预览**
    - `?ui=mylists`（歌单列表）、`?ui=playlists`（歌单内歌曲）、`?ui=collect`（收藏弹层）。
@@ -643,9 +644,9 @@ listen_together_multi/
 
 6. **调试入口**
    - `window.LT.chatroom` / `window.LT.lastChatroom` 暴露当前/上一个 Chatroom 实例；`window.LT.imDebug.state()` 查看连接状态，`LT.imDebug.disconnect()` 手动断开并返回 Promise。disconnect 开始/完成也会写入工作日志。
-   - `?v=` 升到 **85**。
+   - `?v=` 升到 **86**。
 
 7. **缓存**
-   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **85**，避免 Vercel/浏览器继续使用旧脚本。
+   - `boot.js` 的 `VERSION` 与所有 `?v=` 升到 **86**，避免 Vercel/浏览器继续使用旧脚本。
 
 验收：真实账号创建私房后重匹配到新的公开房，新房间的首歌/聊天室/聊天记录均来自新 roomId；旧 roomId 的 status 快照、ready 事件、IM 消息均被忽略；本地 headless 用 fake Chatroom 验证旧连接消息不会进入新连接。
